@@ -1,0 +1,122 @@
+# Training Pipeline Configuration
+# Complete configuration for running the fraud detection training pipeline
+
+# Pipeline identification
+pipeline_name: "fraud_detection_training"
+pipeline_version: "1.0.0"
+
+# Data source configuration
+# Option 1: Load from file
+dataset_path: "data/processed/fraud_detection_dataset.csv"
+
+# Option 2: Load from feature store (alternative to dataset_path)
+# feature_store_path: "data/feature_store"
+# feature_set_name: "fraud_features_v1"
+# feature_set_version: "latest"
+
+# Experiment tracking configuration
+experiment_tracker_type: "auto"  # "mlflow", "local", "auto"
+experiment_name: "fraud_detection_experiments"
+tracking_uri: null  # MLflow tracking server URI (if using MLflow)
+
+# Model registry configuration
+registry_path: "models/registry"
+
+# Evaluation configuration
+generate_evaluation_reports: true
+evaluation_output_dir: "evaluation_reports"
+
+# Threshold optimization configuration
+optimize_thresholds: true
+threshold_optimization_configs:
+  - objective: "business_cost"
+    cost_matrix:
+      false_positive_cost: 10
+      false_negative_cost: 100
+      true_positive_reward: 50
+      true_negative_reward: 0
+    save_plots: true
+    
+  - objective: "f1_score"
+    save_plots: true
+    
+  - objective: "recall"
+    min_precision: 0.1
+    save_plots: true
+
+# Artifact management
+artifacts_base_dir: "artifacts"
+save_predictions: true
+save_plots: true
+save_models: true
+
+# Reproducibility
+random_seed: 42
+capture_environment: true
+
+# Trainer configurations
+trainer_configs:
+  # XGBoost Configuration
+  - model_name: "xgboost_fraud_detector"
+    model_version: "1.0.0"
+    target_column: "is_fraud"
+    test_size: 0.2
+    validation_size: 0.15
+    random_seed: 42
+    stratify: true
+    use_cross_validation: true
+    cv_folds: 5
+    cv_scoring: "roc_auc"
+    
+    # XGBoost specific parameters
+    n_estimators: 100
+    max_depth: 6
+    learning_rate: 0.1
+    subsample: 0.8
+    colsample_bytree: 0.8
+    reg_alpha: 0.0
+    reg_lambda: 1.0
+    
+    # Early stopping
+    early_stopping: true
+    early_stopping_rounds: 10
+    
+    # Artifacts
+    save_model: true
+    save_predictions: true
+    save_feature_importance: true
+    save_plots: true
+    
+  # Isolation Forest Configuration  
+  - model_name: "isolation_forest_anomaly_detector"
+    model_version: "1.0.0"
+    target_column: "is_fraud"
+    test_size: 0.2
+    validation_size: 0.15
+    random_seed: 42
+    stratify: true
+    use_cross_validation: true
+    cv_folds: 5
+    cv_scoring: "roc_auc"
+    
+    # Isolation Forest specific parameters
+    n_estimators: 100
+    max_samples: "auto"
+    contamination: "auto"
+    max_features: 1.0
+    bootstrap: false
+    n_jobs: -1
+    
+    # Feature scaling
+    scale_features: true
+    scaler_type: "standard"
+    
+    # Score calibration
+    calibrate_scores: true
+    calibration_method: "sigmoid"
+    
+    # Artifacts
+    save_model: true
+    save_predictions: true
+    save_feature_importance: true
+    save_plots: true

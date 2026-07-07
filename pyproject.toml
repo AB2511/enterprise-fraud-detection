@@ -1,0 +1,146 @@
+[tool.poetry]
+name = "enterprise-fraud-detection"
+version = "0.1.0"
+description = "Production-grade AI platform for real-time fraud detection with explainability and automated retraining"
+authors = ["Enterprise ML Team <ml-team@example.com>"]
+license = "MIT"
+readme = "README.md"
+homepage = "https://github.com/yourusername/enterprise-fraud-detection"
+repository = "https://github.com/yourusername/enterprise-fraud-detection"
+keywords = ["fraud-detection", "machine-learning", "xgboost", "mlops", "fastapi"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+fastapi = "^0.109.0"
+uvicorn = {extras = ["standard"], version = "^0.27.0"}
+pydantic = "^2.5.0"
+pydantic-settings = "^2.1.0"
+sqlalchemy = "^2.0.25"
+alembic = "^1.13.0"
+psycopg2-binary = "^2.9.9"
+python-jose = {extras = ["cryptography"], version = "^3.3.0"}
+passlib = {extras = ["bcrypt"], version = "^1.7.4"}
+python-multipart = "^0.0.6"
+boto3 = "^1.34.0"
+python-json-logger = "^2.0.7"
+structlog = "^24.1.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.0"
+pytest-asyncio = "^0.23.0"
+pytest-cov = "^4.1.0"
+pytest-mock = "^3.12.0"
+httpx = "^0.26.0"
+faker = "^22.0.0"
+ruff = "^0.1.0"
+mypy = "^1.8.0"
+black = "^23.12.0"
+isort = "^5.13.0"
+pre-commit = "^3.6.0"
+ipython = "^8.20.0"
+types-passlib = "^1.7.7"
+types-python-jose = "^3.3.4"
+sqlalchemy-stubs = "^0.4"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 100
+target-version = ['py312']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 100
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "C",  # flake8-comprehensions
+    "B",  # flake8-bugbear
+    "UP", # pyupgrade
+]
+ignore = [
+    "E501",  # line too long (handled by black)
+    "B008",  # do not perform function calls in argument defaults
+    "C901",  # too complex
+]
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["F401"]
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_calls = true
+disallow_untyped_decorators = false
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+follow_imports = "normal"
+ignore_missing_imports = true
+plugins = ["pydantic.mypy"]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q --strict-markers --cov=backend/src --cov-report=term-missing --cov-report=html"
+testpaths = ["backend/tests"]
+pythonpath = ["backend"]
+asyncio_mode = "auto"
+
+[tool.coverage.run]
+source = ["backend/src"]
+omit = [
+    "*/tests/*",
+    "*/migrations/*",
+    "*/__init__.py",
+]
+
+[tool.coverage.report]
+precision = 2
+show_missing = true
+skip_covered = false
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if TYPE_CHECKING:",
+    "raise AssertionError",
+    "raise NotImplementedError",
+]

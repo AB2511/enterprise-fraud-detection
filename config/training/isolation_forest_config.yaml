@@ -1,0 +1,50 @@
+# Isolation Forest Training Configuration
+# Example configuration for training Isolation Forest anomaly detector
+
+# Model configuration
+model_name: "isolation_forest_anomaly_detector"
+model_version: "1.0.0"
+
+# Data configuration
+target_column: "is_fraud"
+feature_columns: null  # Use all available features except target
+
+# Training splits
+test_size: 0.2
+validation_size: 0.15
+random_seed: 42
+stratify: true
+
+# Cross-validation
+use_cross_validation: true
+cv_folds: 5
+cv_scoring: "roc_auc"
+
+# Isolation Forest specific parameters
+n_estimators: 100
+max_samples: "auto"  # Use all samples
+contamination: "auto"  # Auto-estimate contamination rate
+max_features: 1.0  # Use all features
+bootstrap: false
+n_jobs: -1  # Use all available cores
+
+# Feature scaling (recommended for Isolation Forest)
+scale_features: true
+scaler_type: "standard"  # "standard", "minmax", "robust"
+
+# Anomaly score calibration
+calibrate_scores: true
+calibration_method: "sigmoid"  # "sigmoid", "isotonic"
+
+# Artifact management
+save_model: true
+save_predictions: true
+save_feature_importance: true  # Uses permutation importance
+save_plots: true
+
+# Reproducibility
+capture_git_hash: true
+capture_environment: true
+
+# Early stopping (not applicable to Isolation Forest)
+early_stopping: false

@@ -1,0 +1,53 @@
+# XGBoost Training Configuration
+# Example configuration for training XGBoost fraud detection model
+
+# Model configuration
+model_name: "xgboost_fraud_detector"
+model_version: "1.0.0"
+
+# Data configuration
+target_column: "is_fraud"
+feature_columns: null  # Use all available features except target
+
+# Training splits
+test_size: 0.2
+validation_size: 0.15
+random_seed: 42
+stratify: true
+
+# Cross-validation
+use_cross_validation: true
+cv_folds: 5
+cv_scoring: "roc_auc"
+
+# XGBoost specific parameters
+n_estimators: 100
+max_depth: 6
+learning_rate: 0.1
+subsample: 0.8
+colsample_bytree: 0.8
+reg_alpha: 0.0
+reg_lambda: 1.0
+gamma: 0.0
+min_child_weight: 1
+scale_pos_weight: null  # Auto-calculate from class imbalance
+
+# Early stopping
+early_stopping: true
+early_stopping_rounds: 10
+patience: 15
+min_delta: 0.001
+
+# Evaluation metric for XGBoost training
+eval_metric: "logloss"
+use_label_encoder: false
+
+# Artifact management
+save_model: true
+save_predictions: true
+save_feature_importance: true
+save_plots: true
+
+# Reproducibility
+capture_git_hash: true
+capture_environment: true
