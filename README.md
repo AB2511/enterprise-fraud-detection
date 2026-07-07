@@ -186,7 +186,7 @@ Presentation → Application → Domain ← Infrastructure
 ### 1. Clone Repository
 
 ```bash
-git clone https://github.com/yourusername/enterprise-fraud-detection.git
+git clone https://github.com/AB2511/enterprise-fraud-detection.git
 cd enterprise-fraud-detection
 ```
 
@@ -333,10 +333,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 👤 Author
 
-**Your Name**
-- GitHub: [@yourusername](https://github.com/yourusername)
-- LinkedIn: [Your Profile](https://linkedin.com/in/yourprofile)
-- Portfolio: [yourportfolio.com](https://yourportfolio.com)
+**Anjali Barge** 
 
 ---
 
@@ -346,12 +343,16 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **SHAP** authors for explainability framework
 - **FastAPI** for the modern Python web framework
 - **AWS** for cloud infrastructure
+- **Open Source Community** for the incredible ecosystem that makes projects like this possible
 
 ---
 
 ## 📞 Contact
 
-For questions or feedback, please open an issue or reach out via email: your.email@example.com
+For questions, feedback, or collaboration opportunities, please:
+- 📧 Email: bargeanjali650@gmail.com
+- 💬 Open an issue on this repository
+- 🔗 Connect on [LinkedIn](https://linkedin.com/in/anjali-barge)
 
 ---
 
