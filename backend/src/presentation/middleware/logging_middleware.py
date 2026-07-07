@@ -4,9 +4,10 @@ import time
 from uuid import uuid4
 
 from fastapi import Request, Response
-from src.config.logging_config import get_logger
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.types import ASGIApp
+
+from src.config.logging_config import get_logger
 
 logger = get_logger(__name__)
 

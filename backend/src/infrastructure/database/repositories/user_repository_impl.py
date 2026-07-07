@@ -5,6 +5,7 @@ from uuid import UUID
 
 from sqlalchemy import and_, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from src.application.interfaces.user_repository import UserRepository
 from src.domain.entities.user import User
 from src.domain.exceptions.base import ConflictError, NotFoundError, RepositoryError

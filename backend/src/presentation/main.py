@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+
 from src.config.logging_config import get_logger, setup_logging
 from src.config.settings import get_settings
 from src.infrastructure.database import close_db, init_db

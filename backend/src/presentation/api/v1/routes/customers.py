@@ -6,6 +6,7 @@ Provides CRUD endpoints for customer management.
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, status
+
 from src.application.dtos.customer_dtos import (
     CreateCustomerRequest,
     CustomerResponse,
@@ -200,7 +201,8 @@ async def update_customer(
 )
 async def delete_customer(
     customer_id: UUID,
-    reason: str | None = Query(
+    reason: str
+    | None = Query(
         default="User requested deletion",
         description="Reason for deletion",
     ),

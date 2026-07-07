@@ -4,6 +4,7 @@ from datetime import datetime
 
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from src.config.settings import Settings, get_settings
 from src.infrastructure.database import get_async_session
 from src.presentation.api.v1.schemas.health_schema import HealthResponse

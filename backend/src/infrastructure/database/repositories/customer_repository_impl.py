@@ -6,12 +6,10 @@ from uuid import UUID
 from sqlalchemy import and_, desc, func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from src.application.interfaces.customer_repository import CustomerRepository
 from src.domain.entities.customer import Customer
-from src.domain.exceptions.base import (
-    ConflictError,
-    DomainException,
-)
+from src.domain.exceptions.base import ConflictError, DomainException
 from src.infrastructure.database.models import CustomerModel
 
 

@@ -7,9 +7,7 @@ from uuid import uuid4
 
 import pytest
 from src.domain.entities.customer import Customer
-from src.infrastructure.database.repositories.customer_repository_impl import (
-    CustomerRepositoryImpl,
-)
+from src.infrastructure.database.repositories.customer_repository_impl import CustomerRepositoryImpl
 
 
 @pytest.fixture

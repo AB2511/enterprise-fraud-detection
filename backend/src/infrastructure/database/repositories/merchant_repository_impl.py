@@ -6,12 +6,10 @@ from uuid import UUID
 from sqlalchemy import and_, desc, func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from src.application.interfaces.merchant_repository import MerchantRepository
 from src.domain.entities.merchant import Merchant
-from src.domain.exceptions.base import (
-    DomainException,
-    RepositoryError,
-)
+from src.domain.exceptions.base import DomainException, RepositoryError
 from src.infrastructure.database.models import MerchantModel
 
 

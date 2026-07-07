@@ -62,7 +62,7 @@ def validate_probability(value: float) -> bool:
     Returns:
         True if valid probability, False otherwise
     """
-    return isinstance(value, (int, float)) and 0.0 <= value <= 1.0
+    return isinstance(value, int | float) and 0.0 <= value <= 1.0
 
 
 def validate_risk_score(value: int) -> bool:

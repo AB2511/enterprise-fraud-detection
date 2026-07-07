@@ -5,6 +5,7 @@ from uuid import UUID
 
 from sqlalchemy import and_, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from src.application.interfaces.model_repository import ModelRepository
 from src.domain.entities.model import Model
 from src.domain.exceptions.base import NotFoundError, RepositoryError

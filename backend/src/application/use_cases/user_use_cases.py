@@ -11,9 +11,7 @@ from src.application.dtos.user_dtos import (
     UserListRequest,
     UserResponse,
 )
-from src.application.exceptions.application_exceptions import (
-    EntityNotFoundException,
-)
+from src.application.exceptions.application_exceptions import EntityNotFoundException
 from src.application.services.user_service import UserService
 from src.domain.entities.user import User
 

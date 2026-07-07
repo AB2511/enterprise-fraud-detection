@@ -21,7 +21,7 @@ class RiskScore:
 
     def __post_init__(self) -> None:
         """Validate risk score range."""
-        if not isinstance(self.score, (int, float)):
+        if not isinstance(self.score, int | float):
             raise TypeError("Risk score must be numeric")
 
         if self.score < 0 or self.score > 100:

@@ -6,6 +6,7 @@ from uuid import UUID
 from sqlalchemy import and_, desc, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from src.application.interfaces.alert_repository import AlertRepository
 from src.domain.entities.alert import Alert
 from src.domain.exceptions.base import DomainException
