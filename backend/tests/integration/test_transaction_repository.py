@@ -46,7 +46,7 @@ def sample_transaction() -> Transaction:
         velocity_24h=5,
         velocity_7d=20,
         created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow()
+        updated_at=datetime.utcnow(),
     )
 
 
@@ -135,9 +135,7 @@ class TestTransactionRepositoryRead:
         await transaction_repository.save(sample_transaction)
         await async_session.commit()
 
-        result = await transaction_repository.get_by_user(
-            str(sample_transaction.customer_id)
-        )
+        result = await transaction_repository.get_by_user(str(sample_transaction.customer_id))
 
         assert len(result) == 1
         assert result[0].customer_id == sample_transaction.customer_id
@@ -156,16 +154,12 @@ class TestTransactionRepositoryRead:
         tomorrow = datetime.utcnow() + timedelta(days=1)
 
         result = await transaction_repository.get_by_user(
-            str(sample_transaction.customer_id),
-            start_date=yesterday,
-            end_date=tomorrow
+            str(sample_transaction.customer_id), start_date=yesterday, end_date=tomorrow
         )
 
         assert len(result) == 1
 
-    async def test_get_by_user_no_results(
-        self, transaction_repository: TransactionRepositoryImpl
-    ):
+    async def test_get_by_user_no_results(self, transaction_repository: TransactionRepositoryImpl):
         """Test user transaction retrieval with no results."""
         result = await transaction_repository.get_by_user(str(uuid4()))
         assert len(result) == 0
@@ -260,7 +254,7 @@ class TestTransactionRepositoryVelocityCalculations:
                 merchant_id=uuid4(),
                 amount=Decimal("100.00"),
                 currency="USD",
-                timestamp=now - timedelta(minutes=i*10),
+                timestamp=now - timedelta(minutes=i * 10),
                 payment_channel="online",
                 payment_method="card",
                 device_id="device123",
@@ -275,8 +269,8 @@ class TestTransactionRepositoryVelocityCalculations:
                 velocity_1h=0,
                 velocity_24h=0,
                 velocity_7d=0,
-                created_at=now - timedelta(minutes=i*10),
-                updated_at=now - timedelta(minutes=i*10)
+                created_at=now - timedelta(minutes=i * 10),
+                updated_at=now - timedelta(minutes=i * 10),
             )
             transactions.append(transaction)
             await transaction_repository.save(transaction)
@@ -284,16 +278,12 @@ class TestTransactionRepositoryVelocityCalculations:
         await async_session.commit()
 
         # Count transactions in last 60 minutes
-        count = await transaction_repository.count_recent_transactions(
-            str(customer_id), 60
-        )
+        count = await transaction_repository.count_recent_transactions(str(customer_id), 60)
 
         assert count == 3
 
         # Count transactions in last 15 minutes
-        count_15min = await transaction_repository.count_recent_transactions(
-            str(customer_id), 15
-        )
+        count_15min = await transaction_repository.count_recent_transactions(str(customer_id), 15)
 
         assert count_15min == 2  # Only first two transactions
 
@@ -308,13 +298,13 @@ class TestTransactionRepositoryVelocityCalculations:
 
         # Create transactions at different times
         times = [
-            reference_time - timedelta(minutes=30),    # 1h window
-            reference_time - timedelta(hours=12),      # 24h window
-            reference_time - timedelta(days=3),        # 7d window
-            reference_time - timedelta(days=10),       # Outside 7d window
+            reference_time - timedelta(minutes=30),  # 1h window
+            reference_time - timedelta(hours=12),  # 24h window
+            reference_time - timedelta(days=3),  # 7d window
+            reference_time - timedelta(days=10),  # Outside 7d window
         ]
 
-        for i, timestamp in enumerate(times):
+        for _i, timestamp in enumerate(times):
             transaction = Transaction(
                 transaction_id=uuid4(),
                 customer_id=customer_id,
@@ -337,16 +327,14 @@ class TestTransactionRepositoryVelocityCalculations:
                 velocity_24h=0,
                 velocity_7d=0,
                 created_at=timestamp,
-                updated_at=timestamp
+                updated_at=timestamp,
             )
             await transaction_repository.save(transaction)
 
         await async_session.commit()
 
         # Get velocity data
-        velocity_data = await transaction_repository.get_velocity_data(
-            customer_id, reference_time
-        )
+        velocity_data = await transaction_repository.get_velocity_data(customer_id, reference_time)
 
         assert velocity_data["velocity_1h"] == 1
         assert velocity_data["velocity_24h"] == 2
@@ -391,7 +379,7 @@ class TestTransactionRepositoryFiltering:
                 velocity_24h=5,
                 velocity_7d=20,
                 created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow()
+                updated_at=datetime.utcnow(),
             ),
             # Low-value transaction
             Transaction(
@@ -416,7 +404,7 @@ class TestTransactionRepositoryFiltering:
                 velocity_24h=8,
                 velocity_7d=25,
                 created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow()
+                updated_at=datetime.utcnow(),
             ),
             # Pending transaction
             Transaction(
@@ -441,7 +429,7 @@ class TestTransactionRepositoryFiltering:
                 velocity_24h=3,
                 velocity_7d=12,
                 created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow()
+                updated_at=datetime.utcnow(),
             ),
         ]
 
@@ -459,10 +447,7 @@ class TestTransactionRepositoryFiltering:
         multiple_transactions: list[Transaction],
     ):
         """Test finding transactions by amount range."""
-        result = await transaction_repository.find_by_criteria(
-            min_amount=100.0,
-            max_amount=1000.0
-        )
+        result = await transaction_repository.find_by_criteria(min_amount=100.0, max_amount=1000.0)
 
         assert len(result) >= 2
         for txn in result:
@@ -474,9 +459,7 @@ class TestTransactionRepositoryFiltering:
         multiple_transactions: list[Transaction],
     ):
         """Test finding transactions by payment channel."""
-        result = await transaction_repository.find_by_criteria(
-            payment_channel="online"
-        )
+        result = await transaction_repository.find_by_criteria(payment_channel="online")
 
         assert len(result) >= 1
         for txn in result:
@@ -488,13 +471,9 @@ class TestTransactionRepositoryFiltering:
         multiple_transactions: list[Transaction],
     ):
         """Test finding transactions by fraud status."""
-        fraud_result = await transaction_repository.find_by_criteria(
-            is_fraud=True
-        )
+        fraud_result = await transaction_repository.find_by_criteria(is_fraud=True)
 
-        legitimate_result = await transaction_repository.find_by_criteria(
-            is_fraud=False
-        )
+        legitimate_result = await transaction_repository.find_by_criteria(is_fraud=False)
 
         assert len(fraud_result) >= 1
         assert len(legitimate_result) >= 2
@@ -511,13 +490,9 @@ class TestTransactionRepositoryFiltering:
         multiple_transactions: list[Transaction],
     ):
         """Test finding transactions by currency."""
-        usd_result = await transaction_repository.find_by_criteria(
-            currency="USD"
-        )
+        usd_result = await transaction_repository.find_by_criteria(currency="USD")
 
-        eur_result = await transaction_repository.find_by_criteria(
-            currency="EUR"
-        )
+        eur_result = await transaction_repository.find_by_criteria(currency="EUR")
 
         assert len(usd_result) >= 2
         assert len(eur_result) >= 1
@@ -529,11 +504,7 @@ class TestTransactionRepositoryFiltering:
     ):
         """Test comprehensive criteria search."""
         result = await transaction_repository.find_by_criteria(
-            currency="USD",
-            min_amount=20.0,
-            max_amount=500.0,
-            is_fraud=False,
-            status="approved"
+            currency="USD", min_amount=20.0, max_amount=500.0, is_fraud=False, status="approved"
         )
 
         assert len(result) >= 1
@@ -557,9 +528,7 @@ class TestTransactionRepositoryStatistics:
         tomorrow = datetime.utcnow() + timedelta(days=1)
 
         stats = await transaction_repository.get_fraud_statistics(
-            start_date=yesterday,
-            end_date=tomorrow,
-            group_by="day"
+            start_date=yesterday, end_date=tomorrow, group_by="day"
         )
 
         assert len(stats) >= 1
@@ -582,7 +551,7 @@ class TestTransactionRepositoryBulkOperations:
         """Test bulk fraud status update."""
         # Create multiple transactions
         transactions = []
-        for i in range(3):
+        for _i in range(3):
             transaction = Transaction(
                 transaction_id=uuid4(),
                 customer_id=uuid4(),
@@ -605,7 +574,7 @@ class TestTransactionRepositoryBulkOperations:
                 velocity_24h=5,
                 velocity_7d=20,
                 created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow()
+                updated_at=datetime.utcnow(),
             )
             created = await transaction_repository.save(transaction)
             transactions.append(created)
@@ -614,9 +583,7 @@ class TestTransactionRepositoryBulkOperations:
 
         # Bulk update fraud status
         transaction_ids = [t.transaction_id for t in transactions]
-        updated_count = await transaction_repository.bulk_update_fraud_status(
-            transaction_ids, True
-        )
+        updated_count = await transaction_repository.bulk_update_fraud_status(transaction_ids, True)
         await async_session.commit()
 
         assert updated_count == 3
@@ -626,9 +593,7 @@ class TestTransactionRepositoryBulkOperations:
             updated_transaction = await transaction_repository.get_by_id(transaction_id)
             assert updated_transaction.is_fraud is True
 
-    async def test_bulk_update_empty_list(
-        self, transaction_repository: TransactionRepositoryImpl
-    ):
+    async def test_bulk_update_empty_list(self, transaction_repository: TransactionRepositoryImpl):
         """Test bulk update with empty ID list."""
         result = await transaction_repository.bulk_update_fraud_status([], True)
         assert result == 0
@@ -669,16 +634,14 @@ class TestTransactionRepositoryPagination:
                 velocity_24h=5,
                 velocity_7d=20,
                 created_at=datetime.utcnow() - timedelta(minutes=i),
-                updated_at=datetime.utcnow() - timedelta(minutes=i)
+                updated_at=datetime.utcnow() - timedelta(minutes=i),
             )
             await transaction_repository.save(transaction)
 
         await async_session.commit()
 
         # Test pagination
-        page1 = await transaction_repository.get_by_user(
-            str(customer_id), limit=2
-        )
+        page1 = await transaction_repository.get_by_user(str(customer_id), limit=2)
 
         # Should get all since we don't have offset parameter in get_by_user
         # Let's use find_by_criteria instead
@@ -718,9 +681,9 @@ class TestTransactionRepositoryEdgeCases:
             payment_method="card",
             device_id=None,  # Optional field
             ip_address=None,  # Optional field
-            latitude=None,    # Optional field
-            longitude=None,   # Optional field
-            terminal_id=None, # Optional field
+            latitude=None,  # Optional field
+            longitude=None,  # Optional field
+            terminal_id=None,  # Optional field
             merchant_category="",
             mcc="",
             status="approved",
@@ -729,7 +692,7 @@ class TestTransactionRepositoryEdgeCases:
             velocity_24h=0,
             velocity_7d=0,
             created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow()
+            updated_at=datetime.utcnow(),
         )
 
         result = await transaction_repository.save(transaction)
@@ -768,7 +731,7 @@ class TestTransactionRepositoryEdgeCases:
             velocity_24h=5,
             velocity_7d=20,
             created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow()
+            updated_at=datetime.utcnow(),
         )
 
         # Large amount
@@ -794,7 +757,7 @@ class TestTransactionRepositoryEdgeCases:
             velocity_24h=5,
             velocity_7d=20,
             created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow()
+            updated_at=datetime.utcnow(),
         )
 
         small_result = await transaction_repository.save(small_transaction)
@@ -832,6 +795,6 @@ class TestTransactionRepositoryEdgeCases:
                 velocity_24h=5,
                 velocity_7d=20,
                 created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow()
+                updated_at=datetime.utcnow(),
             )
             await transaction_repository.update(invalid_transaction)

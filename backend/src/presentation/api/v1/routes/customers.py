@@ -6,7 +6,6 @@ Provides CRUD endpoints for customer management.
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, status
-
 from src.application.dtos.customer_dtos import (
     CreateCustomerRequest,
     CustomerResponse,

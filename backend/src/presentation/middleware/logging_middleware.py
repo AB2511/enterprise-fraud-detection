@@ -4,10 +4,9 @@ import time
 from uuid import uuid4
 
 from fastapi import Request, Response
+from src.config.logging_config import get_logger
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.types import ASGIApp
-
-from src.config.logging_config import get_logger
 
 logger = get_logger(__name__)
 
@@ -29,9 +28,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         """
         super().__init__(app)
 
-    async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint
-    ) -> Response:
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         """Process request and log details.
 
         Args:

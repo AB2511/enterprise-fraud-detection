@@ -69,9 +69,7 @@ class Settings(BaseSettings):
     redis_url: str = Field(default="redis://localhost:6379/0")
 
     # CORS
-    cors_origins: list[str] = Field(
-        default=["http://localhost:3000", "http://localhost:8000"]
-    )
+    cors_origins: list[str] = Field(default=["http://localhost:3000", "http://localhost:8000"])
     cors_credentials: bool = Field(default=True)
     cors_methods: list[str] = Field(default=["*"])
     cors_headers: list[str] = Field(default=["*"])

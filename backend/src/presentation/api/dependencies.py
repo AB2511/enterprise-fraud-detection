@@ -8,7 +8,6 @@ from collections.abc import AsyncGenerator
 
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-
 from src.application.interfaces.audit_repository import AuditRepository
 from src.application.interfaces.customer_repository import CustomerRepository
 from src.application.services.customer_service import CustomerService

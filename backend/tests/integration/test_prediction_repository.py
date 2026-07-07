@@ -33,13 +33,13 @@ def sample_prediction() -> Prediction:
         confidence=0.92,
         explanation_data={
             "top_features": ["amount", "velocity_1h", "merchant_risk"],
-            "feature_scores": {"amount": 0.3, "velocity_1h": 0.25, "merchant_risk": 0.2}
+            "feature_scores": {"amount": 0.3, "velocity_1h": 0.25, "merchant_risk": 0.2},
         },
         latency_ms=150,
         timestamp=datetime.utcnow(),
         analyst_feedback_id=None,
         created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow()
+        updated_at=datetime.utcnow(),
     )
 
 
@@ -97,7 +97,7 @@ class TestPredictionRepositoryCreate:
             timestamp=datetime.utcnow(),
             analyst_feedback_id=None,
             created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow()
+            updated_at=datetime.utcnow(),
         )
 
         result = await prediction_repository.create(prediction)
@@ -141,9 +141,7 @@ class TestPredictionRepositoryRead:
         await prediction_repository.create(sample_prediction)
         await async_session.commit()
 
-        result = await prediction_repository.get_by_transaction_id(
-            sample_prediction.transaction_id
-        )
+        result = await prediction_repository.get_by_transaction_id(sample_prediction.transaction_id)
 
         assert result is not None
         assert result.transaction_id == sample_prediction.transaction_id
@@ -248,7 +246,7 @@ class TestPredictionRepositoryListing:
                 timestamp=datetime.utcnow(),
                 analyst_feedback_id=None,
                 created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow()
+                updated_at=datetime.utcnow(),
             ),
             # Low-risk legitimate prediction
             Prediction(
@@ -266,7 +264,7 @@ class TestPredictionRepositoryListing:
                 timestamp=datetime.utcnow(),
                 analyst_feedback_id=None,
                 created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow()
+                updated_at=datetime.utcnow(),
             ),
             # Medium-risk review prediction
             Prediction(
@@ -284,7 +282,7 @@ class TestPredictionRepositoryListing:
                 timestamp=datetime.utcnow(),
                 analyst_feedback_id=None,
                 created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow()
+                updated_at=datetime.utcnow(),
             ),
         ]
 
@@ -346,9 +344,7 @@ class TestPredictionRepositoryListing:
         yesterday = datetime.utcnow() - timedelta(days=1)
         tomorrow = datetime.utcnow() + timedelta(days=1)
 
-        result = await prediction_repository.list_by_date_range(
-            yesterday, tomorrow
-        )
+        result = await prediction_repository.list_by_date_range(yesterday, tomorrow)
 
         assert len(result) == 3  # All predictions should be in range
 
@@ -434,7 +430,7 @@ class TestPredictionRepositoryComplexQueries:
             model_version="v1.2.0",
             min_fraud_probability=0.8,
             max_fraud_probability=1.0,
-            decision="decline"
+            decision="decline",
         )
 
         assert len(result) == 1
@@ -449,10 +445,7 @@ class TestPredictionRepositoryComplexQueries:
         multiple_predictions: list[Prediction],
     ):
         """Test finding predictions by risk score range."""
-        result = await prediction_repository.find_by_criteria(
-            min_risk_score=50,
-            max_risk_score=100
-        )
+        result = await prediction_repository.find_by_criteria(min_risk_score=50, max_risk_score=100)
 
         assert len(result) == 2  # High and medium risk predictions
         for prediction in result:
@@ -464,9 +457,7 @@ class TestPredictionRepositoryComplexQueries:
         multiple_predictions: list[Prediction],
     ):
         """Test finding predictions by confidence threshold."""
-        result = await prediction_repository.find_by_criteria(
-            min_confidence=0.9
-        )
+        result = await prediction_repository.find_by_criteria(min_confidence=0.9)
 
         assert len(result) == 1  # Only high-confidence prediction
         assert result[0].confidence >= 0.9
@@ -477,9 +468,7 @@ class TestPredictionRepositoryComplexQueries:
         multiple_predictions: list[Prediction],
     ):
         """Test finding predictions by prediction class."""
-        fraud_result = await prediction_repository.find_by_criteria(
-            prediction_class="fraud"
-        )
+        fraud_result = await prediction_repository.find_by_criteria(prediction_class="fraud")
 
         legitimate_result = await prediction_repository.find_by_criteria(
             prediction_class="legitimate"
@@ -496,14 +485,12 @@ class TestPredictionRepositoryComplexQueries:
         """Test finding predictions with custom sorting."""
         # Sort by risk score descending
         result_desc = await prediction_repository.find_by_criteria(
-            sort_by="risk_score",
-            sort_desc=True
+            sort_by="risk_score", sort_desc=True
         )
 
         # Sort by risk score ascending
         result_asc = await prediction_repository.find_by_criteria(
-            sort_by="risk_score",
-            sort_desc=False
+            sort_by="risk_score", sort_desc=False
         )
 
         assert len(result_desc) == 3
@@ -540,19 +527,15 @@ class TestPredictionRepositoryPagination:
                 timestamp=datetime.utcnow(),
                 analyst_feedback_id=None,
                 created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow()
+                updated_at=datetime.utcnow(),
             )
             await prediction_repository.create(prediction)
 
         await async_session.commit()
 
         # Test pagination
-        page1 = await prediction_repository.find_by_criteria(
-            limit=2, offset=0
-        )
-        page2 = await prediction_repository.find_by_criteria(
-            limit=2, offset=2
-        )
+        page1 = await prediction_repository.find_by_criteria(limit=2, offset=0)
+        page2 = await prediction_repository.find_by_criteria(limit=2, offset=2)
 
         assert len(page1) == 2
         assert len(page2) == 2
@@ -577,20 +560,17 @@ class TestPredictionRepositoryEdgeCases:
             transaction_id=uuid4(),
             model_version="v0.0.1",
             fraud_probability=1.0,  # Maximum probability
-            anomaly_score=0.0,     # Minimum score
-            risk_score=100,        # Maximum risk
+            anomaly_score=0.0,  # Minimum score
+            risk_score=100,  # Maximum risk
             predicted_class="fraud",
             decision="decline",
-            confidence=1.0,        # Maximum confidence
-            explanation_data={
-                "extreme_case": True,
-                "confidence_factors": []
-            },
-            latency_ms=5000,       # High latency
+            confidence=1.0,  # Maximum confidence
+            explanation_data={"extreme_case": True, "confidence_factors": []},
+            latency_ms=5000,  # High latency
             timestamp=datetime.utcnow(),
             analyst_feedback_id=None,
             created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow()
+            updated_at=datetime.utcnow(),
         )
 
         result = await prediction_repository.create(prediction)
@@ -622,7 +602,7 @@ class TestPredictionRepositoryEdgeCases:
             timestamp=datetime.utcnow(),
             analyst_feedback_id=None,
             created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow()
+            updated_at=datetime.utcnow(),
         )
 
         result = await prediction_repository.create(prediction)
@@ -655,7 +635,7 @@ class TestPredictionRepositoryEdgeCases:
                 timestamp=datetime.utcnow(),
                 analyst_feedback_id=None,
                 created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow()
+                updated_at=datetime.utcnow(),
             )
             created = await prediction_repository.create(prediction)
             predictions.append(created)
@@ -687,6 +667,6 @@ class TestPredictionRepositoryEdgeCases:
                 timestamp=datetime.utcnow(),
                 analyst_feedback_id=None,
                 created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow()
+                updated_at=datetime.utcnow(),
             )
             await prediction_repository.update(invalid_prediction)

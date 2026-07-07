@@ -1,9 +1,9 @@
 """Prediction Class Enumeration."""
 
-from enum import Enum
+from enum import StrEnum
 
 
-class PredictionClass(str, Enum):
+class PredictionClass(StrEnum):
     """Binary classification result for fraud detection."""
 
     FRAUD = "fraud"

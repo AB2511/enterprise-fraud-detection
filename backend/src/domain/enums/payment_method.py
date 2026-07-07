@@ -1,9 +1,9 @@
 """Payment Method Enumeration."""
 
-from enum import Enum
+from enum import StrEnum
 
 
-class PaymentMethod(str, Enum):
+class PaymentMethod(StrEnum):
     """Method of payment used for transaction.
 
     Attributes:

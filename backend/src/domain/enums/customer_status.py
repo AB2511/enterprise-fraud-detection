@@ -1,9 +1,9 @@
 """Customer Status Enumeration."""
 
-from enum import Enum
+from enum import StrEnum
 
 
-class CustomerStatus(str, Enum):
+class CustomerStatus(StrEnum):
     """Status of a customer account.
 
     Attributes:

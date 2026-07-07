@@ -284,9 +284,7 @@ class TestCustomerRepositoryList:
 
         # Assert
         assert len(high_risk) == 3  # high, critical, high
-        assert all(
-            c.customer_risk_category in ["high", "critical"] for c in high_risk
-        )
+        assert all(c.customer_risk_category in ["high", "critical"] for c in high_risk)
 
     @pytest.mark.asyncio
     async def test_count_by_risk_category(
@@ -335,15 +333,10 @@ class TestCustomerRepositoryList:
             await customer_repository.create(customer)
 
         # Act
-        page1 = await customer_repository.list_by_risk_category(
-            "medium", limit=5, offset=0
-        )
-        page2 = await customer_repository.list_by_risk_category(
-            "medium", limit=5, offset=5
-        )
+        page1 = await customer_repository.list_by_risk_category("medium", limit=5, offset=0)
+        page2 = await customer_repository.list_by_risk_category("medium", limit=5, offset=5)
 
         # Assert
         assert len(page1) == 5
         assert len(page2) == 5
         assert page1[0].customer_id != page2[0].customer_id
-

@@ -1,9 +1,9 @@
 """Transaction Status Enumeration."""
 
-from enum import Enum
+from enum import StrEnum
 
 
-class TransactionStatus(str, Enum):
+class TransactionStatus(StrEnum):
     """Status of a transaction in its lifecycle.
 
     Attributes:

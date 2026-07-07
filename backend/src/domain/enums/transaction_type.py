@@ -1,9 +1,9 @@
 """Transaction Type Enumeration."""
 
-from enum import Enum
+from enum import StrEnum
 
 
-class TransactionType(str, Enum):
+class TransactionType(StrEnum):
     """Types of financial transactions."""
 
     PURCHASE = "purchase"

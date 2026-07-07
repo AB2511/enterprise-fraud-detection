@@ -26,7 +26,7 @@ def sample_audit_log() -> AuditLog:
         new_value={"amount": 100.0, "merchant": "Test Store"},
         ip_address="192.168.1.1",
         user_agent="Mozilla/5.0",
-        description="Created transaction"
+        description="Created transaction",
     )
 
 
@@ -66,7 +66,7 @@ class TestAuditRepositoryCreate:
             new_value={"name": "John Doe", "email": "john@example.com"},
             ip_address="10.0.0.1",
             user_agent="Chrome/91.0",
-            description="New customer registration"
+            description="New customer registration",
         )
 
         result = await audit_repository.create(audit_log)
@@ -95,7 +95,7 @@ class TestAuditRepositoryCreate:
             username="analyst",
             ip_address="172.16.0.1",
             user_agent="Firefox/89.0",
-            description="Updated merchant status"
+            description="Updated merchant status",
         )
 
         result = await audit_repository.create(audit_log)
@@ -124,7 +124,7 @@ class TestAuditRepositoryCreate:
             username="supervisor",
             ip_address="192.168.0.100",
             user_agent="Safari/14.0",
-            description="Deleted false alert"
+            description="Deleted false alert",
         )
 
         result = await audit_repository.create(audit_log)
@@ -151,7 +151,7 @@ class TestAuditRepositoryCreate:
             username="viewer",
             ip_address="203.0.113.1",
             user_agent="Edge/91.0",
-            description="Accessed customer profile"
+            description="Accessed customer profile",
         )
 
         result = await audit_repository.create(audit_log)
@@ -177,7 +177,7 @@ class TestAuditRepositoryCreate:
             username="compliance_officer",
             ip_address="198.51.100.1",
             user_agent="Chrome/92.0",
-            description="Exported transaction data for audit"
+            description="Exported transaction data for audit",
         )
 
         result = await audit_repository.create(audit_log)
@@ -237,7 +237,7 @@ class TestAuditRepositoryListing:
                 new_value={"amount": 500.0, "merchant": "Online Store"},
                 ip_address="192.168.1.100",
                 user_agent="Chrome/91.0",
-                description="Customer initiated transaction"
+                description="Customer initiated transaction",
             ),
             # Transaction update (fraud review)
             AuditLog.for_update(
@@ -249,7 +249,7 @@ class TestAuditRepositoryListing:
                 username="fraud_analyst",
                 ip_address="10.0.0.50",
                 user_agent="Firefox/89.0",
-                description="Flagged transaction for manual review"
+                description="Flagged transaction for manual review",
             ),
             # Customer read access
             AuditLog.for_read(
@@ -259,7 +259,7 @@ class TestAuditRepositoryListing:
                 username="fraud_analyst",
                 ip_address="10.0.0.50",
                 user_agent="Firefox/89.0",
-                description="Accessed customer profile during investigation"
+                description="Accessed customer profile during investigation",
             ),
             # Data export
             AuditLog.for_export(
@@ -269,7 +269,7 @@ class TestAuditRepositoryListing:
                 username="compliance_officer",
                 ip_address="172.16.1.1",
                 user_agent="Safari/14.0",
-                description="Exported transaction data for regulatory report"
+                description="Exported transaction data for regulatory report",
             ),
             # Alert deletion
             AuditLog.for_deletion(
@@ -280,7 +280,7 @@ class TestAuditRepositoryListing:
                 username="supervisor",
                 ip_address="192.168.1.200",
                 user_agent="Edge/91.0",
-                description="Removed obsolete alert"
+                description="Removed obsolete alert",
             ),
         ]
 
@@ -392,7 +392,7 @@ class TestAuditRepositorySearch:
                 new_value={"amount": 500.0, "merchant": "Online Store"},
                 ip_address="192.168.1.100",
                 user_agent="Chrome/91.0",
-                description="Customer initiated transaction"
+                description="Customer initiated transaction",
             ),
             # Transaction update (fraud review)
             AuditLog.for_update(
@@ -404,7 +404,7 @@ class TestAuditRepositorySearch:
                 username="fraud_analyst",
                 ip_address="10.0.0.50",
                 user_agent="Firefox/89.0",
-                description="Flagged transaction for manual review"
+                description="Flagged transaction for manual review",
             ),
             # Customer read access
             AuditLog.for_read(
@@ -414,7 +414,7 @@ class TestAuditRepositorySearch:
                 username="fraud_analyst",
                 ip_address="10.0.0.50",
                 user_agent="Firefox/89.0",
-                description="Accessed customer profile during investigation"
+                description="Accessed customer profile during investigation",
             ),
         ]
 
@@ -433,10 +433,7 @@ class TestAuditRepositorySearch:
     ):
         """Test comprehensive search with multiple filters."""
         # Search for transaction updates
-        result = await audit_repository.search(
-            entity_type="transaction",
-            action="UPDATE"
-        )
+        result = await audit_repository.search(entity_type="transaction", action="UPDATE")
 
         assert len(result) >= 1
         for log in result:
@@ -456,9 +453,7 @@ class TestAuditRepositorySearch:
         end_date = datetime.utcnow() + timedelta(hours=1)
 
         result = await audit_repository.search(
-            user_id=user_id,
-            start_date=start_date,
-            end_date=end_date
+            user_id=user_id, start_date=start_date, end_date=end_date
         )
 
         assert len(result) >= 1
@@ -483,8 +478,7 @@ class TestAuditRepositorySearch:
     ):
         """Test search with filters that return no results."""
         result = await audit_repository.search(
-            entity_type="nonexistent_type",
-            action="INVALID_ACTION"
+            entity_type="nonexistent_type", action="INVALID_ACTION"
         )
 
         assert len(result) == 0
@@ -513,7 +507,7 @@ class TestAuditRepositoryCount:
                 new_value={"amount": 500.0, "merchant": "Online Store"},
                 ip_address="192.168.1.100",
                 user_agent="Chrome/91.0",
-                description="Customer initiated transaction"
+                description="Customer initiated transaction",
             ),
             # Transaction update
             AuditLog.for_update(
@@ -525,7 +519,7 @@ class TestAuditRepositoryCount:
                 username="fraud_analyst",
                 ip_address="10.0.0.50",
                 user_agent="Firefox/89.0",
-                description="Flagged transaction for manual review"
+                description="Flagged transaction for manual review",
             ),
         ]
 
@@ -585,7 +579,7 @@ class TestAuditRepositoryAnalytics:
                 new_value={"amount": 500.0, "merchant": "Online Store"},
                 ip_address="192.168.1.100",
                 user_agent="Chrome/91.0",
-                description="Customer initiated transaction"
+                description="Customer initiated transaction",
             ),
             # Transaction update
             AuditLog.for_update(
@@ -597,7 +591,7 @@ class TestAuditRepositoryAnalytics:
                 username="fraud_analyst",
                 ip_address="10.0.0.50",
                 user_agent="Firefox/89.0",
-                description="Flagged transaction for manual review"
+                description="Flagged transaction for manual review",
             ),
             # Customer read access
             AuditLog.for_read(
@@ -607,7 +601,7 @@ class TestAuditRepositoryAnalytics:
                 username="customer_service",
                 ip_address="192.168.1.200",
                 user_agent="Chrome/92.0",
-                description="Customer service accessed profile"
+                description="Customer service accessed profile",
             ),
         ]
 
@@ -721,7 +715,7 @@ class TestAuditRepositoryPagination:
                 new_value={"sequence": i},
                 ip_address=f"192.168.1.{i+1}",
                 user_agent="TestAgent/1.0",
-                description=f"Test log entry {i}"
+                description=f"Test log entry {i}",
             )
             await audit_repository.create(audit_log)
 
@@ -761,7 +755,7 @@ class TestAuditRepositoryEdgeCases:
             ip_address=None,
             user_agent=None,
             description=None,
-            created_at=datetime.utcnow()
+            created_at=datetime.utcnow(),
         )
 
         result = await audit_repository.create(audit_log)
@@ -777,9 +771,7 @@ class TestAuditRepositoryEdgeCases:
         async_session: AsyncSession,
     ):
         """Test audit log creation with large JSON values."""
-        large_data = {
-            "field_" + str(i): f"value_{i}" * 100 for i in range(10)
-        }
+        large_data = {"field_" + str(i): f"value_{i}" * 100 for i in range(10)}
 
         audit_log = AuditLog.for_update(
             entity_type="large_entity",
@@ -790,7 +782,7 @@ class TestAuditRepositoryEdgeCases:
             username="test_user",
             ip_address="192.168.1.1",
             user_agent="TestAgent/1.0",
-            description="Update with large data"
+            description="Update with large data",
         )
 
         result = await audit_repository.create(audit_log)
@@ -825,7 +817,7 @@ class TestAuditRepositoryEdgeCases:
                 ip_address="192.168.1.1",
                 user_agent="TestAgent/1.0",
                 description=f"Test log {i}",
-                created_at=datetime.utcnow() - timedelta(minutes=i)
+                created_at=datetime.utcnow() - timedelta(minutes=i),
             )
             created = await audit_repository.create(audit_log)
             audit_logs.append(created)
@@ -852,8 +844,14 @@ class TestAuditRepositoryEdgeCases:
     ):
         """Test audit logs for all common entity types."""
         entity_types = [
-            "transaction", "customer", "merchant", "alert",
-            "prediction", "user", "model", "rule"
+            "transaction",
+            "customer",
+            "merchant",
+            "alert",
+            "prediction",
+            "user",
+            "model",
+            "rule",
         ]
 
         audit_logs = []
@@ -866,7 +864,7 @@ class TestAuditRepositoryEdgeCases:
                 new_value={"type": entity_type},
                 ip_address="127.0.0.1",
                 user_agent="System/1.0",
-                description=f"Created {entity_type}"
+                description=f"Created {entity_type}",
             )
             created = await audit_repository.create(audit_log)
             audit_logs.append(created)
@@ -890,10 +888,12 @@ class TestAuditRepositoryEdgeCases:
         await async_session.commit()
 
         # Verify repository doesn't have update method
-        assert not hasattr(audit_repository, 'update')
+        assert not hasattr(audit_repository, "update")
 
         # Verify audit log entity is frozen (immutable dataclass)
-        with pytest.raises(Exception):  # Should raise FrozenInstanceError or similar
+        with pytest.raises(
+            (AttributeError, TypeError)
+        ):  # Should raise FrozenInstanceError or similar
             created.action = "MODIFIED"  # This should fail
 
     async def test_audit_log_factory_methods_validation(
@@ -907,10 +907,7 @@ class TestAuditRepositoryEdgeCases:
 
         # Test CREATE validation (should not have old_value)
         create_log = AuditLog.for_creation(
-            entity_type="test",
-            entity_id=entity_id,
-            user_id=user_id,
-            username="test_user"
+            entity_type="test", entity_id=entity_id, user_id=user_id, username="test_user"
         )
         assert create_log.old_value is None
         assert create_log.action == "CREATE"
@@ -922,7 +919,7 @@ class TestAuditRepositoryEdgeCases:
             old_value={"status": "old"},
             new_value={"status": "new"},
             user_id=user_id,
-            username="test_user"
+            username="test_user",
         )
         assert update_log.old_value is not None
         assert update_log.new_value is not None
@@ -934,7 +931,7 @@ class TestAuditRepositoryEdgeCases:
             entity_id=entity_id,
             old_value={"status": "deleted"},
             user_id=user_id,
-            username="test_user"
+            username="test_user",
         )
         assert delete_log.old_value is not None
         assert delete_log.new_value is None

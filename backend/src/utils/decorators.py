@@ -13,7 +13,7 @@ logger = get_logger(__name__)
 F = TypeVar("F", bound=Callable[..., Any])
 
 
-def timed(func: F) -> F:
+def timed[F: Callable[..., Any]](func: F) -> F:
     """Decorator to log function execution time.
 
     Args:

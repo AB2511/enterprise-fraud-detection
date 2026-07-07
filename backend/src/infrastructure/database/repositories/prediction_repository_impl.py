@@ -6,7 +6,6 @@ from uuid import UUID
 from sqlalchemy import and_, desc, func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-
 from src.application.interfaces.prediction_repository import PredictionRepository
 from src.domain.entities.prediction import Prediction
 from src.domain.exceptions.base import DomainException
@@ -52,7 +51,9 @@ class PredictionRepositoryImpl(PredictionRepository):
             prediction_model = PredictionModel(
                 id=prediction.prediction_id,
                 transaction_id=prediction.transaction_id,
-                model_id=UUID(prediction.model_version) if prediction.model_version != "0.0.0" else None,
+                model_id=(
+                    UUID(prediction.model_version) if prediction.model_version != "0.0.0" else None
+                ),
                 model_version=prediction.model_version,
                 prediction_class=prediction.predicted_class,
                 fraud_probability=prediction.fraud_probability,
@@ -63,7 +64,7 @@ class PredictionRepositoryImpl(PredictionRepository):
                 latency_ms=prediction.latency_ms,
                 explanation_data=prediction.explanation_data,
                 created_at=prediction.created_at,
-                updated_at=prediction.updated_at
+                updated_at=prediction.updated_at,
             )
 
             self._session.add(prediction_model)
@@ -74,11 +75,13 @@ class PredictionRepositoryImpl(PredictionRepository):
 
         except IntegrityError as e:
             await self._session.rollback()
-            raise DomainException(f"Database constraint violation: {e}", "DB_CONSTRAINT_ERROR")
+            raise DomainException(
+                f"Database constraint violation: {e}", "DB_CONSTRAINT_ERROR"
+            ) from e
 
         except Exception as e:
             await self._session.rollback()
-            raise DomainException(f"Failed to create prediction: {e}", "REPOSITORY_ERROR")
+            raise DomainException(f"Failed to create prediction: {e}", "REPOSITORY_ERROR") from e
 
     async def get_by_id(self, prediction_id: UUID) -> Prediction | None:
         """Retrieve prediction by ID.
@@ -100,7 +103,7 @@ class PredictionRepositoryImpl(PredictionRepository):
             return None
 
         except Exception as e:
-            raise DomainException(f"Failed to get prediction by ID: {e}", "REPOSITORY_ERROR")
+            raise DomainException(f"Failed to get prediction by ID: {e}", "REPOSITORY_ERROR") from e
 
     async def get_by_transaction_id(self, transaction_id: UUID) -> Prediction | None:
         """Retrieve prediction by transaction ID.
@@ -113,7 +116,8 @@ class PredictionRepositoryImpl(PredictionRepository):
         """
         try:
             result = await self._session.execute(
-                select(PredictionModel).where(PredictionModel.transaction_id == transaction_id)
+                select(PredictionModel)
+                .where(PredictionModel.transaction_id == transaction_id)
                 .order_by(desc(PredictionModel.created_at))
             )
             prediction_model = result.scalar_one_or_none()
@@ -123,7 +127,9 @@ class PredictionRepositoryImpl(PredictionRepository):
             return None
 
         except Exception as e:
-            raise DomainException(f"Failed to get prediction by transaction ID: {e}", "REPOSITORY_ERROR")
+            raise DomainException(
+                f"Failed to get prediction by transaction ID: {e}", "REPOSITORY_ERROR"
+            ) from e
 
     async def update(self, prediction: Prediction) -> Prediction:
         """Update existing prediction.
@@ -153,7 +159,7 @@ class PredictionRepositoryImpl(PredictionRepository):
                 .values(
                     decision=prediction.decision,
                     explanation_data=prediction.explanation_data,
-                    updated_at=datetime.utcnow()
+                    updated_at=datetime.utcnow(),
                 )
             )
 
@@ -169,7 +175,7 @@ class PredictionRepositoryImpl(PredictionRepository):
             raise
         except Exception as e:
             await self._session.rollback()
-            raise DomainException(f"Failed to update prediction: {e}", "REPOSITORY_ERROR")
+            raise DomainException(f"Failed to update prediction: {e}", "REPOSITORY_ERROR") from e
 
     async def delete(self, prediction_id: UUID) -> bool:
         """Delete prediction.
@@ -193,7 +199,7 @@ class PredictionRepositoryImpl(PredictionRepository):
 
         except Exception as e:
             await self._session.rollback()
-            raise DomainException(f"Failed to delete prediction: {e}", "REPOSITORY_ERROR")
+            raise DomainException(f"Failed to delete prediction: {e}", "REPOSITORY_ERROR") from e
 
     async def list_by_model_version(
         self,
@@ -224,7 +230,9 @@ class PredictionRepositoryImpl(PredictionRepository):
             return [self._model_to_entity(pred) for pred in predictions]
 
         except Exception as e:
-            raise DomainException(f"Failed to list predictions by model version: {e}", "REPOSITORY_ERROR")
+            raise DomainException(
+                f"Failed to list predictions by model version: {e}", "REPOSITORY_ERROR"
+            ) from e
 
     async def list_by_decision(
         self,
@@ -255,7 +263,9 @@ class PredictionRepositoryImpl(PredictionRepository):
             return [self._model_to_entity(pred) for pred in predictions]
 
         except Exception as e:
-            raise DomainException(f"Failed to list predictions by decision: {e}", "REPOSITORY_ERROR")
+            raise DomainException(
+                f"Failed to list predictions by decision: {e}", "REPOSITORY_ERROR"
+            ) from e
 
     async def list_high_risk(
         self,
@@ -286,7 +296,9 @@ class PredictionRepositoryImpl(PredictionRepository):
             return [self._model_to_entity(pred) for pred in predictions]
 
         except Exception as e:
-            raise DomainException(f"Failed to list high-risk predictions: {e}", "REPOSITORY_ERROR")
+            raise DomainException(
+                f"Failed to list high-risk predictions: {e}", "REPOSITORY_ERROR"
+            ) from e
 
     async def list_by_date_range(
         self,
@@ -312,7 +324,7 @@ class PredictionRepositoryImpl(PredictionRepository):
                 .where(
                     and_(
                         PredictionModel.created_at >= start_date,
-                        PredictionModel.created_at <= end_date
+                        PredictionModel.created_at <= end_date,
                     )
                 )
                 .order_by(desc(PredictionModel.created_at))
@@ -324,7 +336,9 @@ class PredictionRepositoryImpl(PredictionRepository):
             return [self._model_to_entity(pred) for pred in predictions]
 
         except Exception as e:
-            raise DomainException(f"Failed to list predictions by date range: {e}", "REPOSITORY_ERROR")
+            raise DomainException(
+                f"Failed to list predictions by date range: {e}", "REPOSITORY_ERROR"
+            ) from e
 
     async def count_by_decision(self, decision: str) -> int:
         """Count predictions by decision.
@@ -337,14 +351,15 @@ class PredictionRepositoryImpl(PredictionRepository):
         """
         try:
             result = await self._session.execute(
-                select(func.count(PredictionModel.id))
-                .where(PredictionModel.decision == decision)
+                select(func.count(PredictionModel.id)).where(PredictionModel.decision == decision)
             )
 
             return result.scalar() or 0
 
         except Exception as e:
-            raise DomainException(f"Failed to count predictions by decision: {e}", "REPOSITORY_ERROR")
+            raise DomainException(
+                f"Failed to count predictions by decision: {e}", "REPOSITORY_ERROR"
+            ) from e
 
     async def get_model_performance_stats(
         self,
@@ -369,10 +384,18 @@ class PredictionRepositoryImpl(PredictionRepository):
                 func.avg(PredictionModel.risk_score).label("avg_risk_score"),
                 func.avg(PredictionModel.confidence).label("avg_confidence"),
                 func.avg(PredictionModel.latency_ms).label("avg_latency"),
-                func.sum(func.cast(PredictionModel.prediction_class == "fraud", func.Integer)).label("fraud_predictions"),
-                func.sum(func.cast(PredictionModel.decision == "approve", func.Integer)).label("approved_count"),
-                func.sum(func.cast(PredictionModel.decision == "review", func.Integer)).label("review_count"),
-                func.sum(func.cast(PredictionModel.decision == "decline", func.Integer)).label("declined_count"),
+                func.sum(
+                    func.cast(PredictionModel.prediction_class == "fraud", func.Integer)
+                ).label("fraud_predictions"),
+                func.sum(func.cast(PredictionModel.decision == "approve", func.Integer)).label(
+                    "approved_count"
+                ),
+                func.sum(func.cast(PredictionModel.decision == "review", func.Integer)).label(
+                    "review_count"
+                ),
+                func.sum(func.cast(PredictionModel.decision == "decline", func.Integer)).label(
+                    "declined_count"
+                ),
             ).where(PredictionModel.model_version == model_version)
 
             if start_date:
@@ -393,7 +416,7 @@ class PredictionRepositoryImpl(PredictionRepository):
                     "fraud_rate": 0.0,
                     "approval_rate": 0.0,
                     "review_rate": 0.0,
-                    "decline_rate": 0.0
+                    "decline_rate": 0.0,
                 }
 
             total = row.total_predictions
@@ -411,11 +434,13 @@ class PredictionRepositoryImpl(PredictionRepository):
                 "fraud_rate": fraud_rate,
                 "approval_rate": approval_rate,
                 "review_rate": review_rate,
-                "decline_rate": decline_rate
+                "decline_rate": decline_rate,
             }
 
         except Exception as e:
-            raise DomainException(f"Failed to get model performance stats: {e}", "REPOSITORY_ERROR")
+            raise DomainException(
+                f"Failed to get model performance stats: {e}", "REPOSITORY_ERROR"
+            ) from e
 
     async def find_predictions_needing_feedback(
         self,
@@ -437,7 +462,7 @@ class PredictionRepositoryImpl(PredictionRepository):
                 .where(
                     and_(
                         PredictionModel.decision == "review",
-                        PredictionModel.risk_score >= 70  # High risk predictions
+                        PredictionModel.risk_score >= 70,  # High risk predictions
                     )
                 )
                 .order_by(desc(PredictionModel.risk_score), desc(PredictionModel.created_at))
@@ -449,7 +474,9 @@ class PredictionRepositoryImpl(PredictionRepository):
             return [self._model_to_entity(pred) for pred in predictions]
 
         except Exception as e:
-            raise DomainException(f"Failed to find predictions needing feedback: {e}", "REPOSITORY_ERROR")
+            raise DomainException(
+                f"Failed to find predictions needing feedback: {e}", "REPOSITORY_ERROR"
+            ) from e
 
     async def find_by_criteria(
         self,
@@ -529,7 +556,9 @@ class PredictionRepositoryImpl(PredictionRepository):
             return [self._model_to_entity(pred) for pred in predictions]
 
         except Exception as e:
-            raise DomainException(f"Failed to find predictions by criteria: {e}", "REPOSITORY_ERROR")
+            raise DomainException(
+                f"Failed to find predictions by criteria: {e}", "REPOSITORY_ERROR"
+            ) from e
 
     def _model_to_entity(self, model: PredictionModel) -> Prediction:
         """Convert database model to domain entity.
@@ -555,5 +584,5 @@ class PredictionRepositoryImpl(PredictionRepository):
             timestamp=model.created_at,
             analyst_feedback_id=None,  # Would need separate feedback table
             created_at=model.created_at,
-            updated_at=model.updated_at
+            updated_at=model.updated_at,
         )

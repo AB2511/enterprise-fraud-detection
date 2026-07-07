@@ -5,7 +5,6 @@ from uuid import UUID
 
 from sqlalchemy import and_, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-
 from src.application.interfaces.user_repository import UserRepository
 from src.domain.entities.user import User
 from src.domain.exceptions.base import ConflictError, NotFoundError, RepositoryError
@@ -14,14 +13,14 @@ from src.infrastructure.database.models import UserModel
 
 class UserRepositoryImpl(UserRepository):
     """SQLAlchemy implementation of UserRepository.
-    
+
     Provides complete CRUD operations, authentication support, role management,
     and advanced querying capabilities for user entities.
     """
 
     def __init__(self, session: AsyncSession) -> None:
         """Initialize repository with database session.
-        
+
         Args:
             session: Async SQLAlchemy session
         """
@@ -460,9 +459,7 @@ class UserRepositoryImpl(UserRepository):
             status_counts = dict(status_result.all())
 
             # Total count
-            total_query = select(func.count(UserModel.id)).where(
-                UserModel.deleted_at.is_(None)
-            )
+            total_query = select(func.count(UserModel.id)).where(UserModel.deleted_at.is_(None))
             total_result = await self._session.execute(total_query)
             total_count = total_result.scalar() or 0
 

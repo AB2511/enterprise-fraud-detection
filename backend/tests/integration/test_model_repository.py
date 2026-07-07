@@ -28,15 +28,10 @@ class TestModelRepositoryImpl:
             metadata={
                 "hyperparameters": {"n_estimators": 100, "max_depth": 6},
                 "dataset_version": "2024-01",
-                "features_count": 47
+                "features_count": 47,
             },
-            metrics={
-                "accuracy": 0.95,
-                "precision": 0.92,
-                "recall": 0.88,
-                "f1_score": 0.90
-            },
-            created_by="data_scientist@company.com"
+            metrics={"accuracy": 0.95, "precision": 0.92, "recall": 0.88, "f1_score": 0.90},
+            created_by="data_scientist@company.com",
         )
 
     async def test_create_model(self, repository: ModelRepositoryImpl, sample_model: Model):
@@ -116,14 +111,16 @@ class TestModelRepositoryImpl:
             model_id=uuid4(),
             version="2.0.0",
             model_type="xgboost",
-            artifact_path="s3://test/model.pkl"
+            artifact_path="s3://test/model.pkl",
         )
 
         # Act & Assert
         with pytest.raises(NotFoundError):
             await repository.update(model)
 
-    async def test_delete_model_hard_delete(self, repository: ModelRepositoryImpl, sample_model: Model):
+    async def test_delete_model_hard_delete(
+        self, repository: ModelRepositoryImpl, sample_model: Model
+    ):
         """Test hard delete functionality."""
         # Arrange
         created = await repository.create(sample_model)
@@ -149,8 +146,15 @@ class TestModelRepositoryImpl:
     async def test_list_by_status(self, repository: ModelRepositoryImpl):
         """Test listing models by status."""
         # Arrange
-        training_model = Model(version="1.0.0", model_type="xgboost", artifact_path="s3://test1.pkl", status="training")
-        production_model = Model(version="2.0.0", model_type="xgboost", artifact_path="s3://test2.pkl", status="production")
+        training_model = Model(
+            version="1.0.0", model_type="xgboost", artifact_path="s3://test1.pkl", status="training"
+        )
+        production_model = Model(
+            version="2.0.0",
+            model_type="xgboost",
+            artifact_path="s3://test2.pkl",
+            status="production",
+        )
 
         await repository.create(training_model)
         await repository.create(production_model)
@@ -166,7 +170,9 @@ class TestModelRepositoryImpl:
         """Test listing models by type."""
         # Arrange
         xgboost_model = Model(version="1.0.0", model_type="xgboost", artifact_path="s3://test1.pkl")
-        isolation_forest_model = Model(version="2.0.0", model_type="isolation_forest", artifact_path="s3://test2.pkl")
+        isolation_forest_model = Model(
+            version="2.0.0", model_type="isolation_forest", artifact_path="s3://test2.pkl"
+        )
 
         await repository.create(xgboost_model)
         await repository.create(isolation_forest_model)
@@ -181,9 +187,21 @@ class TestModelRepositoryImpl:
     async def test_get_production_models(self, repository: ModelRepositoryImpl):
         """Test getting all production models."""
         # Arrange
-        prod_model1 = Model(version="1.0.0", model_type="xgboost", artifact_path="s3://test1.pkl", status="production")
-        prod_model2 = Model(version="2.0.0", model_type="isolation_forest", artifact_path="s3://test2.pkl", status="production")
-        staging_model = Model(version="3.0.0", model_type="xgboost", artifact_path="s3://test3.pkl", status="staging")
+        prod_model1 = Model(
+            version="1.0.0",
+            model_type="xgboost",
+            artifact_path="s3://test1.pkl",
+            status="production",
+        )
+        prod_model2 = Model(
+            version="2.0.0",
+            model_type="isolation_forest",
+            artifact_path="s3://test2.pkl",
+            status="production",
+        )
+        staging_model = Model(
+            version="3.0.0", model_type="xgboost", artifact_path="s3://test3.pkl", status="staging"
+        )
 
         await repository.create(prod_model1)
         await repository.create(prod_model2)
@@ -204,13 +222,13 @@ class TestModelRepositoryImpl:
             version="1.0.0",
             model_type="xgboost",
             artifact_path="s3://test1.pkl",
-            training_date=datetime(2024, 1, 1)
+            training_date=datetime(2024, 1, 1),
         )
         new_model = Model(
             version="2.0.0",
             model_type="xgboost",
             artifact_path="s3://test2.pkl",
-            training_date=datetime(2024, 2, 1)
+            training_date=datetime(2024, 2, 1),
         )
 
         await repository.create(old_model)
@@ -230,13 +248,13 @@ class TestModelRepositoryImpl:
             version="1.0.0",
             model_type="xgboost",
             artifact_path="s3://test1.pkl",
-            training_date=datetime(2024, 1, 1)
+            training_date=datetime(2024, 1, 1),
         )
         iso_model = Model(
             version="2.0.0",
             model_type="isolation_forest",
             artifact_path="s3://test2.pkl",
-            training_date=datetime(2024, 2, 1)
+            training_date=datetime(2024, 2, 1),
         )
 
         await repository.create(xgb_model)
@@ -250,7 +268,9 @@ class TestModelRepositoryImpl:
         assert latest_xgb.model_type == "xgboost"
         assert latest_xgb.version == "1.0.0"
 
-    async def test_promote_to_production(self, repository: ModelRepositoryImpl, sample_model: Model):
+    async def test_promote_to_production(
+        self, repository: ModelRepositoryImpl, sample_model: Model
+    ):
         """Test promoting model to production."""
         # Arrange
         sample_model.status = "staging"
@@ -266,7 +286,12 @@ class TestModelRepositoryImpl:
     async def test_promote_already_production_model_fails(self, repository: ModelRepositoryImpl):
         """Test promoting already production model fails."""
         # Arrange
-        prod_model = Model(version="1.0.0", model_type="xgboost", artifact_path="s3://test.pkl", status="production")
+        prod_model = Model(
+            version="1.0.0",
+            model_type="xgboost",
+            artifact_path="s3://test.pkl",
+            status="production",
+        )
         created = await repository.create(prod_model)
 
         # Act & Assert
@@ -276,7 +301,9 @@ class TestModelRepositoryImpl:
     async def test_promote_archived_model_fails(self, repository: ModelRepositoryImpl):
         """Test promoting archived model fails."""
         # Arrange
-        archived_model = Model(version="1.0.0", model_type="xgboost", artifact_path="s3://test.pkl", status="archived")
+        archived_model = Model(
+            version="1.0.0", model_type="xgboost", artifact_path="s3://test.pkl", status="archived"
+        )
         created = await repository.create(archived_model)
 
         # Act & Assert
@@ -299,7 +326,12 @@ class TestModelRepositoryImpl:
         """Test counting models by status."""
         # Arrange
         for i in range(3):
-            model = Model(version=f"{i}.0.0", model_type="xgboost", artifact_path=f"s3://test{i}.pkl", status="training")
+            model = Model(
+                version=f"{i}.0.0",
+                model_type="xgboost",
+                artifact_path=f"s3://test{i}.pkl",
+                status="training",
+            )
             await repository.create(model)
 
         # Act
@@ -315,18 +347,16 @@ class TestModelRepositoryImpl:
             version="1.0.0",
             model_type="xgboost",
             artifact_path="s3://test1.pkl",
-            training_date=datetime(2024, 1, 1)
+            training_date=datetime(2024, 1, 1),
         )
         model2 = Model(
             version="2.0.0",
             model_type="xgboost",
             artifact_path="s3://test2.pkl",
-            training_date=datetime(2024, 2, 1)
+            training_date=datetime(2024, 2, 1),
         )
         different_type = Model(
-            version="1.0.0",
-            model_type="isolation_forest",
-            artifact_path="s3://test3.pkl"
+            version="1.0.0", model_type="isolation_forest", artifact_path="s3://test3.pkl"
         )
 
         created1 = await repository.create(model1)
@@ -344,8 +374,15 @@ class TestModelRepositoryImpl:
     async def test_get_model_statistics(self, repository: ModelRepositoryImpl):
         """Test getting model statistics."""
         # Arrange
-        training_model = Model(version="1.0.0", model_type="xgboost", artifact_path="s3://test1.pkl", status="training")
-        production_model = Model(version="2.0.0", model_type="isolation_forest", artifact_path="s3://test2.pkl", status="production")
+        training_model = Model(
+            version="1.0.0", model_type="xgboost", artifact_path="s3://test1.pkl", status="training"
+        )
+        production_model = Model(
+            version="2.0.0",
+            model_type="isolation_forest",
+            artifact_path="s3://test2.pkl",
+            status="production",
+        )
 
         await repository.create(training_model)
         await repository.create(production_model)
@@ -365,9 +402,27 @@ class TestModelRepositoryImpl:
     async def test_search_models(self, repository: ModelRepositoryImpl):
         """Test advanced model search."""
         # Arrange
-        model1 = Model(version="1.0.0", model_type="xgboost", artifact_path="s3://test1.pkl", status="production", created_by="user1")
-        model2 = Model(version="2.0.0", model_type="xgboost", artifact_path="s3://test2.pkl", status="staging", created_by="user2")
-        model3 = Model(version="3.0.0", model_type="isolation_forest", artifact_path="s3://test3.pkl", status="production", created_by="user1")
+        model1 = Model(
+            version="1.0.0",
+            model_type="xgboost",
+            artifact_path="s3://test1.pkl",
+            status="production",
+            created_by="user1",
+        )
+        model2 = Model(
+            version="2.0.0",
+            model_type="xgboost",
+            artifact_path="s3://test2.pkl",
+            status="staging",
+            created_by="user2",
+        )
+        model3 = Model(
+            version="3.0.0",
+            model_type="isolation_forest",
+            artifact_path="s3://test3.pkl",
+            status="production",
+            created_by="user1",
+        )
 
         await repository.create(model1)
         await repository.create(model2)
@@ -375,9 +430,7 @@ class TestModelRepositoryImpl:
 
         # Act - Search by multiple filters
         results = await repository.search_models(
-            model_type="xgboost",
-            status="production",
-            created_by="user1"
+            model_type="xgboost", status="production", created_by="user1"
         )
 
         # Assert
@@ -391,13 +444,13 @@ class TestModelRepositoryImpl:
             version="1.0.0",
             model_type="xgboost",
             artifact_path="s3://test1.pkl",
-            training_date=datetime(2024, 1, 1)
+            training_date=datetime(2024, 1, 1),
         )
         recent_model = Model(
             version="2.0.0",
             model_type="xgboost",
             artifact_path="s3://test2.pkl",
-            training_date=datetime(2024, 6, 1)
+            training_date=datetime(2024, 6, 1),
         )
 
         await repository.create(old_model)
@@ -405,8 +458,7 @@ class TestModelRepositoryImpl:
 
         # Act
         recent_models = await repository.get_models_by_date_range(
-            start_date=datetime(2024, 5, 1),
-            end_date=datetime(2024, 12, 31)
+            start_date=datetime(2024, 5, 1), end_date=datetime(2024, 12, 31)
         )
 
         # Assert
@@ -417,7 +469,9 @@ class TestModelRepositoryImpl:
         """Test pagination limits and offsets."""
         # Arrange
         for i in range(5):
-            model = Model(version=f"{i}.0.0", model_type="xgboost", artifact_path=f"s3://test{i}.pkl")
+            model = Model(
+                version=f"{i}.0.0", model_type="xgboost", artifact_path=f"s3://test{i}.pkl"
+            )
             await repository.create(model)
 
         # Act
@@ -433,7 +487,9 @@ class TestModelRepositoryImpl:
         """Test that version strings must be unique."""
         # Arrange
         model1 = Model(version="1.0.0", model_type="xgboost", artifact_path="s3://test1.pkl")
-        model2 = Model(version="1.0.0", model_type="isolation_forest", artifact_path="s3://test2.pkl")
+        model2 = Model(
+            version="1.0.0", model_type="isolation_forest", artifact_path="s3://test2.pkl"
+        )
 
         # Act
         await repository.create(model1)
@@ -452,14 +508,14 @@ class TestModelRepositoryImpl:
             metadata={
                 "layers": [{"type": "dense", "units": 128}, {"type": "dropout", "rate": 0.2}],
                 "optimizer": {"name": "adam", "learning_rate": 0.001},
-                "nested": {"deep": {"value": 42}}
+                "nested": {"deep": {"value": 42}},
             },
             metrics={
                 "train_accuracy": 0.95,
                 "val_accuracy": 0.92,
                 "test_accuracy": 0.90,
-                "confusion_matrix": [[100, 5], [8, 87]]
-            }
+                "confusion_matrix": [[100, 5], [8, 87]],
+            },
         )
 
         # Act

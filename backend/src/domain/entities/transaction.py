@@ -147,7 +147,9 @@ class Transaction:
         self.is_fraud = False
         self.updated_at = datetime.utcnow()
 
-    def calculate_velocity(self, transactions_1h: int, transactions_24h: int, transactions_7d: int) -> None:
+    def calculate_velocity(
+        self, transactions_1h: int, transactions_24h: int, transactions_7d: int
+    ) -> None:
         """Calculate and store velocity metrics.
 
         Args:

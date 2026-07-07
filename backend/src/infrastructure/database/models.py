@@ -10,7 +10,6 @@ from uuid import uuid4
 from sqlalchemy import DateTime, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-
 from src.infrastructure.database.types import PortableJSON
 
 
@@ -167,7 +166,9 @@ class TransactionModel(Base, UUIDMixin, TimestampMixin, SoftDeleteMixin):
 
     # Fraud information
     is_fraud: Mapped[bool] = mapped_column(default=False, nullable=False, index=True)
-    fraud_confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    fraud_confirmed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
 
 class PredictionModel(Base, UUIDMixin, TimestampMixin):
@@ -210,7 +211,9 @@ class AlertModel(Base, UUIDMixin, TimestampMixin, SoftDeleteMixin):
     status: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
 
     # Assignment
-    assigned_analyst_id: Mapped[UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True, index=True)
+    assigned_analyst_id: Mapped[UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True, index=True
+    )
     assigned_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # Resolution
@@ -293,4 +296,6 @@ class AnalystFeedbackModel(Base, UUIDMixin, TimestampMixin):
     notes: Mapped[str | None] = mapped_column(String(1000), nullable=True)
 
     # Context
-    reviewed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    reviewed_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=datetime.utcnow, nullable=False
+    )

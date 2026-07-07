@@ -1,9 +1,9 @@
 """KYC Status Enumeration."""
 
-from enum import Enum
+from enum import StrEnum
 
 
-class KYCStatus(str, Enum):
+class KYCStatus(StrEnum):
     """Know Your Customer (KYC) verification status.
 
     Attributes:

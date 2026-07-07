@@ -10,7 +10,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 
 class PortableJSON(TypeDecorator):
     """Portable JSON type that uses JSONB on PostgreSQL and JSON elsewhere.
-    
+
     This allows us to use PostgreSQL's JSONB type in production for better
     performance while maintaining compatibility with SQLite for testing.
     """

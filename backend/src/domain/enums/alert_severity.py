@@ -1,9 +1,9 @@
 """Alert Severity Enumeration."""
 
-from enum import Enum
+from enum import StrEnum
 
 
-class AlertSeverity(str, Enum):
+class AlertSeverity(StrEnum):
     """Severity level of a fraud alert.
 
     Attributes:

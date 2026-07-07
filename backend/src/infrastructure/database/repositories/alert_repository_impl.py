@@ -6,7 +6,6 @@ from uuid import UUID
 from sqlalchemy import and_, desc, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-
 from src.application.interfaces.alert_repository import AlertRepository
 from src.domain.entities.alert import Alert
 from src.domain.exceptions.base import DomainException
@@ -55,9 +54,7 @@ class AlertRepositoryImpl(AlertRepository):
             elif alert.severity == "high":
                 sla_hours = 8
 
-            sla_deadline = alert.created_at.replace(
-                hour=(alert.created_at.hour + sla_hours) % 24
-            )
+            sla_deadline = alert.created_at.replace(hour=(alert.created_at.hour + sla_hours) % 24)
 
             # Convert domain entity to database model
             alert_model = AlertModel(
@@ -75,7 +72,7 @@ class AlertRepositoryImpl(AlertRepository):
                 sla_deadline=sla_deadline,
                 is_sla_breached=False,
                 created_at=alert.created_at,
-                updated_at=alert.updated_at
+                updated_at=alert.updated_at,
             )
 
             self._session.add(alert_model)
@@ -86,11 +83,13 @@ class AlertRepositoryImpl(AlertRepository):
 
         except IntegrityError as e:
             await self._session.rollback()
-            raise DomainException(f"Database constraint violation: {e}", "DB_CONSTRAINT_ERROR")
+            raise DomainException(
+                f"Database constraint violation: {e}", "DB_CONSTRAINT_ERROR"
+            ) from e
 
         except Exception as e:
             await self._session.rollback()
-            raise DomainException(f"Failed to create alert: {e}", "REPOSITORY_ERROR")
+            raise DomainException(f"Failed to create alert: {e}", "REPOSITORY_ERROR") from e
 
     async def get_by_id(self, alert_id: UUID) -> Alert | None:
         """Retrieve alert by ID.
@@ -104,10 +103,7 @@ class AlertRepositoryImpl(AlertRepository):
         try:
             result = await self._session.execute(
                 select(AlertModel).where(
-                    and_(
-                        AlertModel.id == alert_id,
-                        AlertModel.deleted_at.is_(None)
-                    )
+                    and_(AlertModel.id == alert_id, AlertModel.deleted_at.is_(None))
                 )
             )
             alert_model = result.scalar_one_or_none()
@@ -117,7 +113,7 @@ class AlertRepositoryImpl(AlertRepository):
             return None
 
         except Exception as e:
-            raise DomainException(f"Failed to get alert by ID: {e}", "REPOSITORY_ERROR")
+            raise DomainException(f"Failed to get alert by ID: {e}", "REPOSITORY_ERROR") from e
 
     async def update(self, alert: Alert) -> Alert:
         """Update existing alert.
@@ -136,10 +132,7 @@ class AlertRepositoryImpl(AlertRepository):
             # Check if alert exists
             existing = await self._session.execute(
                 select(AlertModel).where(
-                    and_(
-                        AlertModel.id == alert.alert_id,
-                        AlertModel.deleted_at.is_(None)
-                    )
+                    and_(AlertModel.id == alert.alert_id, AlertModel.deleted_at.is_(None))
                 )
             )
             if not existing.scalar_one_or_none():
@@ -156,7 +149,7 @@ class AlertRepositoryImpl(AlertRepository):
                     resolution=alert.resolution,
                     resolved_at=alert.resolved_at,
                     severity=alert.severity,
-                    updated_at=datetime.utcnow()
+                    updated_at=datetime.utcnow(),
                 )
             )
 
@@ -172,7 +165,7 @@ class AlertRepositoryImpl(AlertRepository):
             raise
         except Exception as e:
             await self._session.rollback()
-            raise DomainException(f"Failed to update alert: {e}", "REPOSITORY_ERROR")
+            raise DomainException(f"Failed to update alert: {e}", "REPOSITORY_ERROR") from e
 
     async def delete(self, alert_id: UUID) -> bool:
         """Soft delete alert.
@@ -186,12 +179,7 @@ class AlertRepositoryImpl(AlertRepository):
         try:
             result = await self._session.execute(
                 update(AlertModel)
-                .where(
-                    and_(
-                        AlertModel.id == alert_id,
-                        AlertModel.deleted_at.is_(None)
-                    )
-                )
+                .where(and_(AlertModel.id == alert_id, AlertModel.deleted_at.is_(None)))
                 .values(deleted_at=datetime.utcnow())
             )
 
@@ -199,7 +187,7 @@ class AlertRepositoryImpl(AlertRepository):
 
         except Exception as e:
             await self._session.rollback()
-            raise DomainException(f"Failed to delete alert: {e}", "REPOSITORY_ERROR")
+            raise DomainException(f"Failed to delete alert: {e}", "REPOSITORY_ERROR") from e
 
     async def list_by_status(
         self,
@@ -220,12 +208,7 @@ class AlertRepositoryImpl(AlertRepository):
         try:
             result = await self._session.execute(
                 select(AlertModel)
-                .where(
-                    and_(
-                        AlertModel.status == status,
-                        AlertModel.deleted_at.is_(None)
-                    )
-                )
+                .where(and_(AlertModel.status == status, AlertModel.deleted_at.is_(None)))
                 .order_by(desc(AlertModel.created_at))
                 .limit(limit)
                 .offset(offset)
@@ -235,7 +218,9 @@ class AlertRepositoryImpl(AlertRepository):
             return [self._model_to_entity(alert) for alert in alerts]
 
         except Exception as e:
-            raise DomainException(f"Failed to list alerts by status: {e}", "REPOSITORY_ERROR")
+            raise DomainException(
+                f"Failed to list alerts by status: {e}", "REPOSITORY_ERROR"
+            ) from e
 
     async def list_by_severity(
         self,
@@ -256,12 +241,7 @@ class AlertRepositoryImpl(AlertRepository):
         try:
             result = await self._session.execute(
                 select(AlertModel)
-                .where(
-                    and_(
-                        AlertModel.severity == severity,
-                        AlertModel.deleted_at.is_(None)
-                    )
-                )
+                .where(and_(AlertModel.severity == severity, AlertModel.deleted_at.is_(None)))
                 .order_by(desc(AlertModel.created_at))
                 .limit(limit)
                 .offset(offset)
@@ -271,7 +251,9 @@ class AlertRepositoryImpl(AlertRepository):
             return [self._model_to_entity(alert) for alert in alerts]
 
         except Exception as e:
-            raise DomainException(f"Failed to list alerts by severity: {e}", "REPOSITORY_ERROR")
+            raise DomainException(
+                f"Failed to list alerts by severity: {e}", "REPOSITORY_ERROR"
+            ) from e
 
     async def list_by_analyst(
         self,
@@ -295,7 +277,7 @@ class AlertRepositoryImpl(AlertRepository):
                 .where(
                     and_(
                         AlertModel.assigned_analyst_id == analyst_id,
-                        AlertModel.deleted_at.is_(None)
+                        AlertModel.deleted_at.is_(None),
                     )
                 )
                 .order_by(desc(AlertModel.severity), desc(AlertModel.created_at))
@@ -307,7 +289,9 @@ class AlertRepositoryImpl(AlertRepository):
             return [self._model_to_entity(alert) for alert in alerts]
 
         except Exception as e:
-            raise DomainException(f"Failed to list alerts by analyst: {e}", "REPOSITORY_ERROR")
+            raise DomainException(
+                f"Failed to list alerts by analyst: {e}", "REPOSITORY_ERROR"
+            ) from e
 
     async def list_unassigned(
         self,
@@ -330,7 +314,7 @@ class AlertRepositoryImpl(AlertRepository):
                     and_(
                         AlertModel.assigned_analyst_id.is_(None),
                         AlertModel.status == "open",
-                        AlertModel.deleted_at.is_(None)
+                        AlertModel.deleted_at.is_(None),
                     )
                 )
                 .order_by(desc(AlertModel.severity), desc(AlertModel.created_at))
@@ -342,7 +326,9 @@ class AlertRepositoryImpl(AlertRepository):
             return [self._model_to_entity(alert) for alert in alerts]
 
         except Exception as e:
-            raise DomainException(f"Failed to list unassigned alerts: {e}", "REPOSITORY_ERROR")
+            raise DomainException(
+                f"Failed to list unassigned alerts: {e}", "REPOSITORY_ERROR"
+            ) from e
 
     async def list_sla_breached(self, limit: int = 100) -> list[Alert]:
         """List alerts that have breached SLA.
@@ -362,7 +348,7 @@ class AlertRepositoryImpl(AlertRepository):
                     and_(
                         AlertModel.sla_deadline < current_time,
                         AlertModel.status.in_(["open", "in_review"]),
-                        AlertModel.deleted_at.is_(None)
+                        AlertModel.deleted_at.is_(None),
                     )
                 )
                 .order_by(AlertModel.sla_deadline.asc())
@@ -373,7 +359,9 @@ class AlertRepositoryImpl(AlertRepository):
             return [self._model_to_entity(alert) for alert in alerts]
 
         except Exception as e:
-            raise DomainException(f"Failed to list SLA-breached alerts: {e}", "REPOSITORY_ERROR")
+            raise DomainException(
+                f"Failed to list SLA-breached alerts: {e}", "REPOSITORY_ERROR"
+            ) from e
 
     async def count_by_status(self, status: str) -> int:
         """Count alerts by status.
@@ -386,20 +374,19 @@ class AlertRepositoryImpl(AlertRepository):
         """
         try:
             from sqlalchemy import func
+
             result = await self._session.execute(
-                select(func.count(AlertModel.id))
-                .where(
-                    and_(
-                        AlertModel.status == status,
-                        AlertModel.deleted_at.is_(None)
-                    )
+                select(func.count(AlertModel.id)).where(
+                    and_(AlertModel.status == status, AlertModel.deleted_at.is_(None))
                 )
             )
 
             return result.scalar() or 0
 
         except Exception as e:
-            raise DomainException(f"Failed to count alerts by status: {e}", "REPOSITORY_ERROR")
+            raise DomainException(
+                f"Failed to count alerts by status: {e}", "REPOSITORY_ERROR"
+            ) from e
 
     async def get_alerts_for_transaction(
         self,
@@ -418,8 +405,7 @@ class AlertRepositoryImpl(AlertRepository):
                 select(AlertModel)
                 .where(
                     and_(
-                        AlertModel.transaction_id == transaction_id,
-                        AlertModel.deleted_at.is_(None)
+                        AlertModel.transaction_id == transaction_id, AlertModel.deleted_at.is_(None)
                     )
                 )
                 .order_by(desc(AlertModel.created_at))
@@ -429,7 +415,9 @@ class AlertRepositoryImpl(AlertRepository):
             return [self._model_to_entity(alert) for alert in alerts]
 
         except Exception as e:
-            raise DomainException(f"Failed to get alerts for transaction: {e}", "REPOSITORY_ERROR")
+            raise DomainException(
+                f"Failed to get alerts for transaction: {e}", "REPOSITORY_ERROR"
+            ) from e
 
     async def get_open_alerts_in_range(
         self,
@@ -453,7 +441,7 @@ class AlertRepositoryImpl(AlertRepository):
                         AlertModel.status.in_(["open", "in_review"]),
                         AlertModel.created_at >= start_date,
                         AlertModel.created_at <= end_date,
-                        AlertModel.deleted_at.is_(None)
+                        AlertModel.deleted_at.is_(None),
                     )
                 )
                 .order_by(desc(AlertModel.severity), desc(AlertModel.created_at))
@@ -463,7 +451,9 @@ class AlertRepositoryImpl(AlertRepository):
             return [self._model_to_entity(alert) for alert in alerts]
 
         except Exception as e:
-            raise DomainException(f"Failed to get open alerts in range: {e}", "REPOSITORY_ERROR")
+            raise DomainException(
+                f"Failed to get open alerts in range: {e}", "REPOSITORY_ERROR"
+            ) from e
 
     async def update_sla_breach_status(self) -> int:
         """Update SLA breach status for overdue alerts.
@@ -479,22 +469,21 @@ class AlertRepositoryImpl(AlertRepository):
                 .where(
                     and_(
                         AlertModel.sla_deadline < current_time,
-                        AlertModel.is_sla_breached == False,
+                        not AlertModel.is_sla_breached,
                         AlertModel.status.in_(["open", "in_review"]),
-                        AlertModel.deleted_at.is_(None)
+                        AlertModel.deleted_at.is_(None),
                     )
                 )
-                .values(
-                    is_sla_breached=True,
-                    updated_at=current_time
-                )
+                .values(is_sla_breached=True, updated_at=current_time)
             )
 
             return result.rowcount
 
         except Exception as e:
             await self._session.rollback()
-            raise DomainException(f"Failed to update SLA breach status: {e}", "REPOSITORY_ERROR")
+            raise DomainException(
+                f"Failed to update SLA breach status: {e}", "REPOSITORY_ERROR"
+            ) from e
 
     def _model_to_entity(self, model: AlertModel) -> Alert:
         """Convert database model to domain entity.
@@ -518,5 +507,5 @@ class AlertRepositoryImpl(AlertRepository):
             created_at=model.created_at,
             assigned_at=model.assigned_at,
             resolved_at=model.resolved_at,
-            updated_at=model.updated_at
+            updated_at=model.updated_at,
         )

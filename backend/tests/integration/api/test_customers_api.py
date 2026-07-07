@@ -45,10 +45,7 @@ async def async_client(test_app):
     """Create async HTTP client for testing."""
     from httpx import ASGITransport
 
-    async with AsyncClient(
-        transport=ASGITransport(app=test_app),
-        base_url="http://test"
-    ) as client:
+    async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as client:
         yield client
 
 
@@ -141,9 +138,7 @@ class TestCreateCustomerAPI:
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
     @pytest.mark.asyncio
-    async def test_create_customer_missing_required_fields(
-        self, async_client: AsyncClient
-    ):
+    async def test_create_customer_missing_required_fields(self, async_client: AsyncClient):
         """Test creating customer with missing required fields."""
         # Arrange
         payload = {
@@ -158,9 +153,7 @@ class TestCreateCustomerAPI:
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
     @pytest.mark.asyncio
-    async def test_create_customer_invalid_country_code(
-        self, async_client: AsyncClient
-    ):
+    async def test_create_customer_invalid_country_code(self, async_client: AsyncClient):
         """Test creating customer with invalid country code."""
         # Arrange
         payload = {
@@ -247,9 +240,7 @@ class TestUpdateCustomerAPI:
             "customer_name": "Henry Ford Jr",
             "credit_score": 800,
         }
-        response = await async_client.put(
-            f"/v1/customers/{customer_id}", json=update_payload
-        )
+        response = await async_client.put(f"/v1/customers/{customer_id}", json=update_payload)
 
         # Assert
         assert response.status_code == status.HTTP_200_OK
@@ -273,9 +264,7 @@ class TestUpdateCustomerAPI:
 
         # Act - Update only credit score
         update_payload = {"credit_score": 720}
-        response = await async_client.put(
-            f"/v1/customers/{customer_id}", json=update_payload
-        )
+        response = await async_client.put(f"/v1/customers/{customer_id}", json=update_payload)
 
         # Assert
         assert response.status_code == status.HTTP_200_OK
@@ -291,17 +280,13 @@ class TestUpdateCustomerAPI:
         update_payload = {"credit_score": 750}
 
         # Act
-        response = await async_client.put(
-            f"/v1/customers/{nonexistent_id}", json=update_payload
-        )
+        response = await async_client.put(f"/v1/customers/{nonexistent_id}", json=update_payload)
 
         # Assert
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     @pytest.mark.asyncio
-    async def test_update_customer_invalid_credit_score(
-        self, async_client: AsyncClient
-    ):
+    async def test_update_customer_invalid_credit_score(self, async_client: AsyncClient):
         """Test updating with invalid credit score."""
         # Arrange - Create customer
         create_payload = {
@@ -314,9 +299,7 @@ class TestUpdateCustomerAPI:
 
         # Act - Invalid credit score (out of range)
         update_payload = {"credit_score": 1000}  # Max is 850
-        response = await async_client.put(
-            f"/v1/customers/{customer_id}", json=update_payload
-        )
+        response = await async_client.put(f"/v1/customers/{customer_id}", json=update_payload)
 
         # Assert
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY

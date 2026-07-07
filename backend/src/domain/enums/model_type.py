@@ -1,9 +1,9 @@
 """Model Type Enumeration."""
 
-from enum import Enum
+from enum import StrEnum
 
 
-class ModelType(str, Enum):
+class ModelType(StrEnum):
     """Types of ML models supported by the platform."""
 
     XGBOOST = "xgboost"

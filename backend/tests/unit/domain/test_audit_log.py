@@ -160,9 +160,7 @@ class TestAuditLogValidation:
 
     def test_update_requires_both_values(self):
         """Test that UPDATE action requires both old_value and new_value."""
-        with pytest.raises(
-            ValueError, match="UPDATE action requires both old_value and new_value"
-        ):
+        with pytest.raises(ValueError, match="UPDATE action requires both old_value and new_value"):
             AuditLog(
                 entity_type="customer",
                 entity_id=uuid4(),
@@ -184,7 +182,9 @@ class TestAuditLogImmutability:
         )
 
         # Attempt to modify should raise FrozenInstanceError
-        with pytest.raises(Exception):  # dataclasses.FrozenInstanceError in Python 3.11+
+        with pytest.raises(
+            (AttributeError, TypeError)
+        ):  # dataclasses.FrozenInstanceError in Python 3.11+
             audit.action = "UPDATE"
 
     def test_default_username_is_system(self):

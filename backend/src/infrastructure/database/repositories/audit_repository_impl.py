@@ -6,7 +6,6 @@ from uuid import UUID
 from sqlalchemy import and_, desc, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-
 from src.application.interfaces.audit_repository import AuditRepository
 from src.domain.entities.audit_log import AuditLog
 from src.domain.exceptions.base import DomainException
@@ -54,7 +53,7 @@ class AuditRepositoryImpl(AuditRepository):
                 ip_address=audit_log.ip_address,
                 user_agent=audit_log.user_agent,
                 description=audit_log.description,
-                created_at=audit_log.created_at
+                created_at=audit_log.created_at,
             )
 
             self._session.add(audit_model)
@@ -65,11 +64,13 @@ class AuditRepositoryImpl(AuditRepository):
 
         except IntegrityError as e:
             await self._session.rollback()
-            raise DomainException(f"Database constraint violation: {e}", "DB_CONSTRAINT_ERROR")
+            raise DomainException(
+                f"Database constraint violation: {e}", "DB_CONSTRAINT_ERROR"
+            ) from e
 
         except Exception as e:
             await self._session.rollback()
-            raise DomainException(f"Failed to create audit log: {e}", "REPOSITORY_ERROR")
+            raise DomainException(f"Failed to create audit log: {e}", "REPOSITORY_ERROR") from e
 
     async def get_by_id(self, log_id: UUID) -> AuditLog | None:
         """Retrieve audit log by ID.
@@ -91,7 +92,7 @@ class AuditRepositoryImpl(AuditRepository):
             return None
 
         except Exception as e:
-            raise DomainException(f"Failed to get audit log by ID: {e}", "REPOSITORY_ERROR")
+            raise DomainException(f"Failed to get audit log by ID: {e}", "REPOSITORY_ERROR") from e
 
     async def list_by_entity(
         self,
@@ -117,7 +118,7 @@ class AuditRepositoryImpl(AuditRepository):
                 .where(
                     and_(
                         AuditLogModel.entity_type == entity_type,
-                        AuditLogModel.entity_id == entity_id
+                        AuditLogModel.entity_id == entity_id,
                     )
                 )
                 .order_by(desc(AuditLogModel.created_at))
@@ -129,7 +130,9 @@ class AuditRepositoryImpl(AuditRepository):
             return [self._model_to_entity(log) for log in audit_logs]
 
         except Exception as e:
-            raise DomainException(f"Failed to list audit logs by entity: {e}", "REPOSITORY_ERROR")
+            raise DomainException(
+                f"Failed to list audit logs by entity: {e}", "REPOSITORY_ERROR"
+            ) from e
 
     async def list_by_user(
         self,
@@ -160,7 +163,9 @@ class AuditRepositoryImpl(AuditRepository):
             return [self._model_to_entity(log) for log in audit_logs]
 
         except Exception as e:
-            raise DomainException(f"Failed to list audit logs by user: {e}", "REPOSITORY_ERROR")
+            raise DomainException(
+                f"Failed to list audit logs by user: {e}", "REPOSITORY_ERROR"
+            ) from e
 
     async def list_by_action(
         self,
@@ -191,7 +196,9 @@ class AuditRepositoryImpl(AuditRepository):
             return [self._model_to_entity(log) for log in audit_logs]
 
         except Exception as e:
-            raise DomainException(f"Failed to list audit logs by action: {e}", "REPOSITORY_ERROR")
+            raise DomainException(
+                f"Failed to list audit logs by action: {e}", "REPOSITORY_ERROR"
+            ) from e
 
     async def list_by_date_range(
         self,
@@ -216,8 +223,7 @@ class AuditRepositoryImpl(AuditRepository):
                 select(AuditLogModel)
                 .where(
                     and_(
-                        AuditLogModel.created_at >= start_date,
-                        AuditLogModel.created_at <= end_date
+                        AuditLogModel.created_at >= start_date, AuditLogModel.created_at <= end_date
                     )
                 )
                 .order_by(desc(AuditLogModel.created_at))
@@ -229,7 +235,9 @@ class AuditRepositoryImpl(AuditRepository):
             return [self._model_to_entity(log) for log in audit_logs]
 
         except Exception as e:
-            raise DomainException(f"Failed to list audit logs by date range: {e}", "REPOSITORY_ERROR")
+            raise DomainException(
+                f"Failed to list audit logs by date range: {e}", "REPOSITORY_ERROR"
+            ) from e
 
     async def search(
         self,
@@ -282,7 +290,7 @@ class AuditRepositoryImpl(AuditRepository):
             return [self._model_to_entity(log) for log in audit_logs]
 
         except Exception as e:
-            raise DomainException(f"Failed to search audit logs: {e}", "REPOSITORY_ERROR")
+            raise DomainException(f"Failed to search audit logs: {e}", "REPOSITORY_ERROR") from e
 
     async def count_by_entity(self, entity_type: str, entity_id: UUID) -> int:
         """Count audit logs for entity.
@@ -296,12 +304,12 @@ class AuditRepositoryImpl(AuditRepository):
         """
         try:
             from sqlalchemy import func
+
             result = await self._session.execute(
-                select(func.count(AuditLogModel.id))
-                .where(
+                select(func.count(AuditLogModel.id)).where(
                     and_(
                         AuditLogModel.entity_type == entity_type,
-                        AuditLogModel.entity_id == entity_id
+                        AuditLogModel.entity_id == entity_id,
                     )
                 )
             )
@@ -309,13 +317,11 @@ class AuditRepositoryImpl(AuditRepository):
             return result.scalar() or 0
 
         except Exception as e:
-            raise DomainException(f"Failed to count audit logs by entity: {e}", "REPOSITORY_ERROR")
+            raise DomainException(
+                f"Failed to count audit logs by entity: {e}", "REPOSITORY_ERROR"
+            ) from e
 
-    async def get_audit_trail_summary(
-        self,
-        entity_type: str,
-        entity_id: UUID
-    ) -> dict[str, any]:
+    async def get_audit_trail_summary(self, entity_type: str, entity_id: UUID) -> dict[str, any]:
         """Get audit trail summary for an entity.
 
         Args:
@@ -333,11 +339,10 @@ class AuditRepositoryImpl(AuditRepository):
                     func.count(func.distinct(AuditLogModel.user_id)).label("unique_users"),
                     func.min(AuditLogModel.created_at).label("first_event"),
                     func.max(AuditLogModel.created_at).label("last_event"),
-                )
-                .where(
+                ).where(
                     and_(
                         AuditLogModel.entity_type == entity_type,
-                        AuditLogModel.entity_id == entity_id
+                        AuditLogModel.entity_id == entity_id,
                     )
                 )
             )
@@ -353,53 +358,49 @@ class AuditRepositoryImpl(AuditRepository):
                     "create_count": 0,
                     "update_count": 0,
                     "delete_count": 0,
-                    "read_count": 0
+                    "read_count": 0,
                 }
 
             # Get action counts separately
             create_count_result = await self._session.execute(
-                select(func.count(AuditLogModel.id))
-                .where(
+                select(func.count(AuditLogModel.id)).where(
                     and_(
                         AuditLogModel.entity_type == entity_type,
                         AuditLogModel.entity_id == entity_id,
-                        AuditLogModel.action == "CREATE"
+                        AuditLogModel.action == "CREATE",
                     )
                 )
             )
             create_count = create_count_result.scalar() or 0
 
             update_count_result = await self._session.execute(
-                select(func.count(AuditLogModel.id))
-                .where(
+                select(func.count(AuditLogModel.id)).where(
                     and_(
                         AuditLogModel.entity_type == entity_type,
                         AuditLogModel.entity_id == entity_id,
-                        AuditLogModel.action == "UPDATE"
+                        AuditLogModel.action == "UPDATE",
                     )
                 )
             )
             update_count = update_count_result.scalar() or 0
 
             delete_count_result = await self._session.execute(
-                select(func.count(AuditLogModel.id))
-                .where(
+                select(func.count(AuditLogModel.id)).where(
                     and_(
                         AuditLogModel.entity_type == entity_type,
                         AuditLogModel.entity_id == entity_id,
-                        AuditLogModel.action == "DELETE"
+                        AuditLogModel.action == "DELETE",
                     )
                 )
             )
             delete_count = delete_count_result.scalar() or 0
 
             read_count_result = await self._session.execute(
-                select(func.count(AuditLogModel.id))
-                .where(
+                select(func.count(AuditLogModel.id)).where(
                     and_(
                         AuditLogModel.entity_type == entity_type,
                         AuditLogModel.entity_id == entity_id,
-                        AuditLogModel.action == "READ"
+                        AuditLogModel.action == "READ",
                     )
                 )
             )
@@ -413,17 +414,16 @@ class AuditRepositoryImpl(AuditRepository):
                 "create_count": create_count,
                 "update_count": update_count,
                 "delete_count": delete_count,
-                "read_count": read_count
+                "read_count": read_count,
             }
 
         except Exception as e:
-            raise DomainException(f"Failed to get audit trail summary: {e}", "REPOSITORY_ERROR")
+            raise DomainException(
+                f"Failed to get audit trail summary: {e}", "REPOSITORY_ERROR"
+            ) from e
 
     async def get_user_activity_summary(
-        self,
-        user_id: UUID,
-        start_date: datetime | None = None,
-        end_date: datetime | None = None
+        self, user_id: UUID, start_date: datetime | None = None, end_date: datetime | None = None
     ) -> dict[str, any]:
         """Get user activity summary.
 
@@ -437,7 +437,9 @@ class AuditRepositoryImpl(AuditRepository):
         """
         try:
             # Simplified approach using separate queries
-            base_query = select(func.count(AuditLogModel.id)).where(AuditLogModel.user_id == user_id)
+            base_query = select(func.count(AuditLogModel.id)).where(
+                AuditLogModel.user_id == user_id
+            )
 
             if start_date:
                 base_query = base_query.where(AuditLogModel.created_at >= start_date)
@@ -455,13 +457,17 @@ class AuditRepositoryImpl(AuditRepository):
                     "create_count": 0,
                     "update_count": 0,
                     "delete_count": 0,
-                    "read_count": 0
+                    "read_count": 0,
                 }
 
             # Get entity types count
-            entity_types_query = select(func.count(func.distinct(AuditLogModel.entity_type))).where(AuditLogModel.user_id == user_id)
+            entity_types_query = select(func.count(func.distinct(AuditLogModel.entity_type))).where(
+                AuditLogModel.user_id == user_id
+            )
             if start_date:
-                entity_types_query = entity_types_query.where(AuditLogModel.created_at >= start_date)
+                entity_types_query = entity_types_query.where(
+                    AuditLogModel.created_at >= start_date
+                )
             if end_date:
                 entity_types_query = entity_types_query.where(AuditLogModel.created_at <= end_date)
 
@@ -491,11 +497,13 @@ class AuditRepositoryImpl(AuditRepository):
                 "create_count": create_count,
                 "update_count": update_count,
                 "delete_count": delete_count,
-                "read_count": read_count
+                "read_count": read_count,
             }
 
         except Exception as e:
-            raise DomainException(f"Failed to get user activity summary: {e}", "REPOSITORY_ERROR")
+            raise DomainException(
+                f"Failed to get user activity summary: {e}", "REPOSITORY_ERROR"
+            ) from e
 
     def _model_to_entity(self, model: AuditLogModel) -> AuditLog:
         """Convert database model to domain entity.
@@ -518,5 +526,5 @@ class AuditRepositoryImpl(AuditRepository):
             ip_address=model.ip_address,
             user_agent=model.user_agent,
             description=model.description,
-            created_at=model.created_at
+            created_at=model.created_at,
         )

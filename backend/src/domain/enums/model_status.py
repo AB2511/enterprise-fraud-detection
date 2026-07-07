@@ -1,9 +1,9 @@
 """Model Status Enumeration."""
 
-from enum import Enum
+from enum import StrEnum
 
 
-class ModelStatus(str, Enum):
+class ModelStatus(StrEnum):
     """Model deployment lifecycle status."""
 
     TRAINING = "training"

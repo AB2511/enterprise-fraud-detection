@@ -25,10 +25,12 @@ class TestCustomerRepositoryImpl:
             customer_name="John Doe",
             email="john.doe@example.com",
             country="USA",
-            date_of_birth=date(1990, 1, 15)
+            date_of_birth=date(1990, 1, 15),
         )
 
-    async def test_create_customer(self, repository: CustomerRepositoryImpl, sample_customer: Customer):
+    async def test_create_customer(
+        self, repository: CustomerRepositoryImpl, sample_customer: Customer
+    ):
         """Test customer creation."""
         # Act
         created = await repository.create(sample_customer)
@@ -75,7 +77,9 @@ class TestCustomerRepositoryImpl:
         # Assert
         assert result is None
 
-    async def test_get_by_email(self, repository: CustomerRepositoryImpl, sample_customer: Customer):
+    async def test_get_by_email(
+        self, repository: CustomerRepositoryImpl, sample_customer: Customer
+    ):
         """Test retrieving customer by email."""
         # Arrange
         await repository.create(sample_customer)
@@ -87,7 +91,9 @@ class TestCustomerRepositoryImpl:
         assert retrieved is not None
         assert retrieved.email == "john.doe@example.com"
 
-    async def test_get_by_email_case_insensitive(self, repository: CustomerRepositoryImpl, sample_customer: Customer):
+    async def test_get_by_email_case_insensitive(
+        self, repository: CustomerRepositoryImpl, sample_customer: Customer
+    ):
         """Test email lookup is case insensitive."""
         # Arrange
         await repository.create(sample_customer)
@@ -99,7 +105,9 @@ class TestCustomerRepositoryImpl:
         assert retrieved is not None
         assert retrieved.email == "john.doe@example.com"
 
-    async def test_update_customer(self, repository: CustomerRepositoryImpl, sample_customer: Customer):
+    async def test_update_customer(
+        self, repository: CustomerRepositoryImpl, sample_customer: Customer
+    ):
         """Test updating customer."""
         # Arrange
         created = await repository.create(sample_customer)
@@ -124,7 +132,9 @@ class TestCustomerRepositoryImpl:
         with pytest.raises(NotFoundError):
             await repository.update(customer)
 
-    async def test_delete_customer_soft_delete(self, repository: CustomerRepositoryImpl, sample_customer: Customer):
+    async def test_delete_customer_soft_delete(
+        self, repository: CustomerRepositoryImpl, sample_customer: Customer
+    ):
         """Test soft delete functionality."""
         # Arrange
         created = await repository.create(sample_customer)
@@ -186,7 +196,9 @@ class TestCustomerRepositoryImpl:
         """Test counting customers by risk category."""
         # Arrange
         for i in range(3):
-            customer = Customer(customer_name=f"Customer {i}", email=f"test{i}@example.com", country="USA")
+            customer = Customer(
+                customer_name=f"Customer {i}", email=f"test{i}@example.com", country="USA"
+            )
             customer.customer_risk_category = "medium"
             await repository.create(customer)
 
@@ -201,7 +213,9 @@ class TestCustomerRepositoryImpl:
         # Arrange
         high_risk = Customer(customer_name="High Risk", email="high@example.com", country="USA")
         high_risk.customer_risk_category = "high"
-        critical_risk = Customer(customer_name="Critical Risk", email="critical@example.com", country="USA")
+        critical_risk = Customer(
+            customer_name="Critical Risk", email="critical@example.com", country="USA"
+        )
         critical_risk.customer_risk_category = "critical"
         low_risk = Customer(customer_name="Low Risk", email="low@example.com", country="USA")
         low_risk.customer_risk_category = "low"
@@ -223,7 +237,9 @@ class TestCustomerRepositoryImpl:
         """Test pagination limits and offsets."""
         # Arrange
         for i in range(5):
-            customer = Customer(customer_name=f"Customer {i}", email=f"test{i}@example.com", country="USA")
+            customer = Customer(
+                customer_name=f"Customer {i}", email=f"test{i}@example.com", country="USA"
+            )
             await repository.create(customer)
 
         # Act
@@ -235,7 +251,9 @@ class TestCustomerRepositoryImpl:
         assert len(page2) == 2
         assert page1[0].customer_id != page2[0].customer_id
 
-    async def test_email_exists(self, repository: CustomerRepositoryImpl, sample_customer: Customer):
+    async def test_email_exists(
+        self, repository: CustomerRepositoryImpl, sample_customer: Customer
+    ):
         """Test email existence check."""
         # Arrange
         await repository.create(sample_customer)
@@ -249,7 +267,9 @@ class TestCustomerRepositoryImpl:
         # Arrange
         customers = []
         for i in range(10):
-            customer = Customer(customer_name=f"Bulk Customer {i}", email=f"bulk{i}@example.com", country="USA")
+            customer = Customer(
+                customer_name=f"Bulk Customer {i}", email=f"bulk{i}@example.com", country="USA"
+            )
             customers.append(customer)
 
         # Act
@@ -263,7 +283,9 @@ class TestCustomerRepositoryImpl:
         for created in created_customers:
             assert created.customer_id is not None
 
-    async def test_concurrent_access_optimistic_locking(self, repository: CustomerRepositoryImpl, sample_customer: Customer):
+    async def test_concurrent_access_optimistic_locking(
+        self, repository: CustomerRepositoryImpl, sample_customer: Customer
+    ):
         """Test optimistic locking behavior."""
         # Arrange
         created = await repository.create(sample_customer)

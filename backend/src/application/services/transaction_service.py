@@ -128,9 +128,7 @@ class TransactionService:
             ValueError: If validation fails
         """
         # Validate transaction
-        validation = await self.validate_transaction(
-            customer_id, merchant_id, amount, currency
-        )
+        validation = await self.validate_transaction(customer_id, merchant_id, amount, currency)
         if not validation["eligible"]:
             raise ValueError(f"Transaction validation failed: {validation['reason']}")
 
@@ -435,9 +433,7 @@ class TransactionService:
             "payment_channel": transaction.payment_channel,
             "payment_method": transaction.payment_method,
             # Customer features
-            "customer_risk_score": self._risk_category_to_score(
-                customer.customer_risk_category
-            ),
+            "customer_risk_score": self._risk_category_to_score(customer.customer_risk_category),
             "customer_credit_score": customer.credit_score,
             "customer_account_age_days": customer.account_age_days,
             "customer_historical_fraud_count": customer.historical_fraud_count,

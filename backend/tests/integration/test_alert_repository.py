@@ -34,7 +34,7 @@ def sample_alert() -> Alert:
         created_at=datetime.utcnow(),
         assigned_at=None,
         resolved_at=None,
-        updated_at=datetime.utcnow()
+        updated_at=datetime.utcnow(),
     )
 
 
@@ -76,7 +76,7 @@ class TestAlertRepositoryCreate:
             created_at=datetime.utcnow(),
             assigned_at=None,
             resolved_at=None,
-            updated_at=datetime.utcnow()
+            updated_at=datetime.utcnow(),
         )
 
         result = await alert_repository.create(alert)
@@ -105,7 +105,7 @@ class TestAlertRepositoryCreate:
             created_at=datetime.utcnow(),
             assigned_at=datetime.utcnow(),
             resolved_at=None,
-            updated_at=datetime.utcnow()
+            updated_at=datetime.utcnow(),
         )
 
         result = await alert_repository.create(alert)
@@ -150,9 +150,7 @@ class TestAlertRepositoryRead:
         await alert_repository.create(sample_alert)
         await async_session.commit()
 
-        result = await alert_repository.get_alerts_for_transaction(
-            sample_alert.transaction_id
-        )
+        result = await alert_repository.get_alerts_for_transaction(sample_alert.transaction_id)
 
         assert len(result) == 1
         assert result[0].transaction_id == sample_alert.transaction_id
@@ -240,9 +238,7 @@ class TestAlertRepositoryDelete:
         retrieved = await alert_repository.get_by_id(created.alert_id)
         assert retrieved is None
 
-    async def test_delete_alert_not_found(
-        self, alert_repository: AlertRepositoryImpl
-    ):
+    async def test_delete_alert_not_found(self, alert_repository: AlertRepositoryImpl):
         """Test deletion of non-existent alert."""
         result = await alert_repository.delete(uuid4())
         assert result is False
@@ -273,7 +269,7 @@ class TestAlertRepositoryListing:
                 created_at=datetime.utcnow(),
                 assigned_at=None,
                 resolved_at=None,
-                updated_at=datetime.utcnow()
+                updated_at=datetime.utcnow(),
             ),
             # High alert - assigned
             Alert(
@@ -289,7 +285,7 @@ class TestAlertRepositoryListing:
                 created_at=datetime.utcnow(),
                 assigned_at=datetime.utcnow(),
                 resolved_at=None,
-                updated_at=datetime.utcnow()
+                updated_at=datetime.utcnow(),
             ),
             # Medium alert - resolved
             Alert(
@@ -305,7 +301,7 @@ class TestAlertRepositoryListing:
                 created_at=datetime.utcnow() - timedelta(hours=1),
                 assigned_at=datetime.utcnow() - timedelta(hours=1),
                 resolved_at=datetime.utcnow(),
-                updated_at=datetime.utcnow()
+                updated_at=datetime.utcnow(),
             ),
             # Low alert - open
             Alert(
@@ -321,7 +317,7 @@ class TestAlertRepositoryListing:
                 created_at=datetime.utcnow() - timedelta(minutes=30),
                 assigned_at=None,
                 resolved_at=None,
-                updated_at=datetime.utcnow()
+                updated_at=datetime.utcnow(),
             ),
         ]
 
@@ -434,7 +430,7 @@ class TestAlertRepositoryListing:
             created_at=old_time,
             assigned_at=None,
             resolved_at=None,
-            updated_at=old_time
+            updated_at=old_time,
         )
 
         await alert_repository.create(old_alert)
@@ -490,7 +486,7 @@ class TestAlertRepositoryCount:
                 created_at=datetime.utcnow(),
                 assigned_at=None,
                 resolved_at=None,
-                updated_at=datetime.utcnow()
+                updated_at=datetime.utcnow(),
             ),
             # High alert - assigned
             Alert(
@@ -506,7 +502,7 @@ class TestAlertRepositoryCount:
                 created_at=datetime.utcnow(),
                 assigned_at=datetime.utcnow(),
                 resolved_at=None,
-                updated_at=datetime.utcnow()
+                updated_at=datetime.utcnow(),
             ),
             # Medium alert - resolved
             Alert(
@@ -522,7 +518,7 @@ class TestAlertRepositoryCount:
                 created_at=datetime.utcnow() - timedelta(hours=1),
                 assigned_at=datetime.utcnow() - timedelta(hours=1),
                 resolved_at=datetime.utcnow(),
-                updated_at=datetime.utcnow()
+                updated_at=datetime.utcnow(),
             ),
             # Low alert - open
             Alert(
@@ -538,7 +534,7 @@ class TestAlertRepositoryCount:
                 created_at=datetime.utcnow() - timedelta(minutes=30),
                 assigned_at=None,
                 resolved_at=None,
-                updated_at=datetime.utcnow()
+                updated_at=datetime.utcnow(),
             ),
         ]
 
@@ -576,9 +572,7 @@ class TestAlertRepositoryCount:
         assert test_in_review_count == 1
         assert test_resolved_count == 1
 
-    async def test_count_by_status_empty(
-        self, alert_repository: AlertRepositoryImpl
-    ):
+    async def test_count_by_status_empty(self, alert_repository: AlertRepositoryImpl):
         """Test counting alerts by status with no results."""
         count = await alert_repository.count_by_status("non_existent_status")
         assert count == 0
@@ -608,7 +602,7 @@ class TestAlertRepositorySLA:
             created_at=old_time,
             assigned_at=None,
             resolved_at=None,
-            updated_at=old_time
+            updated_at=old_time,
         )
 
         # Create a recent alert
@@ -625,7 +619,7 @@ class TestAlertRepositorySLA:
             created_at=datetime.utcnow(),
             assigned_at=None,
             resolved_at=None,
-            updated_at=datetime.utcnow()
+            updated_at=datetime.utcnow(),
         )
 
         await alert_repository.create(old_alert)
@@ -664,7 +658,7 @@ class TestAlertRepositoryPagination:
                 created_at=datetime.utcnow() - timedelta(minutes=i),
                 assigned_at=None,
                 resolved_at=None,
-                updated_at=datetime.utcnow()
+                updated_at=datetime.utcnow(),
             )
             await alert_repository.create(alert)
 
@@ -709,7 +703,7 @@ class TestAlertRepositoryEdgeCases:
                 created_at=datetime.utcnow(),
                 assigned_at=None,
                 resolved_at=None,
-                updated_at=datetime.utcnow()
+                updated_at=datetime.utcnow(),
             )
             created = await alert_repository.create(alert)
             alerts.append(created)
@@ -743,7 +737,7 @@ class TestAlertRepositoryEdgeCases:
                 created_at=datetime.utcnow(),
                 assigned_at=None,
                 resolved_at=None,
-                updated_at=datetime.utcnow()
+                updated_at=datetime.utcnow(),
             )
             created = await alert_repository.create(alert)
             alerts.append(created)
@@ -772,12 +766,20 @@ class TestAlertRepositoryEdgeCases:
                 alert_type="ml_based",
                 assigned_analyst_id=uuid4() if status != "open" else None,
                 status=status,
-                resolution="fraud" if status == "confirmed_fraud" else ("false_positive" if status == "false_positive" else None),
+                resolution=(
+                    "fraud"
+                    if status == "confirmed_fraud"
+                    else ("false_positive" if status == "false_positive" else None)
+                ),
                 resolution_notes=None,
                 created_at=datetime.utcnow(),
                 assigned_at=datetime.utcnow() if status != "open" else None,
-                resolved_at=datetime.utcnow() if status in ["resolved", "false_positive", "confirmed_fraud"] else None,
-                updated_at=datetime.utcnow()
+                resolved_at=(
+                    datetime.utcnow()
+                    if status in ["resolved", "false_positive", "confirmed_fraud"]
+                    else None
+                ),
+                updated_at=datetime.utcnow(),
             )
             created = await alert_repository.create(alert)
             alerts.append(created)
@@ -807,7 +809,7 @@ class TestAlertRepositoryEdgeCases:
                 created_at=datetime.utcnow(),
                 assigned_at=None,
                 resolved_at=None,
-                updated_at=datetime.utcnow()
+                updated_at=datetime.utcnow(),
             )
             await alert_repository.update(invalid_alert)
 
@@ -833,7 +835,7 @@ class TestAlertRepositoryEdgeCases:
                 created_at=datetime.utcnow() - timedelta(minutes=i),
                 assigned_at=None,
                 resolved_at=None,
-                updated_at=datetime.utcnow()
+                updated_at=datetime.utcnow(),
             )
             created = await alert_repository.create(alert)
             alerts.append(created)

@@ -92,8 +92,13 @@ class Merchant:
 
         # Base risk by MCC category
         high_risk_categories = [
-            "gambling", "cryptocurrency", "adult", "pharmaceuticals",
-            "electronics", "jewelry", "travel"
+            "gambling",
+            "cryptocurrency",
+            "adult",
+            "pharmaceuticals",
+            "electronics",
+            "jewelry",
+            "travel",
         ]
         if any(cat in self.merchant_category.lower() for cat in high_risk_categories):
             risk_score += 30

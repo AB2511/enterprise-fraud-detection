@@ -28,62 +28,70 @@ from src.infrastructure.database.repositories.user_repository_impl import UserRe
 class TestRepositoryInterfaceCompliance:
     """Test that all repository implementations properly implement their interfaces."""
 
-    @pytest.mark.parametrize("interface_class,implementation_class", [
-        (CustomerRepository, CustomerRepositoryImpl),
-        (MerchantRepository, MerchantRepositoryImpl),
-        (TransactionRepository, TransactionRepositoryImpl),
-        (PredictionRepository, PredictionRepositoryImpl),
-        (AlertRepository, AlertRepositoryImpl),
-        (AuditRepository, AuditRepositoryImpl),
-        (UserRepository, UserRepositoryImpl),
-        (ModelRepository, ModelRepositoryImpl),
-    ])
+    @pytest.mark.parametrize(
+        "interface_class,implementation_class",
+        [
+            (CustomerRepository, CustomerRepositoryImpl),
+            (MerchantRepository, MerchantRepositoryImpl),
+            (TransactionRepository, TransactionRepositoryImpl),
+            (PredictionRepository, PredictionRepositoryImpl),
+            (AlertRepository, AlertRepositoryImpl),
+            (AuditRepository, AuditRepositoryImpl),
+            (UserRepository, UserRepositoryImpl),
+            (ModelRepository, ModelRepositoryImpl),
+        ],
+    )
     def test_interface_compliance(self, interface_class, implementation_class):
         """Test that repository implementations comply with their interfaces."""
 
         # Verify implementation inherits from interface
-        assert issubclass(implementation_class, interface_class), \
-            f"{implementation_class.__name__} must inherit from {interface_class.__name__}"
+        assert issubclass(
+            implementation_class, interface_class
+        ), f"{implementation_class.__name__} must inherit from {interface_class.__name__}"
 
         # Get all abstract methods from interface
         interface_methods = set()
         for name, method in inspect.getmembers(interface_class, inspect.ismethod):
-            if getattr(method, '__isabstractmethod__', False):
+            if getattr(method, "__isabstractmethod__", False):
                 interface_methods.add(name)
 
         # Also check for abstract methods in parent classes
         for base in interface_class.__mro__:
             for name, method in inspect.getmembers(base, inspect.ismethod):
-                if getattr(method, '__isabstractmethod__', False):
+                if getattr(method, "__isabstractmethod__", False):
                     interface_methods.add(name)
 
         # Get all methods implemented in the implementation class
         implementation_methods = set()
-        for name, method in inspect.getmembers(implementation_class, inspect.ismethod):
-            if not name.startswith('_'):  # Skip private methods
+        for name, _method in inspect.getmembers(implementation_class, inspect.ismethod):
+            if not name.startswith("_"):  # Skip private methods
                 implementation_methods.add(name)
 
         # Check that all interface methods are implemented
         missing_methods = interface_methods - implementation_methods
-        assert len(missing_methods) == 0, \
-            f"{implementation_class.__name__} is missing methods: {missing_methods}"
+        assert (
+            len(missing_methods) == 0
+        ), f"{implementation_class.__name__} is missing methods: {missing_methods}"
 
-    @pytest.mark.parametrize("interface_class,implementation_class", [
-        (CustomerRepository, CustomerRepositoryImpl),
-        (MerchantRepository, MerchantRepositoryImpl),
-        (TransactionRepository, TransactionRepositoryImpl),
-        (PredictionRepository, PredictionRepositoryImpl),
-        (AlertRepository, AlertRepositoryImpl),
-        (AuditRepository, AuditRepositoryImpl),
-        (UserRepository, UserRepositoryImpl),
-        (ModelRepository, ModelRepositoryImpl),
-    ])
+    @pytest.mark.parametrize(
+        "interface_class,implementation_class",
+        [
+            (CustomerRepository, CustomerRepositoryImpl),
+            (MerchantRepository, MerchantRepositoryImpl),
+            (TransactionRepository, TransactionRepositoryImpl),
+            (PredictionRepository, PredictionRepositoryImpl),
+            (AlertRepository, AlertRepositoryImpl),
+            (AuditRepository, AuditRepositoryImpl),
+            (UserRepository, UserRepositoryImpl),
+            (ModelRepository, ModelRepositoryImpl),
+        ],
+    )
     def test_method_signatures_match(self, interface_class, implementation_class):
         """Test that method signatures match between interface and implementation."""
 
         interface_methods = {}
         for name, method in inspect.getmembers(interface_class, inspect.ismethod):
-            if getattr(method, '__isabstractmethod__', False):
+            if getattr(method, "__isabstractmethod__", False):
                 interface_methods[name] = inspect.signature(method)
 
         implementation_methods = {}
@@ -101,9 +109,10 @@ class TestRepositoryInterfaceCompliance:
                 interface_params = list(interface_sig.parameters.keys())
                 impl_params = list(impl_sig.parameters.keys())
 
-                assert interface_params == impl_params, \
-                    f"Parameter mismatch in {implementation_class.__name__}.{method_name}: " \
+                assert interface_params == impl_params, (
+                    f"Parameter mismatch in {implementation_class.__name__}.{method_name}: "
                     f"interface has {interface_params}, implementation has {impl_params}"
+                )
 
     def test_all_repositories_have_async_methods(self):
         """Test that all repository methods are async."""
@@ -120,13 +129,14 @@ class TestRepositoryInterfaceCompliance:
 
         for repo_class in implementations:
             for name, method in inspect.getmembers(repo_class, inspect.isfunction):
-                if not name.startswith('_') and name != '__init__':
-                    assert inspect.iscoroutinefunction(method), \
-                        f"{repo_class.__name__}.{name} must be async"
+                if not name.startswith("_") and name != "__init__":
+                    assert inspect.iscoroutinefunction(
+                        method
+                    ), f"{repo_class.__name__}.{name} must be async"
 
     def test_crud_operations_exist(self):
         """Test that all repositories implement basic CRUD operations."""
-        required_crud_methods = ['create', 'get_by_id', 'update', 'delete']
+        required_crud_methods = ["create", "get_by_id", "update", "delete"]
 
         implementations = [
             CustomerRepositoryImpl,
@@ -141,8 +151,9 @@ class TestRepositoryInterfaceCompliance:
             repo_methods = [name for name, _ in inspect.getmembers(repo_class, inspect.isfunction)]
 
             for crud_method in required_crud_methods:
-                assert crud_method in repo_methods, \
-                    f"{repo_class.__name__} missing CRUD method: {crud_method}"
+                assert (
+                    crud_method in repo_methods
+                ), f"{repo_class.__name__} missing CRUD method: {crud_method}"
 
     def test_pagination_support(self):
         """Test that repositories support pagination parameters."""
@@ -159,13 +170,13 @@ class TestRepositoryInterfaceCompliance:
         for repo_class in implementations:
             # Find list methods (methods that return lists)
             for name, method in inspect.getmembers(repo_class, inspect.isfunction):
-                if name.startswith('list_') or name.startswith('get_') and 'list' in name.lower():
+                if name.startswith("list_") or name.startswith("get_") and "list" in name.lower():
                     sig = inspect.signature(method)
                     param_names = list(sig.parameters.keys())
 
                     # Check for pagination parameters
-                    has_limit = 'limit' in param_names
-                    has_offset = 'offset' in param_names
+                    has_limit = "limit" in param_names
+                    has_offset = "offset" in param_names
 
                     if has_limit or has_offset:
                         assert has_limit, f"{repo_class.__name__}.{name} has offset but no limit"
@@ -193,7 +204,7 @@ class TestRepositoryInterfaceCompliance:
             instance = repo_class(mock_session)
             assert instance is not None
             # Check that session is stored
-            assert hasattr(instance, '_session')
+            assert hasattr(instance, "_session")
 
     def test_exception_imports(self):
         """Test that repositories import proper exception classes."""
@@ -213,11 +224,17 @@ class TestRepositoryInterfaceCompliance:
 
             # Check for exception imports in module
             module_dict = module.__dict__
-            expected_exceptions = ['RepositoryError', 'NotFoundError']
+            expected_exceptions = ["RepositoryError", "NotFoundError"]
 
             for exception in expected_exceptions:
                 # Should have access to exception classes (either imported or available)
                 # This is a basic check - in practice exceptions should be properly imported
-                assert hasattr(module, exception) or exception in module_dict or \
-                       any(exception in str(imp) for imp in module_dict.values() if hasattr(imp, '__name__')), \
-                    f"{repo_class.__name__} module should have access to {exception}"
+                assert (
+                    hasattr(module, exception)
+                    or exception in module_dict
+                    or any(
+                        exception in str(imp)
+                        for imp in module_dict.values()
+                        if hasattr(imp, "__name__")
+                    )
+                ), f"{repo_class.__name__} module should have access to {exception}"

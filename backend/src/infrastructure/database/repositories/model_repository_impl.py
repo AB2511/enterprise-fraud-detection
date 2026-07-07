@@ -5,7 +5,6 @@ from uuid import UUID
 
 from sqlalchemy import and_, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-
 from src.application.interfaces.model_repository import ModelRepository
 from src.domain.entities.model import Model
 from src.domain.exceptions.base import NotFoundError, RepositoryError
@@ -14,14 +13,14 @@ from src.infrastructure.database.models import ModelModel
 
 class ModelRepositoryImpl(ModelRepository):
     """SQLAlchemy implementation of ModelRepository.
-    
+
     Provides complete CRUD operations, version management, lifecycle tracking,
     and deployment control for ML model entities.
     """
 
     def __init__(self, session: AsyncSession) -> None:
         """Initialize repository with database session.
-        
+
         Args:
             session: Async SQLAlchemy session
         """
@@ -431,17 +430,15 @@ class ModelRepositoryImpl(ModelRepository):
         """
         try:
             # Count by status
-            status_query = (
-                select(ModelModel.status, func.count(ModelModel.id))
-                .group_by(ModelModel.status)
+            status_query = select(ModelModel.status, func.count(ModelModel.id)).group_by(
+                ModelModel.status
             )
             status_result = await self._session.execute(status_query)
             status_counts = dict(status_result.all())
 
             # Count by type
-            type_query = (
-                select(ModelModel.model_type, func.count(ModelModel.id))
-                .group_by(ModelModel.model_type)
+            type_query = select(ModelModel.model_type, func.count(ModelModel.id)).group_by(
+                ModelModel.model_type
             )
             type_result = await self._session.execute(type_query)
             type_counts = dict(type_result.all())
@@ -504,11 +501,7 @@ class ModelRepositoryImpl(ModelRepository):
             if conditions:
                 query = query.where(and_(*conditions))
 
-            query = (
-                query.order_by(desc(ModelModel.training_date))
-                .limit(limit)
-                .offset(offset)
-            )
+            query = query.order_by(desc(ModelModel.training_date)).limit(limit).offset(offset)
 
             result = await self._session.execute(query)
             db_models = result.scalars().all()

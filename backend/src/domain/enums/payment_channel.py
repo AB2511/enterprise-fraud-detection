@@ -1,9 +1,9 @@
 """Payment Channel Enumeration."""
 
-from enum import Enum
+from enum import StrEnum
 
 
-class PaymentChannel(str, Enum):
+class PaymentChannel(StrEnum):
     """Channel through which payment was made.
 
     Attributes:

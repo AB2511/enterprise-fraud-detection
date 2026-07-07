@@ -35,7 +35,7 @@ def sample_merchant() -> Merchant:
         total_volume=Decimal("50000.00"),
         is_active=True,
         created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow()
+        updated_at=datetime.utcnow(),
     )
 
 
@@ -80,7 +80,7 @@ class TestMerchantRepositoryCreate:
             total_volume=Decimal("25000.00"),
             is_active=True,
             created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow()
+            updated_at=datetime.utcnow(),
         )
 
         with pytest.raises(MerchantNameExistsError):
@@ -104,7 +104,7 @@ class TestMerchantRepositoryCreate:
             total_volume=Decimal("37500.00"),
             is_active=True,
             created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow()
+            updated_at=datetime.utcnow(),
         )
 
         result = await merchant_repository.create(merchant)
@@ -248,7 +248,7 @@ class TestMerchantRepositoryFiltering:
                 total_volume=Decimal("100000.00"),
                 is_active=True,
                 created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow()
+                updated_at=datetime.utcnow(),
             ),
             Merchant(
                 merchant_id=uuid4(),
@@ -262,7 +262,7 @@ class TestMerchantRepositoryFiltering:
                 total_volume=Decimal("75000.00"),
                 is_active=True,
                 created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow()
+                updated_at=datetime.utcnow(),
             ),
             Merchant(
                 merchant_id=uuid4(),
@@ -276,7 +276,7 @@ class TestMerchantRepositoryFiltering:
                 total_volume=Decimal("120000.00"),
                 is_active=True,
                 created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow()
+                updated_at=datetime.utcnow(),
             ),
         ]
 
@@ -370,11 +370,7 @@ class TestMerchantRepositoryComplexQueries:
         await async_session.commit()
 
         result = await merchant_repository.find_by_criteria(
-            country="US",
-            min_risk_rating=30,
-            max_risk_rating=60,
-            is_active=True,
-            limit=10
+            country="US", min_risk_rating=30, max_risk_rating=60, is_active=True, limit=10
         )
 
         assert len(result) == 1
@@ -390,10 +386,7 @@ class TestMerchantRepositoryComplexQueries:
         await merchant_repository.create(sample_merchant)
         await async_session.commit()
 
-        result = await merchant_repository.find_by_criteria(
-            name_pattern="Test Merchant",
-            limit=10
-        )
+        result = await merchant_repository.find_by_criteria(name_pattern="Test Merchant", limit=10)
 
         assert len(result) == 1
         assert "Test Merchant" in result[0].merchant_name
@@ -409,8 +402,7 @@ class TestMerchantRepositoryComplexQueries:
         await async_session.commit()
 
         result = await merchant_repository.find_by_criteria(
-            country="ZZ",  # Non-existent country
-            limit=10
+            country="ZZ", limit=10  # Non-existent country
         )
 
         assert len(result) == 0
@@ -440,7 +432,7 @@ class TestMerchantRepositoryBulkOperations:
                 total_volume=Decimal("50000.00"),
                 is_active=True,
                 created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow()
+                updated_at=datetime.utcnow(),
             )
             created = await merchant_repository.create(merchant)
             merchants.append(created)
@@ -449,9 +441,7 @@ class TestMerchantRepositoryBulkOperations:
 
         # Bulk update risk ratings
         merchant_ids = [m.merchant_id for m in merchants]
-        updated_count = await merchant_repository.bulk_update_risk_rating(
-            merchant_ids, 75
-        )
+        updated_count = await merchant_repository.bulk_update_risk_rating(merchant_ids, 75)
         await async_session.commit()
 
         assert updated_count == 3
@@ -461,9 +451,7 @@ class TestMerchantRepositoryBulkOperations:
             updated_merchant = await merchant_repository.get_by_id(merchant_id)
             assert updated_merchant.risk_rating == 75
 
-    async def test_bulk_update_empty_list(
-        self, merchant_repository: MerchantRepositoryImpl
-    ):
+    async def test_bulk_update_empty_list(self, merchant_repository: MerchantRepositoryImpl):
         """Test bulk update with empty ID list."""
         result = await merchant_repository.bulk_update_risk_rating([], 50)
         assert result == 0
@@ -514,19 +502,15 @@ class TestMerchantRepositoryPagination:
                 total_volume=Decimal("50000.00"),
                 is_active=True,
                 created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow()
+                updated_at=datetime.utcnow(),
             )
             await merchant_repository.create(merchant)
 
         await async_session.commit()
 
         # Test pagination
-        page1 = await merchant_repository.list_by_category(
-            "grocery", limit=2, offset=0
-        )
-        page2 = await merchant_repository.list_by_category(
-            "grocery", limit=2, offset=2
-        )
+        page1 = await merchant_repository.list_by_category("grocery", limit=2, offset=0)
+        page2 = await merchant_repository.list_by_category("grocery", limit=2, offset=2)
 
         assert len(page1) == 2
         assert len(page2) == 2
@@ -558,7 +542,7 @@ class TestMerchantRepositoryEdgeCases:
             total_volume=Decimal("0.00"),
             is_active=False,
             created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow()
+            updated_at=datetime.utcnow(),
         )
 
         result = await merchant_repository.create(merchant)
@@ -609,6 +593,6 @@ class TestMerchantRepositoryEdgeCases:
                 total_volume=Decimal("1000.00"),
                 is_active=True,
                 created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow()
+                updated_at=datetime.utcnow(),
             )
             await merchant_repository.update(invalid_merchant)

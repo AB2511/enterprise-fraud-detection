@@ -4,7 +4,7 @@ Provides consistent response structure across all API endpoints.
 """
 
 from datetime import datetime
-from typing import Any, Generic, TypeVar
+from typing import Any, TypeVar
 from uuid import uuid4
 
 from pydantic import BaseModel, Field
@@ -29,7 +29,7 @@ class APIMetadata(BaseModel):
     )
 
 
-class APIResponse(BaseModel, Generic[T]):
+class APIResponse[T](BaseModel):
     """Standard API response envelope.
 
     All API endpoints should return this structure for consistency.

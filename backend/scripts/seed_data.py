@@ -37,7 +37,7 @@ def generate_users(count: int = 100) -> list[dict]:
     role_weights = [5, 40, 20, 20, 15]  # More analysts
 
     users = []
-    for i in range(count):
+    for _i in range(count):
         role = random.choices(roles, weights=role_weights)[0]
         user = {
             "id": uuid4(),
@@ -45,9 +45,11 @@ def generate_users(count: int = 100) -> list[dict]:
             "hashed_password": "$2b$12$dummy_hash_for_seed_data_only",  # Placeholder
             "role": role,
             "status": "active" if random.random() > 0.1 else "inactive",
-            "last_login_at": fake.date_time_between(start_date="-30d", end_date="now")
-            if random.random() > 0.3
-            else None,
+            "last_login_at": (
+                fake.date_time_between(start_date="-30d", end_date="now")
+                if random.random() > 0.3
+                else None
+            ),
             "created_at": fake.date_time_between(start_date="-2y", end_date="-1d"),
             "updated_at": datetime.utcnow(),
             "deleted_at": None,
@@ -73,7 +75,7 @@ def generate_customers(count: int = 1000) -> list[dict]:
     risk_weights = [50, 30, 15, 5]
 
     customers = []
-    for i in range(count):
+    for _i in range(count):
         account_age_days = random.randint(1, 730)
         kyc_status = random.choices(kyc_statuses, weights=kyc_weights)[0]
         risk_category = random.choices(risk_categories, weights=risk_weights)[0]
@@ -86,12 +88,18 @@ def generate_customers(count: int = 1000) -> list[dict]:
             "country": random.choice(countries),
             "kyc_status": kyc_status,
             "customer_risk_category": risk_category,
-            "historical_fraud_count": random.randint(0, 5) if risk_category in ["high", "critical"] else 0,
+            "historical_fraud_count": (
+                random.randint(0, 5) if risk_category in ["high", "critical"] else 0
+            ),
             "credit_score": random.randint(300, 850),
-            "lifetime_transaction_volume": float(Decimal(random.uniform(0, 500000)).quantize(Decimal("0.01"))),
+            "lifetime_transaction_volume": float(
+                Decimal(random.uniform(0, 500000)).quantize(Decimal("0.01"))
+            ),
             "account_age_days": account_age_days,
             "is_active": random.random() > 0.05,
-            "created_at": fake.date_time_between(start_date=f"-{account_age_days}d", end_date=f"-{account_age_days}d"),
+            "created_at": fake.date_time_between(
+                start_date=f"-{account_age_days}d", end_date=f"-{account_age_days}d"
+            ),
             "updated_at": datetime.utcnow(),
             "deleted_at": None,
         }
@@ -125,7 +133,7 @@ def generate_merchants(count: int = 500) -> list[dict]:
     countries = ["USA", "GBR", "DEU", "FRA", "JPN", "CAN", "AUS"]
 
     merchants = []
-    for i in range(count):
+    for _i in range(count):
         mcc, category, risk_level = random.choice(categories)
 
         # Risk rating based on category
@@ -137,7 +145,9 @@ def generate_merchants(count: int = 500) -> list[dict]:
             risk_rating = random.randint(70, 95)
 
         total_transactions = random.randint(100, 50000)
-        fraud_rate = random.uniform(0.1, 10.0) if risk_level == "high" else random.uniform(0.01, 2.0)
+        fraud_rate = (
+            random.uniform(0.1, 10.0) if risk_level == "high" else random.uniform(0.01, 2.0)
+        )
 
         merchant = {
             "id": uuid4(),
@@ -148,7 +158,9 @@ def generate_merchants(count: int = 500) -> list[dict]:
             "risk_rating": risk_rating,
             "historical_fraud_rate": float(Decimal(fraud_rate).quantize(Decimal("0.01"))),
             "total_transactions": total_transactions,
-            "total_volume": float(Decimal(random.uniform(10000, 5000000)).quantize(Decimal("0.01"))),
+            "total_volume": float(
+                Decimal(random.uniform(10000, 5000000)).quantize(Decimal("0.01"))
+            ),
             "is_active": random.random() > 0.05,
             "created_at": fake.date_time_between(start_date="-5y", end_date="-30d"),
             "updated_at": datetime.utcnow(),
@@ -184,17 +196,27 @@ def generate_transactions(
 
     # Fraud patterns
     fraud_rate = 0.05  # 5% fraud
-    high_risk_customers = [c for c in customers if c["customer_risk_category"] in ["high", "critical"]]
+    high_risk_customers = [
+        c for c in customers if c["customer_risk_category"] in ["high", "critical"]
+    ]
     high_risk_merchants = [m for m in merchants if m["risk_rating"] >= 70]
 
-    for i in range(count):
+    for _i in range(count):
         # Determine if transaction is fraud
         is_fraud = random.random() < fraud_rate
 
         if is_fraud and high_risk_customers:
             # Fraud more likely with high-risk customers/merchants
-            customer = random.choice(high_risk_customers) if random.random() > 0.3 else random.choice(customers)
-            merchant = random.choice(high_risk_merchants) if random.random() > 0.5 and high_risk_merchants else random.choice(merchants)
+            customer = (
+                random.choice(high_risk_customers)
+                if random.random() > 0.3
+                else random.choice(customers)
+            )
+            merchant = (
+                random.choice(high_risk_merchants)
+                if random.random() > 0.5 and high_risk_merchants
+                else random.choice(merchants)
+            )
         else:
             customer = random.choice(customers)
             merchant = random.choice(merchants)
@@ -233,7 +255,11 @@ def generate_transactions(
             "velocity_24h": float(Decimal(random.uniform(0, 20)).quantize(Decimal("0.1"))),
             "velocity_7d": float(Decimal(random.uniform(0, 100)).quantize(Decimal("0.1"))),
             "is_fraud": is_fraud,
-            "fraud_confirmed_at": created_at + timedelta(hours=random.randint(1, 48)) if is_fraud and random.random() > 0.5 else None,
+            "fraud_confirmed_at": (
+                created_at + timedelta(hours=random.randint(1, 48))
+                if is_fraud and random.random() > 0.5
+                else None
+            ),
             "created_at": created_at,
             "updated_at": datetime.utcnow(),
             "deleted_at": None,
@@ -284,7 +310,11 @@ def generate_predictions(transactions: list[dict]) -> list[dict]:
             "anomaly_score": float(Decimal(anomaly_score).quantize(Decimal("0.01"))),
             "risk_score": float(Decimal(risk_score).quantize(Decimal("0.01"))),
             "confidence": float(Decimal(random.uniform(0.8, 0.99)).quantize(Decimal("0.01"))),
-            "decision": "block" if fraud_probability > 0.8 else "review" if fraud_probability > 0.5 else "approve",
+            "decision": (
+                "block"
+                if fraud_probability > 0.8
+                else "review" if fraud_probability > 0.5 else "approve"
+            ),
             "latency_ms": float(Decimal(random.uniform(10, 100)).quantize(Decimal("0.1"))),
             "explanation_data": {
                 "top_features": [
@@ -320,7 +350,6 @@ def generate_alerts(predictions: list[dict], users: list[dict]) -> list[dict]:
         "merchant_risk",
         "customer_risk",
     ]
-    severities = ["low", "medium", "high", "critical"]
     statuses = ["open", "in_review", "resolved", "false_positive", "confirmed_fraud"]
 
     alerts = []
@@ -353,7 +382,9 @@ def generate_alerts(predictions: list[dict], users: list[dict]) -> list[dict]:
 
         # Resolution
         resolved = status in ["resolved", "false_positive", "confirmed_fraud"]
-        resolved_at = pred["created_at"] + timedelta(hours=random.randint(1, 48)) if resolved else None
+        resolved_at = (
+            pred["created_at"] + timedelta(hours=random.randint(1, 48)) if resolved else None
+        )
         is_sla_breached = resolved_at > sla_deadline if resolved and resolved_at else False
 
         alert = {
@@ -364,7 +395,9 @@ def generate_alerts(predictions: list[dict], users: list[dict]) -> list[dict]:
             "severity": severity,
             "status": status,
             "assigned_analyst_id": analyst["id"] if analyst else None,
-            "assigned_at": pred["created_at"] + timedelta(minutes=random.randint(5, 60)) if assigned else None,
+            "assigned_at": (
+                pred["created_at"] + timedelta(minutes=random.randint(5, 60)) if assigned else None
+            ),
             "resolution": status if resolved else None,
             "resolved_at": resolved_at,
             "resolved_by_id": analyst["id"] if resolved and analyst else None,
@@ -433,14 +466,16 @@ def main():
         print(f"   • {risk} risk: {count}")
 
     print(f"\n🏪 Merchants: {len(merchants)}")
-    categories = set(m["merchant_category"] for m in merchants)
+    categories = {m["merchant_category"] for m in merchants}
     for category in sorted(categories):
         count = sum(1 for m in merchants if m["merchant_category"] == category)
         print(f"   • {category}: {count}")
 
     print(f"\n💳 Transactions: {len(transactions)}")
     fraud_count = sum(1 for t in transactions if t["is_fraud"])
-    print(f"   • Legitimate: {len(transactions) - fraud_count} ({((len(transactions) - fraud_count) / len(transactions) * 100):.1f}%)")
+    print(
+        f"   • Legitimate: {len(transactions) - fraud_count} ({((len(transactions) - fraud_count) / len(transactions) * 100):.1f}%)"
+    )
     print(f"   • Fraud: {fraud_count} ({(fraud_count / len(transactions) * 100):.1f}%)")
 
     print(f"\n🎯 Predictions: {len(predictions)}")

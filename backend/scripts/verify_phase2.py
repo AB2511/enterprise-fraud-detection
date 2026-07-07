@@ -81,19 +81,19 @@ def test_value_objects():
 
         # Test IPAddress
         ip = IPAddress(address="192.168.1.100")
-        assert ip.is_private() == True
+        assert ip.is_private()
         anonymized = ip.anonymize()
         assert anonymized.address == "192.168.1.0"
 
         # Test DeviceID
         device = DeviceID(device_id="mobile-android-12345678")
-        assert device.is_mobile() == True
+        assert device.is_mobile()
         assert len(device.hash()) == 64
 
         # Test RiskScore
         risk = RiskScore(score=75.5)
         assert risk.get_level() == "high"
-        assert risk.is_high_risk() == True
+        assert risk.is_high_risk()
 
         # Test ModelVersion
         version = ModelVersion(version="1.2.3")
@@ -131,23 +131,23 @@ def test_enumerations():
 
         # Test KYCStatus
         kyc = KYCStatus.VERIFIED
-        assert kyc.is_valid() == True
-        assert kyc.blocks_transactions() == False
+        assert kyc.is_valid()
+        assert not kyc.blocks_transactions()
 
         # Test PaymentMethod
         method = PaymentMethod.CREDIT_CARD
-        assert method.is_reversible() == True
+        assert method.is_reversible()
         assert method.get_risk_level() == "medium"
 
         # Test TransactionStatus
         status = TransactionStatus.APPROVED
-        assert status.is_final() == True
-        assert status.is_successful() == True
+        assert status.is_final()
+        assert status.is_successful()
 
         # Test UserRole
         role = UserRole.ANALYST
-        assert role.can_review_alerts() == True
-        assert role.can_train_models() == False
+        assert role.can_review_alerts()
+        assert not role.can_train_models()
         assert "review_alerts" in role.get_permissions()
 
         print("   ✅ All enumerations working correctly!")
@@ -176,9 +176,9 @@ def test_customer_entity():
         )
 
         # Test initial state
-        assert customer.is_verified == True
-        assert customer.can_transact == True
-        assert customer.is_high_risk == False
+        assert customer.is_verified
+        assert customer.can_transact
+        assert not customer.is_high_risk
 
         # Test fraud counter
         customer.increment_fraud_counter()
@@ -226,8 +226,8 @@ def test_merchant_entity():
         )
 
         # Test initial state
-        assert merchant.is_high_risk == False
-        assert merchant.is_new_merchant == True
+        assert not merchant.is_high_risk
+        assert merchant.is_new_merchant
 
         # Test risk calculation
         calculated_risk = merchant.calculate_risk()
@@ -274,13 +274,13 @@ def test_user_entity():
         )
 
         # Test password verification
-        assert user.verify_password("SecurePassword123!") == True
-        assert user.verify_password("WrongPassword") == False
+        assert user.verify_password("SecurePassword123!")
+        assert not user.verify_password("WrongPassword")
 
         # Test role permissions
-        assert user.can_review_alerts() == True
-        assert user.can_manage_users() == False
-        assert user.has_permission("review_alerts") == True
+        assert user.can_review_alerts()
+        assert not user.can_manage_users()
+        assert user.has_permission("review_alerts")
 
         # Test activation
         user.deactivate()
@@ -291,7 +291,7 @@ def test_user_entity():
         # Test role change
         user.assign_role("admin")
         assert user.role == "admin"
-        assert user.can_manage_users() == True
+        assert user.can_manage_users()
 
         print("   ✅ User entity working correctly!")
         return True
@@ -318,8 +318,8 @@ def test_alert_entity():
 
         # Test initial state
         assert alert.status == "open"
-        assert alert.is_open() == True
-        assert alert.requires_action() == True
+        assert alert.is_open()
+        assert alert.requires_action()
 
         # Test SLA calculation
         sla_hours = alert.calculate_sla_hours()
@@ -334,8 +334,8 @@ def test_alert_entity():
         # Test resolution
         alert.resolve(resolution="false_positive", resolved_by_id=analyst_id)
         assert alert.status == "false_positive"
-        assert alert.is_resolved() == True
-        assert alert.requires_action() == False
+        assert alert.is_resolved()
+        assert not alert.requires_action()
 
         print("   ✅ Alert entity working correctly!")
         return True

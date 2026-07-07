@@ -20,11 +20,7 @@ class TestUserRepositoryImpl:
     @pytest.fixture
     def sample_user(self) -> User:
         """Create sample user entity."""
-        return User.create(
-            email="analyst@company.com",
-            password="SecurePass123!",
-            role="analyst"
-        )
+        return User.create(email="analyst@company.com", password="SecurePass123!", role="analyst")
 
     async def test_create_user(self, repository: UserRepositoryImpl, sample_user: User):
         """Test user creation."""
@@ -85,7 +81,9 @@ class TestUserRepositoryImpl:
         assert retrieved is not None
         assert retrieved.email == "analyst@company.com"
 
-    async def test_get_by_email_case_insensitive(self, repository: UserRepositoryImpl, sample_user: User):
+    async def test_get_by_email_case_insensitive(
+        self, repository: UserRepositoryImpl, sample_user: User
+    ):
         """Test email lookup is case insensitive."""
         # Arrange
         await repository.create(sample_user)
@@ -241,7 +239,7 @@ class TestUserRepositoryImpl:
         old_user = User.create("old@company.com", "pass2", "analyst")
 
         created_recent = await repository.create(recent_user)
-        created_old = await repository.create(old_user)
+        await repository.create(old_user)
 
         # Update login times
         await repository.update_last_login(created_recent.user_id)
@@ -344,7 +342,9 @@ class TestUserRepositoryImpl:
         large_offset = await repository.list_active(offset=1000)
         assert large_offset == []
 
-    async def test_soft_delete_excludes_from_searches(self, repository: UserRepositoryImpl, sample_user: User):
+    async def test_soft_delete_excludes_from_searches(
+        self, repository: UserRepositoryImpl, sample_user: User
+    ):
         """Test that soft-deleted users are excluded from searches."""
         # Arrange
         created = await repository.create(sample_user)

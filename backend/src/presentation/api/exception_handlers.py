@@ -4,12 +4,10 @@ Converts application exceptions to RFC7807 Problem Details format
 with consistent error responses.
 """
 
-
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
-
 from src.application.exceptions.application_exceptions import (
     ApplicationException,
     AuthenticationException,

@@ -6,7 +6,6 @@ from uuid import UUID
 from sqlalchemy import and_, desc, func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-
 from src.application.interfaces.merchant_repository import MerchantRepository
 from src.domain.entities.merchant import Merchant
 from src.domain.exceptions.base import (
@@ -64,7 +63,7 @@ class MerchantRepositoryImpl(MerchantRepository):
                 select(MerchantModel).where(
                     and_(
                         MerchantModel.merchant_name == merchant.merchant_name,
-                        MerchantModel.deleted_at.is_(None)
+                        MerchantModel.deleted_at.is_(None),
                     )
                 )
             )
@@ -84,7 +83,7 @@ class MerchantRepositoryImpl(MerchantRepository):
                 total_volume=float(merchant.total_volume),
                 is_active=merchant.is_active,
                 created_at=merchant.created_at,
-                updated_at=merchant.updated_at
+                updated_at=merchant.updated_at,
             )
 
             self._session.add(merchant_model)
@@ -96,12 +95,14 @@ class MerchantRepositoryImpl(MerchantRepository):
         except IntegrityError as e:
             await self._session.rollback()
             if "unique" in str(e).lower():
-                raise MerchantNameExistsError(merchant.merchant_name)
-            raise DomainException(f"Database constraint violation: {e}", "DB_CONSTRAINT_ERROR")
+                raise MerchantNameExistsError(merchant.merchant_name) from e
+            raise DomainException(
+                f"Database constraint violation: {e}", "DB_CONSTRAINT_ERROR"
+            ) from e
 
         except Exception as e:
             await self._session.rollback()
-            raise DomainException(f"Failed to create merchant: {e}", "REPOSITORY_ERROR")
+            raise DomainException(f"Failed to create merchant: {e}", "REPOSITORY_ERROR") from e
 
     async def get_by_id(self, merchant_id: UUID) -> Merchant | None:
         """Retrieve merchant by ID.
@@ -115,10 +116,7 @@ class MerchantRepositoryImpl(MerchantRepository):
         try:
             result = await self._session.execute(
                 select(MerchantModel).where(
-                    and_(
-                        MerchantModel.id == merchant_id,
-                        MerchantModel.deleted_at.is_(None)
-                    )
+                    and_(MerchantModel.id == merchant_id, MerchantModel.deleted_at.is_(None))
                 )
             )
             merchant_model = result.scalar_one_or_none()
@@ -128,7 +126,7 @@ class MerchantRepositoryImpl(MerchantRepository):
             return None
 
         except Exception as e:
-            raise DomainException(f"Failed to get merchant by ID: {e}", "REPOSITORY_ERROR")
+            raise DomainException(f"Failed to get merchant by ID: {e}", "REPOSITORY_ERROR") from e
 
     async def get_by_name(self, merchant_name: str) -> Merchant | None:
         """Retrieve merchant by name.
@@ -144,7 +142,7 @@ class MerchantRepositoryImpl(MerchantRepository):
                 select(MerchantModel).where(
                     and_(
                         MerchantModel.merchant_name == merchant_name,
-                        MerchantModel.deleted_at.is_(None)
+                        MerchantModel.deleted_at.is_(None),
                     )
                 )
             )
@@ -155,7 +153,7 @@ class MerchantRepositoryImpl(MerchantRepository):
             return None
 
         except Exception as e:
-            raise DomainException(f"Failed to get merchant by name: {e}", "REPOSITORY_ERROR")
+            raise DomainException(f"Failed to get merchant by name: {e}", "REPOSITORY_ERROR") from e
 
     async def update(self, merchant: Merchant) -> Merchant:
         """Update existing merchant.
@@ -175,8 +173,7 @@ class MerchantRepositoryImpl(MerchantRepository):
             existing = await self._session.execute(
                 select(MerchantModel).where(
                     and_(
-                        MerchantModel.id == merchant.merchant_id,
-                        MerchantModel.deleted_at.is_(None)
+                        MerchantModel.id == merchant.merchant_id, MerchantModel.deleted_at.is_(None)
                     )
                 )
             )
@@ -197,7 +194,7 @@ class MerchantRepositoryImpl(MerchantRepository):
                     total_transactions=merchant.total_transactions,
                     total_volume=float(merchant.total_volume),
                     is_active=merchant.is_active,
-                    updated_at=datetime.utcnow()
+                    updated_at=datetime.utcnow(),
                 )
             )
 
@@ -214,11 +211,13 @@ class MerchantRepositoryImpl(MerchantRepository):
         except IntegrityError as e:
             await self._session.rollback()
             if "unique" in str(e).lower():
-                raise MerchantNameExistsError(merchant.merchant_name)
-            raise DomainException(f"Database constraint violation: {e}", "DB_CONSTRAINT_ERROR")
+                raise MerchantNameExistsError(merchant.merchant_name) from e
+            raise DomainException(
+                f"Database constraint violation: {e}", "DB_CONSTRAINT_ERROR"
+            ) from e
         except Exception as e:
             await self._session.rollback()
-            raise DomainException(f"Failed to update merchant: {e}", "REPOSITORY_ERROR")
+            raise DomainException(f"Failed to update merchant: {e}", "REPOSITORY_ERROR") from e
 
     async def delete(self, merchant_id: UUID) -> bool:
         """Soft delete merchant.
@@ -232,12 +231,7 @@ class MerchantRepositoryImpl(MerchantRepository):
         try:
             result = await self._session.execute(
                 update(MerchantModel)
-                .where(
-                    and_(
-                        MerchantModel.id == merchant_id,
-                        MerchantModel.deleted_at.is_(None)
-                    )
-                )
+                .where(and_(MerchantModel.id == merchant_id, MerchantModel.deleted_at.is_(None)))
                 .values(deleted_at=datetime.utcnow())
             )
 
@@ -245,7 +239,7 @@ class MerchantRepositoryImpl(MerchantRepository):
 
         except Exception as e:
             await self._session.rollback()
-            raise DomainException(f"Failed to delete merchant: {e}", "REPOSITORY_ERROR")
+            raise DomainException(f"Failed to delete merchant: {e}", "REPOSITORY_ERROR") from e
 
     async def list_by_category(
         self,
@@ -269,7 +263,7 @@ class MerchantRepositoryImpl(MerchantRepository):
                 .where(
                     and_(
                         MerchantModel.merchant_category == category,
-                        MerchantModel.deleted_at.is_(None)
+                        MerchantModel.deleted_at.is_(None),
                     )
                 )
                 .order_by(desc(MerchantModel.total_volume))
@@ -281,7 +275,9 @@ class MerchantRepositoryImpl(MerchantRepository):
             return [self._model_to_entity(merchant) for merchant in merchants]
 
         except Exception as e:
-            raise DomainException(f"Failed to list merchants by category: {e}", "REPOSITORY_ERROR")
+            raise DomainException(
+                f"Failed to list merchants by category: {e}", "REPOSITORY_ERROR"
+            ) from e
 
     async def list_by_mcc(
         self,
@@ -302,12 +298,7 @@ class MerchantRepositoryImpl(MerchantRepository):
         try:
             result = await self._session.execute(
                 select(MerchantModel)
-                .where(
-                    and_(
-                        MerchantModel.mcc == mcc,
-                        MerchantModel.deleted_at.is_(None)
-                    )
-                )
+                .where(and_(MerchantModel.mcc == mcc, MerchantModel.deleted_at.is_(None)))
                 .order_by(desc(MerchantModel.total_transactions))
                 .limit(limit)
                 .offset(offset)
@@ -317,7 +308,9 @@ class MerchantRepositoryImpl(MerchantRepository):
             return [self._model_to_entity(merchant) for merchant in merchants]
 
         except Exception as e:
-            raise DomainException(f"Failed to list merchants by MCC: {e}", "REPOSITORY_ERROR")
+            raise DomainException(
+                f"Failed to list merchants by MCC: {e}", "REPOSITORY_ERROR"
+            ) from e
 
     async def list_high_risk(self, min_risk_rating: int = 70, limit: int = 100) -> list[Merchant]:
         """List high-risk merchants.
@@ -335,12 +328,11 @@ class MerchantRepositoryImpl(MerchantRepository):
                 .where(
                     and_(
                         MerchantModel.risk_rating >= min_risk_rating,
-                        MerchantModel.deleted_at.is_(None)
+                        MerchantModel.deleted_at.is_(None),
                     )
                 )
                 .order_by(
-                    desc(MerchantModel.risk_rating),
-                    desc(MerchantModel.historical_fraud_rate)
+                    desc(MerchantModel.risk_rating), desc(MerchantModel.historical_fraud_rate)
                 )
                 .limit(limit)
             )
@@ -349,7 +341,9 @@ class MerchantRepositoryImpl(MerchantRepository):
             return [self._model_to_entity(merchant) for merchant in merchants]
 
         except Exception as e:
-            raise DomainException(f"Failed to list high-risk merchants: {e}", "REPOSITORY_ERROR")
+            raise DomainException(
+                f"Failed to list high-risk merchants: {e}", "REPOSITORY_ERROR"
+            ) from e
 
     async def count_by_risk_level(self, min_risk_rating: int) -> int:
         """Count merchants above risk threshold.
@@ -362,12 +356,11 @@ class MerchantRepositoryImpl(MerchantRepository):
         """
         try:
             result = await self._session.execute(
-                select(func.count(MerchantModel.id))
-                .where(
+                select(func.count(MerchantModel.id)).where(
                     and_(
                         MerchantModel.risk_rating >= min_risk_rating,
                         MerchantModel.deleted_at.is_(None),
-                        MerchantModel.is_active == True
+                        MerchantModel.is_active,
                     )
                 )
             )
@@ -375,7 +368,9 @@ class MerchantRepositoryImpl(MerchantRepository):
             return result.scalar() or 0
 
         except Exception as e:
-            raise DomainException(f"Failed to count merchants by risk level: {e}", "REPOSITORY_ERROR")
+            raise DomainException(
+                f"Failed to count merchants by risk level: {e}", "REPOSITORY_ERROR"
+            ) from e
 
     async def find_by_criteria(
         self,
@@ -451,7 +446,9 @@ class MerchantRepositoryImpl(MerchantRepository):
             return [self._model_to_entity(merchant) for merchant in merchants]
 
         except Exception as e:
-            raise DomainException(f"Failed to find merchants by criteria: {e}", "REPOSITORY_ERROR")
+            raise DomainException(
+                f"Failed to find merchants by criteria: {e}", "REPOSITORY_ERROR"
+            ) from e
 
     async def bulk_update_risk_rating(self, merchant_ids: list[UUID], new_rating: int) -> int:
         """Bulk update risk rating for multiple merchants.
@@ -469,23 +466,17 @@ class MerchantRepositoryImpl(MerchantRepository):
 
             result = await self._session.execute(
                 update(MerchantModel)
-                .where(
-                    and_(
-                        MerchantModel.id.in_(merchant_ids),
-                        MerchantModel.deleted_at.is_(None)
-                    )
-                )
-                .values(
-                    risk_rating=new_rating,
-                    updated_at=datetime.utcnow()
-                )
+                .where(and_(MerchantModel.id.in_(merchant_ids), MerchantModel.deleted_at.is_(None)))
+                .values(risk_rating=new_rating, updated_at=datetime.utcnow())
             )
 
             return result.rowcount
 
         except Exception as e:
             await self._session.rollback()
-            raise DomainException(f"Failed to bulk update risk rating: {e}", "REPOSITORY_ERROR")
+            raise DomainException(
+                f"Failed to bulk update risk rating: {e}", "REPOSITORY_ERROR"
+            ) from e
 
     async def get_statistics_by_category(self) -> dict[str, dict[str, any]]:
         """Get merchant statistics grouped by category.
@@ -501,14 +492,9 @@ class MerchantRepositoryImpl(MerchantRepository):
                     func.avg(MerchantModel.risk_rating).label("avg_risk_rating"),
                     func.avg(MerchantModel.historical_fraud_rate).label("avg_fraud_rate"),
                     func.sum(MerchantModel.total_transactions).label("total_transactions"),
-                    func.sum(MerchantModel.total_volume).label("total_volume")
+                    func.sum(MerchantModel.total_volume).label("total_volume"),
                 )
-                .where(
-                    and_(
-                        MerchantModel.deleted_at.is_(None),
-                        MerchantModel.is_active == True
-                    )
-                )
+                .where(and_(MerchantModel.deleted_at.is_(None), MerchantModel.is_active))
                 .group_by(MerchantModel.merchant_category)
             )
 
@@ -519,13 +505,15 @@ class MerchantRepositoryImpl(MerchantRepository):
                     "avg_risk_rating": float(row.avg_risk_rating or 0),
                     "avg_fraud_rate": float(row.avg_fraud_rate or 0),
                     "total_transactions": row.total_transactions or 0,
-                    "total_volume": float(row.total_volume or 0)
+                    "total_volume": float(row.total_volume or 0),
                 }
 
             return stats
 
         except Exception as e:
-            raise DomainException(f"Failed to get merchant statistics: {e}", "REPOSITORY_ERROR")
+            raise DomainException(
+                f"Failed to get merchant statistics: {e}", "REPOSITORY_ERROR"
+            ) from e
 
     async def get_by_country(
         self,
@@ -592,7 +580,9 @@ class MerchantRepositoryImpl(MerchantRepository):
             limit = min(max(1, limit), 1000)
 
             if min_risk > max_risk:
-                raise ValueError(f"min_risk ({min_risk}) cannot be greater than max_risk ({max_risk})")
+                raise ValueError(
+                    f"min_risk ({min_risk}) cannot be greater than max_risk ({max_risk})"
+                )
 
             query = (
                 select(MerchantModel)
@@ -638,5 +628,5 @@ class MerchantRepositoryImpl(MerchantRepository):
             total_volume=Decimal(str(model.total_volume)),
             is_active=model.is_active,
             created_at=model.created_at,
-            updated_at=model.updated_at
+            updated_at=model.updated_at,
         )

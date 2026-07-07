@@ -6,7 +6,6 @@ from uuid import UUID
 from sqlalchemy import and_, desc, func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-
 from src.application.interfaces.customer_repository import CustomerRepository
 from src.domain.entities.customer import Customer
 from src.domain.exceptions.base import (
@@ -62,10 +61,7 @@ class CustomerRepositoryImpl(CustomerRepository):
             # Check if email already exists
             existing = await self._session.execute(
                 select(CustomerModel).where(
-                    and_(
-                        CustomerModel.email == customer.email,
-                        CustomerModel.deleted_at.is_(None)
-                    )
+                    and_(CustomerModel.email == customer.email, CustomerModel.deleted_at.is_(None))
                 )
             )
             if existing.scalar_one_or_none():
@@ -86,7 +82,7 @@ class CustomerRepositoryImpl(CustomerRepository):
                 account_age_days=customer.account_age_days,
                 is_active=customer.is_active,
                 created_at=customer.created_at,
-                updated_at=customer.updated_at
+                updated_at=customer.updated_at,
             )
 
             self._session.add(customer_model)
@@ -97,16 +93,18 @@ class CustomerRepositoryImpl(CustomerRepository):
             return self._model_to_entity(customer_model)
 
         except CustomerEmailExistsError:
-            raise ConflictError(f"Customer with email {customer.email} already exists")
+            raise ConflictError(f"Customer with email {customer.email} already exists") from None
         except IntegrityError as e:
             await self._session.rollback()
             if "unique" in str(e).lower():
-                raise ConflictError(f"Customer with email {customer.email} already exists")
-            raise DomainException(f"Database constraint violation: {e}", "DB_CONSTRAINT_ERROR")
+                raise ConflictError(f"Customer with email {customer.email} already exists") from e
+            raise DomainException(
+                f"Database constraint violation: {e}", "DB_CONSTRAINT_ERROR"
+            ) from e
 
         except Exception as e:
             await self._session.rollback()
-            raise DomainException(f"Failed to create customer: {e}", "REPOSITORY_ERROR")
+            raise DomainException(f"Failed to create customer: {e}", "REPOSITORY_ERROR") from e
 
     async def get_by_id(self, customer_id: UUID) -> Customer | None:
         """Retrieve customer by ID.
@@ -120,10 +118,7 @@ class CustomerRepositoryImpl(CustomerRepository):
         try:
             result = await self._session.execute(
                 select(CustomerModel).where(
-                    and_(
-                        CustomerModel.id == customer_id,
-                        CustomerModel.deleted_at.is_(None)
-                    )
+                    and_(CustomerModel.id == customer_id, CustomerModel.deleted_at.is_(None))
                 )
             )
             customer_model = result.scalar_one_or_none()
@@ -133,7 +128,7 @@ class CustomerRepositoryImpl(CustomerRepository):
             return None
 
         except Exception as e:
-            raise DomainException(f"Failed to get customer by ID: {e}", "REPOSITORY_ERROR")
+            raise DomainException(f"Failed to get customer by ID: {e}", "REPOSITORY_ERROR") from e
 
     async def get_by_email(self, email: str) -> Customer | None:
         """Retrieve customer by email.
@@ -147,10 +142,7 @@ class CustomerRepositoryImpl(CustomerRepository):
         try:
             result = await self._session.execute(
                 select(CustomerModel).where(
-                    and_(
-                        CustomerModel.email == email,
-                        CustomerModel.deleted_at.is_(None)
-                    )
+                    and_(CustomerModel.email == email, CustomerModel.deleted_at.is_(None))
                 )
             )
             customer_model = result.scalar_one_or_none()
@@ -160,7 +152,9 @@ class CustomerRepositoryImpl(CustomerRepository):
             return None
 
         except Exception as e:
-            raise DomainException(f"Failed to get customer by email: {e}", "REPOSITORY_ERROR")
+            raise DomainException(
+                f"Failed to get customer by email: {e}", "REPOSITORY_ERROR"
+            ) from e
 
     async def update(self, customer: Customer) -> Customer:
         """Update existing customer.
@@ -180,8 +174,7 @@ class CustomerRepositoryImpl(CustomerRepository):
             existing = await self._session.execute(
                 select(CustomerModel).where(
                     and_(
-                        CustomerModel.id == customer.customer_id,
-                        CustomerModel.deleted_at.is_(None)
+                        CustomerModel.id == customer.customer_id, CustomerModel.deleted_at.is_(None)
                     )
                 )
             )
@@ -204,7 +197,7 @@ class CustomerRepositoryImpl(CustomerRepository):
                     lifetime_transaction_volume=float(customer.lifetime_transaction_volume),
                     account_age_days=customer.account_age_days,
                     is_active=customer.is_active,
-                    updated_at=datetime.utcnow()
+                    updated_at=datetime.utcnow(),
                 )
             )
 
@@ -221,11 +214,13 @@ class CustomerRepositoryImpl(CustomerRepository):
         except IntegrityError as e:
             await self._session.rollback()
             if "unique" in str(e).lower():
-                raise CustomerEmailExistsError(customer.email)
-            raise DomainException(f"Database constraint violation: {e}", "DB_CONSTRAINT_ERROR")
+                raise CustomerEmailExistsError(customer.email) from e
+            raise DomainException(
+                f"Database constraint violation: {e}", "DB_CONSTRAINT_ERROR"
+            ) from e
         except Exception as e:
             await self._session.rollback()
-            raise DomainException(f"Failed to update customer: {e}", "REPOSITORY_ERROR")
+            raise DomainException(f"Failed to update customer: {e}", "REPOSITORY_ERROR") from e
 
     async def delete(self, customer_id: UUID) -> bool:
         """Soft delete customer.
@@ -242,12 +237,7 @@ class CustomerRepositoryImpl(CustomerRepository):
         try:
             result = await self._session.execute(
                 update(CustomerModel)
-                .where(
-                    and_(
-                        CustomerModel.id == customer_id,
-                        CustomerModel.deleted_at.is_(None)
-                    )
-                )
+                .where(and_(CustomerModel.id == customer_id, CustomerModel.deleted_at.is_(None)))
                 .values(deleted_at=datetime.utcnow())
             )
 
@@ -255,7 +245,7 @@ class CustomerRepositoryImpl(CustomerRepository):
 
         except Exception as e:
             await self._session.rollback()
-            raise DomainException(f"Failed to delete customer: {e}", "REPOSITORY_ERROR")
+            raise DomainException(f"Failed to delete customer: {e}", "REPOSITORY_ERROR") from e
 
     async def list_by_risk_category(
         self,
@@ -280,7 +270,7 @@ class CustomerRepositoryImpl(CustomerRepository):
                     and_(
                         CustomerModel.customer_risk_category == risk_category,
                         CustomerModel.deleted_at.is_(None),
-                        CustomerModel.is_active == True
+                        CustomerModel.is_active,
                     )
                 )
                 .order_by(desc(CustomerModel.updated_at))
@@ -292,7 +282,9 @@ class CustomerRepositoryImpl(CustomerRepository):
             return [self._model_to_entity(customer) for customer in customers]
 
         except Exception as e:
-            raise DomainException(f"Failed to list customers by risk category: {e}", "REPOSITORY_ERROR")
+            raise DomainException(
+                f"Failed to list customers by risk category: {e}", "REPOSITORY_ERROR"
+            ) from e
 
     async def list_by_kyc_status(
         self,
@@ -314,10 +306,7 @@ class CustomerRepositoryImpl(CustomerRepository):
             result = await self._session.execute(
                 select(CustomerModel)
                 .where(
-                    and_(
-                        CustomerModel.kyc_status == kyc_status,
-                        CustomerModel.deleted_at.is_(None)
-                    )
+                    and_(CustomerModel.kyc_status == kyc_status, CustomerModel.deleted_at.is_(None))
                 )
                 .order_by(desc(CustomerModel.created_at))
                 .limit(limit)
@@ -328,7 +317,9 @@ class CustomerRepositoryImpl(CustomerRepository):
             return [self._model_to_entity(customer) for customer in customers]
 
         except Exception as e:
-            raise DomainException(f"Failed to list customers by KYC status: {e}", "REPOSITORY_ERROR")
+            raise DomainException(
+                f"Failed to list customers by KYC status: {e}", "REPOSITORY_ERROR"
+            ) from e
 
     async def count_by_risk_category(self, risk_category: str) -> int:
         """Count customers in risk category.
@@ -341,12 +332,11 @@ class CustomerRepositoryImpl(CustomerRepository):
         """
         try:
             result = await self._session.execute(
-                select(func.count(CustomerModel.id))
-                .where(
+                select(func.count(CustomerModel.id)).where(
                     and_(
                         CustomerModel.customer_risk_category == risk_category,
                         CustomerModel.deleted_at.is_(None),
-                        CustomerModel.is_active == True
+                        CustomerModel.is_active,
                     )
                 )
             )
@@ -354,7 +344,9 @@ class CustomerRepositoryImpl(CustomerRepository):
             return result.scalar() or 0
 
         except Exception as e:
-            raise DomainException(f"Failed to count customers by risk category: {e}", "REPOSITORY_ERROR")
+            raise DomainException(
+                f"Failed to count customers by risk category: {e}", "REPOSITORY_ERROR"
+            ) from e
 
     async def list_high_risk(self, limit: int = 100) -> list[Customer]:
         """List high and critical risk customers.
@@ -372,13 +364,13 @@ class CustomerRepositoryImpl(CustomerRepository):
                     and_(
                         CustomerModel.customer_risk_category.in_(["high", "critical"]),
                         CustomerModel.deleted_at.is_(None),
-                        CustomerModel.is_active == True
+                        CustomerModel.is_active,
                     )
                 )
                 .order_by(
                     desc(CustomerModel.customer_risk_category),
                     desc(CustomerModel.historical_fraud_count),
-                    CustomerModel.credit_score.asc()
+                    CustomerModel.credit_score.asc(),
                 )
                 .limit(limit)
             )
@@ -387,7 +379,9 @@ class CustomerRepositoryImpl(CustomerRepository):
             return [self._model_to_entity(customer) for customer in customers]
 
         except Exception as e:
-            raise DomainException(f"Failed to list high-risk customers: {e}", "REPOSITORY_ERROR")
+            raise DomainException(
+                f"Failed to list high-risk customers: {e}", "REPOSITORY_ERROR"
+            ) from e
 
     async def find_by_criteria(
         self,
@@ -444,7 +438,9 @@ class CustomerRepositoryImpl(CustomerRepository):
             return [self._model_to_entity(customer) for customer in customers]
 
         except Exception as e:
-            raise DomainException(f"Failed to find customers by criteria: {e}", "REPOSITORY_ERROR")
+            raise DomainException(
+                f"Failed to find customers by criteria: {e}", "REPOSITORY_ERROR"
+            ) from e
 
     async def bulk_update_risk_category(self, customer_ids: list[UUID], new_category: str) -> int:
         """Bulk update risk category for multiple customers.
@@ -462,23 +458,17 @@ class CustomerRepositoryImpl(CustomerRepository):
 
             result = await self._session.execute(
                 update(CustomerModel)
-                .where(
-                    and_(
-                        CustomerModel.id.in_(customer_ids),
-                        CustomerModel.deleted_at.is_(None)
-                    )
-                )
-                .values(
-                    customer_risk_category=new_category,
-                    updated_at=datetime.utcnow()
-                )
+                .where(and_(CustomerModel.id.in_(customer_ids), CustomerModel.deleted_at.is_(None)))
+                .values(customer_risk_category=new_category, updated_at=datetime.utcnow())
             )
 
             return result.rowcount
 
         except Exception as e:
             await self._session.rollback()
-            raise DomainException(f"Failed to bulk update risk category: {e}", "REPOSITORY_ERROR")
+            raise DomainException(
+                f"Failed to bulk update risk category: {e}", "REPOSITORY_ERROR"
+            ) from e
 
     async def email_exists(self, email: str) -> bool:
         """Check if email already exists.
@@ -491,11 +481,10 @@ class CustomerRepositoryImpl(CustomerRepository):
         """
         try:
             result = await self._session.execute(
-                select(func.count(CustomerModel.id))
-                .where(
+                select(func.count(CustomerModel.id)).where(
                     and_(
                         func.lower(CustomerModel.email) == func.lower(email),
-                        CustomerModel.deleted_at.is_(None)
+                        CustomerModel.deleted_at.is_(None),
                     )
                 )
             )
@@ -503,7 +492,9 @@ class CustomerRepositoryImpl(CustomerRepository):
             return count > 0
 
         except Exception as e:
-            raise DomainException(f"Failed to check email existence: {e}", "REPOSITORY_ERROR")
+            raise DomainException(
+                f"Failed to check email existence: {e}", "REPOSITORY_ERROR"
+            ) from e
 
     def _model_to_entity(self, model: CustomerModel) -> Customer:
         """Convert database model to domain entity.
@@ -530,5 +521,5 @@ class CustomerRepositoryImpl(CustomerRepository):
             account_age_days=model.account_age_days,
             is_active=model.is_active,
             created_at=model.created_at,
-            updated_at=model.updated_at
+            updated_at=model.updated_at,
         )

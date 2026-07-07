@@ -292,12 +292,16 @@ class AlertService:
         prioritized = []
         for alert in all_alerts:
             sla_info = await self.track_sla(alert.alert_id)
-            prioritized.append({
-                **sla_info,
-                "alert_type": alert.alert_type,
-                "transaction_id": str(alert.transaction_id),
-                "assigned_to": str(alert.assigned_analyst_id) if alert.assigned_analyst_id else None,
-            })
+            prioritized.append(
+                {
+                    **sla_info,
+                    "alert_type": alert.alert_type,
+                    "transaction_id": str(alert.transaction_id),
+                    "assigned_to": (
+                        str(alert.assigned_analyst_id) if alert.assigned_analyst_id else None
+                    ),
+                }
+            )
 
         # Sort by time to breach (ascending)
         prioritized.sort(key=lambda x: x["time_to_breach_minutes"] or float("inf"))
@@ -331,7 +335,9 @@ class AlertService:
         resolved_count = sum(1 for a in assigned_alerts if a.is_resolved())
 
         # Count by severity
-        critical_count = sum(1 for a in assigned_alerts if a.severity == "critical" and not a.is_resolved())
+        critical_count = sum(
+            1 for a in assigned_alerts if a.severity == "critical" and not a.is_resolved()
+        )
         high_count = sum(1 for a in assigned_alerts if a.severity == "high" and not a.is_resolved())
 
         return {

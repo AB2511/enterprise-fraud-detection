@@ -41,10 +41,7 @@ async def async_client(test_app):
     """Create async HTTP client for testing."""
     from httpx import ASGITransport
 
-    async with AsyncClient(
-        transport=ASGITransport(app=test_app),
-        base_url="http://test"
-    ) as client:
+    async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as client:
         yield client
 
 
@@ -69,6 +66,7 @@ class TestDeleteDebug:
         customer_id_str = create_response.json()["data"]["customer_id"]
 
         from uuid import UUID
+
         customer_id = UUID(customer_id_str)
 
         # Create a fresh session for direct DB queries
@@ -83,7 +81,9 @@ class TestDeleteDebug:
             stmt = select(CustomerModel).where(CustomerModel.id == customer_id)
             result = await session.execute(stmt)
             before_delete = result.scalar_one_or_none()
-            print(f"\nBEFORE DELETE: deleted_at = {before_delete.deleted_at if before_delete else 'NOT FOUND'}")
+            print(
+                f"\nBEFORE DELETE: deleted_at = {before_delete.deleted_at if before_delete else 'NOT FOUND'}"
+            )
 
         # Delete
         delete_response = await async_client.delete(f"/v1/customers/{customer_id_str}")
@@ -94,7 +94,9 @@ class TestDeleteDebug:
             stmt2 = select(CustomerModel).where(CustomerModel.id == customer_id)
             result2 = await session.execute(stmt2)
             after_delete = result2.scalar_one_or_none()
-            print(f"AFTER DELETE: deleted_at = {after_delete.deleted_at if after_delete else 'NOT FOUND'}")
+            print(
+                f"AFTER DELETE: deleted_at = {after_delete.deleted_at if after_delete else 'NOT FOUND'}"
+            )
 
         # Try to get via API
         get_response = await async_client.get(f"/v1/customers/{customer_id_str}")

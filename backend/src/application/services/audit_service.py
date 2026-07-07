@@ -1,6 +1,6 @@
 """Audit Service - Business workflows for audit log management."""
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from uuid import UUID
 
 from src.application.interfaces.audit_repository import AuditRepository
@@ -189,14 +189,10 @@ class AuditService:
             stats["by_entity_type"][log.entity_type] = (
                 stats["by_entity_type"].get(log.entity_type, 0) + 1
             )
-            stats["by_action"][log.action] = (
-                stats["by_action"].get(log.action, 0) + 1
-            )
+            stats["by_action"][log.action] = stats["by_action"].get(log.action, 0) + 1
             if log.user_id:
                 user_key = str(log.user_id)
-                stats["by_user"][user_key] = (
-                    stats["by_user"].get(user_key, 0) + 1
-                )
+                stats["by_user"][user_key] = stats["by_user"].get(user_key, 0) + 1
 
         # Format logs
         formatted_logs = [
@@ -295,8 +291,7 @@ class AuditService:
 
         # Verify chronological order
         is_chronological = all(
-            logs[i].created_at <= logs[i + 1].created_at
-            for i in range(len(logs) - 1)
+            logs[i].created_at <= logs[i + 1].created_at for i in range(len(logs) - 1)
         )
 
         # Check for gaps
@@ -311,6 +306,3 @@ class AuditService:
             "first_event": logs[0].created_at.isoformat() if logs else None,
             "last_event": logs[-1].created_at.isoformat() if logs else None,
         }
-
-
-from datetime import timedelta  # Add missing import

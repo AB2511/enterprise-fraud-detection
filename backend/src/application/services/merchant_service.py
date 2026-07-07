@@ -365,7 +365,4 @@ class MerchantService:
         """
         merchants = await self._merchant_repo.list_high_risk(limit=limit)
 
-        return [
-            await self.calculate_merchant_risk(m.merchant_id)
-            for m in merchants
-        ]
+        return [await self.calculate_merchant_risk(m.merchant_id) for m in merchants]

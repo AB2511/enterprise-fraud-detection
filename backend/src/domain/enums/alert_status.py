@@ -1,9 +1,9 @@
 """Alert Status Enumeration."""
 
-from enum import Enum
+from enum import StrEnum
 
 
-class AlertStatus(str, Enum):
+class AlertStatus(StrEnum):
     """Status of a fraud alert.
 
     Attributes:

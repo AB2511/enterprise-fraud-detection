@@ -61,8 +61,14 @@ class CreateAuditLogRequest(BaseModel):
     def validate_entity_type(cls, v: str) -> str:
         """Validate entity type."""
         allowed_types = [
-            "customer", "merchant", "transaction", "prediction",
-            "alert", "user", "model", "audit_log"
+            "customer",
+            "merchant",
+            "transaction",
+            "prediction",
+            "alert",
+            "user",
+            "model",
+            "audit_log",
         ]
         if v not in allowed_types:
             raise ValueError(f"Entity type must be one of: {allowed_types}")
@@ -73,9 +79,20 @@ class CreateAuditLogRequest(BaseModel):
     def validate_action(cls, v: str) -> str:
         """Validate action type."""
         allowed_actions = [
-            "create", "update", "delete", "activate", "deactivate",
-            "assign", "resolve", "escalate", "approve", "reject",
-            "login", "logout", "view", "export"
+            "create",
+            "update",
+            "delete",
+            "activate",
+            "deactivate",
+            "assign",
+            "resolve",
+            "escalate",
+            "approve",
+            "reject",
+            "login",
+            "logout",
+            "view",
+            "export",
         ]
         if v not in allowed_actions:
             raise ValueError(f"Action must be one of: {allowed_actions}")
@@ -174,8 +191,14 @@ class AuditLogListRequest(BaseModel):
         """Validate entity type."""
         if v is not None:
             allowed_types = [
-                "customer", "merchant", "transaction", "prediction",
-                "alert", "user", "model", "audit_log"
+                "customer",
+                "merchant",
+                "transaction",
+                "prediction",
+                "alert",
+                "user",
+                "model",
+                "audit_log",
             ]
             if v not in allowed_types:
                 raise ValueError(f"Entity type must be one of: {allowed_types}")
@@ -187,9 +210,20 @@ class AuditLogListRequest(BaseModel):
         """Validate action type."""
         if v is not None:
             allowed_actions = [
-                "create", "update", "delete", "activate", "deactivate",
-                "assign", "resolve", "escalate", "approve", "reject",
-                "login", "logout", "view", "export"
+                "create",
+                "update",
+                "delete",
+                "activate",
+                "deactivate",
+                "assign",
+                "resolve",
+                "escalate",
+                "approve",
+                "reject",
+                "login",
+                "logout",
+                "view",
+                "export",
             ]
             if v not in allowed_actions:
                 raise ValueError(f"Action must be one of: {allowed_actions}")
@@ -229,7 +263,7 @@ class AuditTrailResponse(BaseModel):
                         "audit_id": "456789ab-cdef-12d3-a456-426614174000",
                         "action": "create",
                         "username": "system",
-                        "created_at": "2024-01-15T10:30:00Z"
+                        "created_at": "2024-01-15T10:30:00Z",
                     }
                 ],
                 "total_entries": 3,

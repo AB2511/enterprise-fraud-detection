@@ -6,7 +6,6 @@ from uuid import UUID
 from sqlalchemy import and_, desc, func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-
 from src.application.interfaces.transaction_repository import TransactionRepository
 from src.domain.entities.transaction import Transaction
 from src.domain.exceptions.base import DomainException
@@ -67,7 +66,7 @@ class TransactionRepositoryImpl(TransactionRepository):
                 is_fraud=transaction.is_fraud,
                 fraud_confirmed_at=None,  # Will be set when fraud is confirmed
                 created_at=transaction.created_at,
-                updated_at=transaction.updated_at
+                updated_at=transaction.updated_at,
             )
 
             self._session.add(transaction_model)
@@ -78,11 +77,13 @@ class TransactionRepositoryImpl(TransactionRepository):
 
         except IntegrityError as e:
             await self._session.rollback()
-            raise DomainException(f"Database constraint violation: {e}", "DB_CONSTRAINT_ERROR")
+            raise DomainException(
+                f"Database constraint violation: {e}", "DB_CONSTRAINT_ERROR"
+            ) from e
 
         except Exception as e:
             await self._session.rollback()
-            raise DomainException(f"Failed to save transaction: {e}", "REPOSITORY_ERROR")
+            raise DomainException(f"Failed to save transaction: {e}", "REPOSITORY_ERROR") from e
 
     async def get_by_id(self, transaction_id: UUID) -> Transaction | None:
         """Retrieve transaction by ID.
@@ -97,8 +98,7 @@ class TransactionRepositoryImpl(TransactionRepository):
             result = await self._session.execute(
                 select(TransactionModel).where(
                     and_(
-                        TransactionModel.id == transaction_id,
-                        TransactionModel.deleted_at.is_(None)
+                        TransactionModel.id == transaction_id, TransactionModel.deleted_at.is_(None)
                     )
                 )
             )
@@ -109,7 +109,9 @@ class TransactionRepositoryImpl(TransactionRepository):
             return None
 
         except Exception as e:
-            raise DomainException(f"Failed to get transaction by ID: {e}", "REPOSITORY_ERROR")
+            raise DomainException(
+                f"Failed to get transaction by ID: {e}", "REPOSITORY_ERROR"
+            ) from e
 
     async def get_by_user(
         self,
@@ -133,7 +135,7 @@ class TransactionRepositoryImpl(TransactionRepository):
             query = select(TransactionModel).where(
                 and_(
                     TransactionModel.customer_id == UUID(user_id),
-                    TransactionModel.deleted_at.is_(None)
+                    TransactionModel.deleted_at.is_(None),
                 )
             )
 
@@ -151,7 +153,9 @@ class TransactionRepositoryImpl(TransactionRepository):
             return [self._model_to_entity(txn) for txn in transactions]
 
         except Exception as e:
-            raise DomainException(f"Failed to get transactions by user: {e}", "REPOSITORY_ERROR")
+            raise DomainException(
+                f"Failed to get transactions by user: {e}", "REPOSITORY_ERROR"
+            ) from e
 
     async def count_recent_transactions(
         self,
@@ -171,12 +175,11 @@ class TransactionRepositoryImpl(TransactionRepository):
             cutoff_time = datetime.utcnow() - timedelta(minutes=minutes)
 
             result = await self._session.execute(
-                select(func.count(TransactionModel.id))
-                .where(
+                select(func.count(TransactionModel.id)).where(
                     and_(
                         TransactionModel.customer_id == UUID(user_id),
                         TransactionModel.created_at >= cutoff_time,
-                        TransactionModel.deleted_at.is_(None)
+                        TransactionModel.deleted_at.is_(None),
                     )
                 )
             )
@@ -184,7 +187,9 @@ class TransactionRepositoryImpl(TransactionRepository):
             return result.scalar() or 0
 
         except Exception as e:
-            raise DomainException(f"Failed to count recent transactions: {e}", "REPOSITORY_ERROR")
+            raise DomainException(
+                f"Failed to count recent transactions: {e}", "REPOSITORY_ERROR"
+            ) from e
 
     async def delete(self, transaction_id: UUID) -> bool:
         """Delete a transaction (soft delete).
@@ -200,8 +205,7 @@ class TransactionRepositoryImpl(TransactionRepository):
                 update(TransactionModel)
                 .where(
                     and_(
-                        TransactionModel.id == transaction_id,
-                        TransactionModel.deleted_at.is_(None)
+                        TransactionModel.id == transaction_id, TransactionModel.deleted_at.is_(None)
                     )
                 )
                 .values(deleted_at=datetime.utcnow())
@@ -211,7 +215,7 @@ class TransactionRepositoryImpl(TransactionRepository):
 
         except Exception as e:
             await self._session.rollback()
-            raise DomainException(f"Failed to delete transaction: {e}", "REPOSITORY_ERROR")
+            raise DomainException(f"Failed to delete transaction: {e}", "REPOSITORY_ERROR") from e
 
     async def update(self, transaction: Transaction) -> Transaction:
         """Update existing transaction.
@@ -232,7 +236,7 @@ class TransactionRepositoryImpl(TransactionRepository):
                 select(TransactionModel).where(
                     and_(
                         TransactionModel.id == transaction.transaction_id,
-                        TransactionModel.deleted_at.is_(None)
+                        TransactionModel.deleted_at.is_(None),
                     )
                 )
             )
@@ -250,7 +254,7 @@ class TransactionRepositoryImpl(TransactionRepository):
                     velocity_7d=transaction.velocity_7d,
                     is_fraud=transaction.is_fraud,
                     fraud_confirmed_at=datetime.utcnow() if transaction.is_fraud else None,
-                    updated_at=datetime.utcnow()
+                    updated_at=datetime.utcnow(),
                 )
             )
 
@@ -266,7 +270,7 @@ class TransactionRepositoryImpl(TransactionRepository):
             raise
         except Exception as e:
             await self._session.rollback()
-            raise DomainException(f"Failed to update transaction: {e}", "REPOSITORY_ERROR")
+            raise DomainException(f"Failed to update transaction: {e}", "REPOSITORY_ERROR") from e
 
     async def find_by_criteria(
         self,
@@ -352,7 +356,9 @@ class TransactionRepositoryImpl(TransactionRepository):
             return [self._model_to_entity(txn) for txn in transactions]
 
         except Exception as e:
-            raise DomainException(f"Failed to find transactions by criteria: {e}", "REPOSITORY_ERROR")
+            raise DomainException(
+                f"Failed to find transactions by criteria: {e}", "REPOSITORY_ERROR"
+            ) from e
 
     async def get_velocity_data(
         self,
@@ -382,37 +388,34 @@ class TransactionRepositoryImpl(TransactionRepository):
 
             # Get counts for each time window
             result_1h = await self._session.execute(
-                select(func.count(TransactionModel.id))
-                .where(
+                select(func.count(TransactionModel.id)).where(
                     and_(
                         TransactionModel.customer_id == customer_id,
                         TransactionModel.created_at >= cutoff_1h,
                         TransactionModel.created_at < reference_time,
-                        TransactionModel.deleted_at.is_(None)
+                        TransactionModel.deleted_at.is_(None),
                     )
                 )
             )
 
             result_24h = await self._session.execute(
-                select(func.count(TransactionModel.id))
-                .where(
+                select(func.count(TransactionModel.id)).where(
                     and_(
                         TransactionModel.customer_id == customer_id,
                         TransactionModel.created_at >= cutoff_24h,
                         TransactionModel.created_at < reference_time,
-                        TransactionModel.deleted_at.is_(None)
+                        TransactionModel.deleted_at.is_(None),
                     )
                 )
             )
 
             result_7d = await self._session.execute(
-                select(func.count(TransactionModel.id))
-                .where(
+                select(func.count(TransactionModel.id)).where(
                     and_(
                         TransactionModel.customer_id == customer_id,
                         TransactionModel.created_at >= cutoff_7d,
                         TransactionModel.created_at < reference_time,
-                        TransactionModel.deleted_at.is_(None)
+                        TransactionModel.deleted_at.is_(None),
                     )
                 )
             )
@@ -424,13 +427,13 @@ class TransactionRepositoryImpl(TransactionRepository):
             }
 
         except Exception as e:
-            raise DomainException(f"Failed to get velocity data: {e}", "REPOSITORY_ERROR")
+            raise DomainException(f"Failed to get velocity data: {e}", "REPOSITORY_ERROR") from e
 
     async def get_fraud_statistics(
         self,
         start_date: datetime | None = None,
         end_date: datetime | None = None,
-        group_by: str = "day"
+        group_by: str = "day",
     ) -> list[dict[str, any]]:
         """Get fraud statistics over time.
 
@@ -453,23 +456,25 @@ class TransactionRepositoryImpl(TransactionRepository):
             if group_by == "day":
                 date_trunc = func.date(TransactionModel.created_at)
             elif group_by == "week":
-                date_trunc = func.date_trunc('week', TransactionModel.created_at)
+                date_trunc = func.date_trunc("week", TransactionModel.created_at)
             else:  # month
-                date_trunc = func.date_trunc('month', TransactionModel.created_at)
+                date_trunc = func.date_trunc("month", TransactionModel.created_at)
 
             result = await self._session.execute(
                 select(
-                    date_trunc.label('period'),
-                    func.count(TransactionModel.id).label('total_transactions'),
-                    func.sum(func.cast(TransactionModel.is_fraud, func.Integer)).label('fraud_count'),
-                    func.avg(TransactionModel.amount).label('avg_amount'),
-                    func.sum(TransactionModel.amount).label('total_amount')
+                    date_trunc.label("period"),
+                    func.count(TransactionModel.id).label("total_transactions"),
+                    func.sum(func.cast(TransactionModel.is_fraud, func.Integer)).label(
+                        "fraud_count"
+                    ),
+                    func.avg(TransactionModel.amount).label("avg_amount"),
+                    func.sum(TransactionModel.amount).label("total_amount"),
                 )
                 .where(
                     and_(
                         TransactionModel.created_at >= start_date,
                         TransactionModel.created_at <= end_date,
-                        TransactionModel.deleted_at.is_(None)
+                        TransactionModel.deleted_at.is_(None),
                     )
                 )
                 .group_by(date_trunc)
@@ -482,25 +487,24 @@ class TransactionRepositoryImpl(TransactionRepository):
                 fraud_count = row.fraud_count or 0
                 fraud_rate = (fraud_count / total_txns * 100) if total_txns > 0 else 0.0
 
-                stats.append({
-                    "period": row.period,
-                    "total_transactions": total_txns,
-                    "fraud_count": fraud_count,
-                    "fraud_rate": fraud_rate,
-                    "avg_amount": float(row.avg_amount or 0),
-                    "total_amount": float(row.total_amount or 0)
-                })
+                stats.append(
+                    {
+                        "period": row.period,
+                        "total_transactions": total_txns,
+                        "fraud_count": fraud_count,
+                        "fraud_rate": fraud_rate,
+                        "avg_amount": float(row.avg_amount or 0),
+                        "total_amount": float(row.total_amount or 0),
+                    }
+                )
 
             return stats
 
         except Exception as e:
-            raise DomainException(f"Failed to get fraud statistics: {e}", "REPOSITORY_ERROR")
+            raise DomainException(f"Failed to get fraud statistics: {e}", "REPOSITORY_ERROR") from e
 
     async def bulk_update_fraud_status(
-        self,
-        transaction_ids: list[UUID],
-        is_fraud: bool,
-        confirmed_by: str | None = None
+        self, transaction_ids: list[UUID], is_fraud: bool, confirmed_by: str | None = None
     ) -> int:
         """Bulk update fraud status for multiple transactions.
 
@@ -516,10 +520,7 @@ class TransactionRepositoryImpl(TransactionRepository):
             if not transaction_ids:
                 return 0
 
-            update_values = {
-                "is_fraud": is_fraud,
-                "updated_at": datetime.utcnow()
-            }
+            update_values = {"is_fraud": is_fraud, "updated_at": datetime.utcnow()}
 
             if is_fraud:
                 update_values["fraud_confirmed_at"] = datetime.utcnow()
@@ -529,7 +530,7 @@ class TransactionRepositoryImpl(TransactionRepository):
                 .where(
                     and_(
                         TransactionModel.id.in_(transaction_ids),
-                        TransactionModel.deleted_at.is_(None)
+                        TransactionModel.deleted_at.is_(None),
                     )
                 )
                 .values(update_values)
@@ -539,7 +540,9 @@ class TransactionRepositoryImpl(TransactionRepository):
 
         except Exception as e:
             await self._session.rollback()
-            raise DomainException(f"Failed to bulk update fraud status: {e}", "REPOSITORY_ERROR")
+            raise DomainException(
+                f"Failed to bulk update fraud status: {e}", "REPOSITORY_ERROR"
+            ) from e
 
     def _model_to_entity(self, model: TransactionModel) -> Transaction:
         """Convert database model to domain entity.
@@ -576,5 +579,5 @@ class TransactionRepositoryImpl(TransactionRepository):
             velocity_24h=int(model.velocity_24h or 0),
             velocity_7d=int(model.velocity_7d or 0),
             created_at=model.created_at,
-            updated_at=model.updated_at
+            updated_at=model.updated_at,
         )

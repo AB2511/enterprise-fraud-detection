@@ -216,7 +216,7 @@ class Customer:
     def can_transact(self) -> bool:
         """Check if customer can make transactions."""
         return (
-            self.is_active and
-            self.kyc_status == "verified" and
-            self.customer_risk_category != "critical"
+            self.is_active
+            and self.kyc_status == "verified"
+            and self.customer_risk_category != "critical"
         )

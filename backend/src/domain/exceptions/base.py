@@ -26,13 +26,13 @@ class DomainException(Exception):
 
 class RepositoryError(DomainException):
     """Exception raised by repository operations.
-    
+
     Indicates infrastructure-level errors during data persistence operations.
     """
 
     def __init__(self, message: str) -> None:
         """Initialize repository error.
-        
+
         Args:
             message: Error description
         """
@@ -41,13 +41,13 @@ class RepositoryError(DomainException):
 
 class NotFoundError(DomainException):
     """Exception raised when an entity is not found in repository.
-    
+
     Indicates the requested entity does not exist.
     """
 
     def __init__(self, message: str) -> None:
         """Initialize not found error.
-        
+
         Args:
             message: Error description
         """
@@ -56,13 +56,13 @@ class NotFoundError(DomainException):
 
 class ConflictError(DomainException):
     """Exception raised when a resource conflict occurs.
-    
+
     Indicates a constraint violation or duplicate resource.
     """
 
     def __init__(self, message: str) -> None:
         """Initialize conflict error.
-        
+
         Args:
             message: Error description
         """
