@@ -3,7 +3,6 @@
 from dataclasses import dataclass, field
 from datetime import datetime
 from decimal import Decimal
-from typing import Optional
 from uuid import UUID, uuid4
 
 
@@ -49,17 +48,17 @@ class Transaction:
     timestamp: datetime = field(default_factory=datetime.utcnow)
     payment_channel: str = "online"
     payment_method: str = "card"
-    device_id: Optional[str] = None
-    ip_address: Optional[str] = None
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
-    terminal_id: Optional[str] = None
+    device_id: str | None = None
+    ip_address: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
+    terminal_id: str | None = None
     merchant_category: str = ""
     mcc: str = ""
-    card_type: Optional[str] = None
-    card_last_four: Optional[str] = None
+    card_type: str | None = None
+    card_last_four: str | None = None
     status: str = "pending"
-    is_fraud: Optional[bool] = None
+    is_fraud: bool | None = None
     velocity_1h: int = 0
     velocity_24h: int = 0
     velocity_7d: int = 0
@@ -116,7 +115,7 @@ class Transaction:
         """Approve the transaction."""
         if self.status == "approved":
             raise ValueError("Transaction is already approved")
-        
+
         self.status = "approved"
         self.updated_at = datetime.utcnow()
 
@@ -128,7 +127,7 @@ class Transaction:
         """
         if self.status in ["approved", "declined"]:
             raise ValueError(f"Cannot decline transaction with status: {self.status}")
-        
+
         self.status = "declined"
         self.updated_at = datetime.utcnow()
 
@@ -136,7 +135,7 @@ class Transaction:
         """Mark this transaction as confirmed fraud."""
         if self.is_fraud is not None:
             raise ValueError("Fraud label is immutable once set")
-        
+
         self.is_fraud = True
         self.updated_at = datetime.utcnow()
 
@@ -144,7 +143,7 @@ class Transaction:
         """Mark this transaction as confirmed legitimate."""
         if self.is_fraud is not None:
             raise ValueError("Fraud label is immutable once set")
-        
+
         self.is_fraud = False
         self.updated_at = datetime.utcnow()
 

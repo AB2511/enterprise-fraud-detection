@@ -1,7 +1,6 @@
 """Audit Service - Business workflows for audit log management."""
 
 from datetime import datetime
-from typing import Optional
 from uuid import UUID
 
 from src.application.interfaces.audit_repository import AuditRepository
@@ -28,12 +27,12 @@ class AuditService:
 
     async def search_audit_logs(
         self,
-        entity_type: Optional[str] = None,
-        entity_id: Optional[UUID] = None,
-        action: Optional[str] = None,
-        user_id: Optional[UUID] = None,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
+        entity_type: str | None = None,
+        entity_id: UUID | None = None,
+        action: str | None = None,
+        user_id: UUID | None = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
         limit: int = 100,
         offset: int = 0,
     ) -> list[AuditLog]:
@@ -103,8 +102,8 @@ class AuditService:
     async def get_user_activity(
         self,
         user_id: UUID,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
         limit: int = 100,
     ) -> list[dict]:
         """Get activity log for a user.
@@ -150,7 +149,7 @@ class AuditService:
         self,
         start_date: datetime,
         end_date: datetime,
-        entity_types: Optional[list[str]] = None,
+        entity_types: list[str] | None = None,
     ) -> dict:
         """Export audit logs for compliance purposes.
 
@@ -227,8 +226,8 @@ class AuditService:
 
     async def get_audit_statistics(
         self,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
     ) -> dict:
         """Get audit log statistics.
 

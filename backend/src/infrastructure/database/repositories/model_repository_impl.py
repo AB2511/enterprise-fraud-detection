@@ -1,7 +1,6 @@
 """Model Repository Implementation using SQLAlchemy."""
 
 from datetime import datetime
-from typing import Optional
 from uuid import UUID
 
 from sqlalchemy import and_, desc, func, select
@@ -64,7 +63,7 @@ class ModelRepositoryImpl(ModelRepository):
         except Exception as e:
             raise RepositoryError(f"Failed to create model: {e}") from e
 
-    async def get_by_id(self, model_id: UUID) -> Optional[Model]:
+    async def get_by_id(self, model_id: UUID) -> Model | None:
         """Retrieve model by ID.
 
         Args:
@@ -83,7 +82,7 @@ class ModelRepositoryImpl(ModelRepository):
         except Exception as e:
             raise RepositoryError(f"Failed to get model by id: {e}") from e
 
-    async def get_by_version(self, version: str) -> Optional[Model]:
+    async def get_by_version(self, version: str) -> Model | None:
         """Retrieve model by version string.
 
         Args:
@@ -266,7 +265,7 @@ class ModelRepositoryImpl(ModelRepository):
         except Exception as e:
             raise RepositoryError(f"Failed to get production models: {e}") from e
 
-    async def get_latest_model(self, model_type: Optional[str] = None) -> Optional[Model]:
+    async def get_latest_model(self, model_type: str | None = None) -> Model | None:
         """Get latest model by training date, optionally filtered by type.
 
         Args:
@@ -469,9 +468,9 @@ class ModelRepositoryImpl(ModelRepository):
 
     async def search_models(
         self,
-        model_type: Optional[str] = None,
-        status: Optional[str] = None,
-        created_by: Optional[str] = None,
+        model_type: str | None = None,
+        status: str | None = None,
+        created_by: str | None = None,
         limit: int = 100,
         offset: int = 0,
     ) -> list[Model]:

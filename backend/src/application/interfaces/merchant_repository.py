@@ -1,7 +1,6 @@
 """Merchant Repository Interface."""
 
 from abc import ABC, abstractmethod
-from typing import Optional
 from uuid import UUID
 
 from src.domain.entities.merchant import Merchant
@@ -26,7 +25,7 @@ class MerchantRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_by_id(self, merchant_id: UUID) -> Optional[Merchant]:
+    async def get_by_id(self, merchant_id: UUID) -> Merchant | None:
         """Retrieve merchant by ID.
 
         Args:
@@ -38,7 +37,7 @@ class MerchantRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_by_name(self, merchant_name: str) -> Optional[Merchant]:
+    async def get_by_name(self, merchant_name: str) -> Merchant | None:
         """Retrieve merchant by name.
 
         Args:

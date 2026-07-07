@@ -3,12 +3,9 @@
 Tests the SQLAlchemy repository implementation against a real database.
 """
 
-from datetime import date
-from decimal import Decimal
 from uuid import uuid4
 
 import pytest
-
 from src.domain.entities.customer import Customer
 from src.infrastructure.database.repositories.customer_repository_impl import (
     CustomerRepositoryImpl,

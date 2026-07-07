@@ -1,12 +1,12 @@
 """Integration tests for CustomerRepositoryImpl."""
 
-import pytest
-from datetime import datetime, date
-from uuid import UUID, uuid4
-from sqlalchemy.ext.asyncio import AsyncSession
+from datetime import date
+from uuid import uuid4
 
+import pytest
+from sqlalchemy.ext.asyncio import AsyncSession
 from src.domain.entities.customer import Customer
-from src.domain.exceptions.base import ConflictError, NotFoundError, RepositoryError
+from src.domain.exceptions.base import ConflictError, NotFoundError
 from src.infrastructure.database.repositories.customer_repository_impl import CustomerRepositoryImpl
 
 
@@ -32,7 +32,7 @@ class TestCustomerRepositoryImpl:
         """Test customer creation."""
         # Act
         created = await repository.create(sample_customer)
-        
+
         # Assert
         assert created.customer_id is not None
         assert created.customer_name == "John Doe"
@@ -46,10 +46,10 @@ class TestCustomerRepositoryImpl:
         # Arrange
         customer1 = Customer(customer_name="John Doe", email="test@example.com", country="USA")
         customer2 = Customer(customer_name="Jane Doe", email="test@example.com", country="USA")
-        
+
         # Act
         await repository.create(customer1)
-        
+
         # Assert
         with pytest.raises(ConflictError):
             await repository.create(customer2)
@@ -58,10 +58,10 @@ class TestCustomerRepositoryImpl:
         """Test retrieving customer by ID."""
         # Arrange
         created = await repository.create(sample_customer)
-        
+
         # Act
         retrieved = await repository.get_by_id(created.customer_id)
-        
+
         # Assert
         assert retrieved is not None
         assert retrieved.customer_id == created.customer_id
@@ -71,7 +71,7 @@ class TestCustomerRepositoryImpl:
         """Test retrieving non-existent customer returns None."""
         # Act
         result = await repository.get_by_id(uuid4())
-        
+
         # Assert
         assert result is None
 
@@ -79,10 +79,10 @@ class TestCustomerRepositoryImpl:
         """Test retrieving customer by email."""
         # Arrange
         await repository.create(sample_customer)
-        
+
         # Act
         retrieved = await repository.get_by_email("john.doe@example.com")
-        
+
         # Assert
         assert retrieved is not None
         assert retrieved.email == "john.doe@example.com"
@@ -91,10 +91,10 @@ class TestCustomerRepositoryImpl:
         """Test email lookup is case insensitive."""
         # Arrange
         await repository.create(sample_customer)
-        
+
         # Act
         retrieved = await repository.get_by_email("JOHN.DOE@EXAMPLE.COM")
-        
+
         # Assert
         assert retrieved is not None
         assert retrieved.email == "john.doe@example.com"
@@ -105,10 +105,10 @@ class TestCustomerRepositoryImpl:
         created = await repository.create(sample_customer)
         created.customer_name = "John Smith"
         created.credit_score = 750
-        
+
         # Act
         updated = await repository.update(created)
-        
+
         # Assert
         assert updated.customer_name == "John Smith"
         assert updated.credit_score == 750
@@ -119,7 +119,7 @@ class TestCustomerRepositoryImpl:
         # Arrange
         customer = Customer(customer_name="John Doe", email="test@example.com", country="USA")
         customer.customer_id = uuid4()
-        
+
         # Act & Assert
         with pytest.raises(NotFoundError):
             await repository.update(customer)
@@ -128,13 +128,13 @@ class TestCustomerRepositoryImpl:
         """Test soft delete functionality."""
         # Arrange
         created = await repository.create(sample_customer)
-        
+
         # Act
         result = await repository.delete(created.customer_id)
-        
+
         # Assert
         assert result is True
-        
+
         # Verify soft delete - should not be retrievable
         retrieved = await repository.get_by_id(created.customer_id)
         assert retrieved is None
@@ -143,7 +143,7 @@ class TestCustomerRepositoryImpl:
         """Test deleting non-existent customer returns False."""
         # Act
         result = await repository.delete(uuid4())
-        
+
         # Assert
         assert result is False
 
@@ -154,13 +154,13 @@ class TestCustomerRepositoryImpl:
         high_risk.customer_risk_category = "high"
         low_risk = Customer(customer_name="Low Risk", email="low@example.com", country="USA")
         low_risk.customer_risk_category = "low"
-        
+
         await repository.create(high_risk)
         await repository.create(low_risk)
-        
+
         # Act
         high_risk_customers = await repository.list_by_risk_category("high")
-        
+
         # Assert
         assert len(high_risk_customers) == 1
         assert high_risk_customers[0].customer_name == "High Risk"
@@ -171,13 +171,13 @@ class TestCustomerRepositoryImpl:
         verified = Customer(customer_name="Verified", email="verified@example.com", country="USA")
         verified.verify_kyc()
         pending = Customer(customer_name="Pending", email="pending@example.com", country="USA")
-        
+
         await repository.create(verified)
         await repository.create(pending)
-        
+
         # Act
         verified_customers = await repository.list_by_kyc_status("verified")
-        
+
         # Assert
         assert len(verified_customers) == 1
         assert verified_customers[0].customer_name == "Verified"
@@ -189,10 +189,10 @@ class TestCustomerRepositoryImpl:
             customer = Customer(customer_name=f"Customer {i}", email=f"test{i}@example.com", country="USA")
             customer.customer_risk_category = "medium"
             await repository.create(customer)
-        
+
         # Act
         count = await repository.count_by_risk_category("medium")
-        
+
         # Assert
         assert count == 3
 
@@ -201,18 +201,18 @@ class TestCustomerRepositoryImpl:
         # Arrange
         high_risk = Customer(customer_name="High Risk", email="high@example.com", country="USA")
         high_risk.customer_risk_category = "high"
-        critical_risk = Customer(customer_name="Critical Risk", email="critical@example.com", country="USA")  
+        critical_risk = Customer(customer_name="Critical Risk", email="critical@example.com", country="USA")
         critical_risk.customer_risk_category = "critical"
         low_risk = Customer(customer_name="Low Risk", email="low@example.com", country="USA")
         low_risk.customer_risk_category = "low"
-        
+
         await repository.create(high_risk)
         await repository.create(critical_risk)
         await repository.create(low_risk)
-        
+
         # Act
         high_risk_customers = await repository.list_high_risk()
-        
+
         # Assert
         assert len(high_risk_customers) == 2
         risk_categories = [c.customer_risk_category for c in high_risk_customers]
@@ -225,11 +225,11 @@ class TestCustomerRepositoryImpl:
         for i in range(5):
             customer = Customer(customer_name=f"Customer {i}", email=f"test{i}@example.com", country="USA")
             await repository.create(customer)
-        
+
         # Act
         page1 = await repository.list_by_kyc_status("pending", limit=2, offset=0)
         page2 = await repository.list_by_kyc_status("pending", limit=2, offset=2)
-        
+
         # Assert
         assert len(page1) == 2
         assert len(page2) == 2
@@ -239,7 +239,7 @@ class TestCustomerRepositoryImpl:
         """Test email existence check."""
         # Arrange
         await repository.create(sample_customer)
-        
+
         # Act & Assert
         assert await repository.email_exists("john.doe@example.com") is True
         assert await repository.email_exists("nonexistent@example.com") is False
@@ -251,13 +251,13 @@ class TestCustomerRepositoryImpl:
         for i in range(10):
             customer = Customer(customer_name=f"Bulk Customer {i}", email=f"bulk{i}@example.com", country="USA")
             customers.append(customer)
-        
+
         # Act
         created_customers = []
         for customer in customers:
             created = await repository.create(customer)
             created_customers.append(created)
-        
+
         # Assert
         assert len(created_customers) == 10
         for created in created_customers:
@@ -267,18 +267,18 @@ class TestCustomerRepositoryImpl:
         """Test optimistic locking behavior."""
         # Arrange
         created = await repository.create(sample_customer)
-        
+
         # Simulate concurrent access by updating same customer
         customer1 = await repository.get_by_id(created.customer_id)
         customer2 = await repository.get_by_id(created.customer_id)
-        
+
         # Act
         customer1.customer_name = "Updated by User 1"
         customer2.customer_name = "Updated by User 2"
-        
+
         # First update should succeed
         await repository.update(customer1)
-        
+
         # Second update should handle optimistic locking
         # (Implementation depends on specific strategy)
         updated2 = await repository.update(customer2)
@@ -289,12 +289,12 @@ class TestCustomerRepositoryImpl:
         # Arrange
         customer1 = Customer(customer_name="Test User", email="test@example.com", country="USA")
         await repository.create(customer1)
-        
+
         # Act & Assert - duplicate email should rollback transaction
         customer2 = Customer(customer_name="Another User", email="test@example.com", country="USA")
         with pytest.raises(ConflictError):
             await repository.create(customer2)
-        
+
         # Verify original customer still exists
         retrieved = await repository.get_by_email("test@example.com")
         assert retrieved.customer_name == "Test User"
@@ -304,11 +304,11 @@ class TestCustomerRepositoryImpl:
         # Test empty results
         empty_result = await repository.list_by_risk_category("nonexistent")
         assert empty_result == []
-        
+
         # Test limit boundaries
         zero_limit = await repository.list_by_kyc_status("pending", limit=0)
         assert len(zero_limit) == 0
-        
+
         # Test large offset
         large_offset = await repository.list_by_kyc_status("pending", offset=1000)
         assert large_offset == []

@@ -2,7 +2,6 @@
 
 from datetime import datetime
 from decimal import Decimal
-from typing import Optional
 from uuid import UUID
 
 from src.application.interfaces.audit_repository import AuditRepository
@@ -38,7 +37,7 @@ class MerchantService:
         mcc: str,
         merchant_category: str,
         country: str,
-        user_id: Optional[UUID] = None,
+        user_id: UUID | None = None,
     ) -> Merchant:
         """Onboard a new merchant with validation.
 
@@ -129,7 +128,7 @@ class MerchantService:
         self,
         merchant_id: UUID,
         updates: dict,
-        user_id: Optional[UUID] = None,
+        user_id: UUID | None = None,
     ) -> Merchant:
         """Update merchant profile information.
 
@@ -192,9 +191,9 @@ class MerchantService:
 
     async def lookup_merchant(
         self,
-        merchant_id: Optional[UUID] = None,
-        merchant_name: Optional[str] = None,
-    ) -> Optional[Merchant]:
+        merchant_id: UUID | None = None,
+        merchant_name: str | None = None,
+    ) -> Merchant | None:
         """Lookup merchant by ID or name.
 
         Args:
@@ -219,7 +218,7 @@ class MerchantService:
         merchant_id: UUID,
         amount: Decimal,
         is_fraud: bool = False,
-        user_id: Optional[UUID] = None,
+        user_id: UUID | None = None,
     ) -> Merchant:
         """Record a transaction for merchant and update statistics.
 
@@ -273,7 +272,7 @@ class MerchantService:
         self,
         merchant_id: UUID,
         reason: str,
-        user_id: Optional[UUID] = None,
+        user_id: UUID | None = None,
     ) -> Merchant:
         """Suspend merchant due to high fraud activity.
 
@@ -314,7 +313,7 @@ class MerchantService:
     async def reactivate_merchant(
         self,
         merchant_id: UUID,
-        user_id: Optional[UUID] = None,
+        user_id: UUID | None = None,
     ) -> Merchant:
         """Reactivate suspended merchant.
 

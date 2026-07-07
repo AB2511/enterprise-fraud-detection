@@ -3,7 +3,6 @@
 Provides CRUD endpoints for customer management.
 """
 
-from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, status
@@ -202,7 +201,7 @@ async def update_customer(
 )
 async def delete_customer(
     customer_id: UUID,
-    reason: Optional[str] = Query(
+    reason: str | None = Query(
         default="User requested deletion",
         description="Reason for deletion",
     ),

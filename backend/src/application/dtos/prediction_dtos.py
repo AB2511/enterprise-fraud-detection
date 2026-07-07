@@ -1,7 +1,7 @@
 """Prediction Data Transfer Objects."""
 
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator
@@ -23,18 +23,18 @@ class CreatePredictionRequest(BaseModel):
         le=1.0,
         description="Fraud probability (0.0-1.0)",
     )
-    anomaly_score: Optional[float] = Field(
+    anomaly_score: float | None = Field(
         default=None,
         ge=0.0,
         description="Anomaly score (higher = more anomalous)",
     )
-    risk_score: Optional[float] = Field(
+    risk_score: float | None = Field(
         default=None,
         ge=0.0,
         le=100.0,
         description="Risk score (0-100)",
     )
-    confidence: Optional[float] = Field(
+    confidence: float | None = Field(
         default=None,
         ge=0.0,
         le=1.0,
@@ -44,12 +44,12 @@ class CreatePredictionRequest(BaseModel):
         ...,
         description="Automated decision (approve, decline, review)",
     )
-    latency_ms: Optional[float] = Field(
+    latency_ms: float | None = Field(
         default=None,
         ge=0,
         description="Prediction latency in milliseconds",
     )
-    explanation_data: Optional[dict[str, Any]] = Field(
+    explanation_data: dict[str, Any] | None = Field(
         default=None,
         description="Feature importance and explanation data",
     )
@@ -97,18 +97,18 @@ class CreatePredictionRequest(BaseModel):
 class UpdatePredictionRequest(BaseModel):
     """Request DTO for updating a prediction."""
 
-    decision: Optional[str] = Field(
+    decision: str | None = Field(
         default=None,
         description="Updated automated decision",
     )
-    explanation_data: Optional[dict[str, Any]] = Field(
+    explanation_data: dict[str, Any] | None = Field(
         default=None,
         description="Updated explanation data",
     )
 
     @field_validator("decision")
     @classmethod
-    def validate_decision(cls, v: Optional[str]) -> Optional[str]:
+    def validate_decision(cls, v: str | None) -> str | None:
         """Validate automated decision."""
         if v is not None:
             allowed_decisions = ["approve", "decline", "review"]
@@ -137,12 +137,12 @@ class PredictionResponse(BaseModel):
     model_version: str = Field(..., description="Model version")
     prediction_class: str = Field(..., description="Prediction class")
     fraud_probability: float = Field(..., description="Fraud probability")
-    anomaly_score: Optional[float] = Field(..., description="Anomaly score")
-    risk_score: Optional[float] = Field(..., description="Risk score")
-    confidence: Optional[float] = Field(..., description="Prediction confidence")
+    anomaly_score: float | None = Field(..., description="Anomaly score")
+    risk_score: float | None = Field(..., description="Risk score")
+    confidence: float | None = Field(..., description="Prediction confidence")
     decision: str = Field(..., description="Automated decision")
-    latency_ms: Optional[float] = Field(..., description="Prediction latency")
-    explanation_data: Optional[dict[str, Any]] = Field(..., description="Explanation data")
+    latency_ms: float | None = Field(..., description="Prediction latency")
+    explanation_data: dict[str, Any] | None = Field(..., description="Explanation data")
     created_at: datetime = Field(..., description="Prediction timestamp")
     updated_at: datetime = Field(..., description="Last update timestamp")
 
@@ -174,46 +174,46 @@ class PredictionResponse(BaseModel):
 class PredictionListRequest(BaseModel):
     """Request DTO for listing predictions."""
 
-    transaction_id: Optional[UUID] = Field(
+    transaction_id: UUID | None = Field(
         default=None,
         description="Filter by transaction ID",
     )
-    model_id: Optional[UUID] = Field(
+    model_id: UUID | None = Field(
         default=None,
         description="Filter by model ID",
     )
-    prediction_class: Optional[str] = Field(
+    prediction_class: str | None = Field(
         default=None,
         description="Filter by prediction class",
     )
-    decision: Optional[str] = Field(
+    decision: str | None = Field(
         default=None,
         description="Filter by decision",
     )
-    min_fraud_probability: Optional[float] = Field(
+    min_fraud_probability: float | None = Field(
         default=None,
         ge=0.0,
         le=1.0,
         description="Minimum fraud probability",
     )
-    max_fraud_probability: Optional[float] = Field(
+    max_fraud_probability: float | None = Field(
         default=None,
         ge=0.0,
         le=1.0,
         description="Maximum fraud probability",
     )
-    start_date: Optional[datetime] = Field(
+    start_date: datetime | None = Field(
         default=None,
         description="Filter predictions after this date",
     )
-    end_date: Optional[datetime] = Field(
+    end_date: datetime | None = Field(
         default=None,
         description="Filter predictions before this date",
     )
 
     @field_validator("prediction_class")
     @classmethod
-    def validate_prediction_class(cls, v: Optional[str]) -> Optional[str]:
+    def validate_prediction_class(cls, v: str | None) -> str | None:
         """Validate prediction class."""
         if v is not None:
             allowed_classes = ["fraud", "legitimate", "suspicious"]
@@ -223,7 +223,7 @@ class PredictionListRequest(BaseModel):
 
     @field_validator("decision")
     @classmethod
-    def validate_decision(cls, v: Optional[str]) -> Optional[str]:
+    def validate_decision(cls, v: str | None) -> str | None:
         """Validate decision."""
         if v is not None:
             allowed_decisions = ["approve", "decline", "review"]
@@ -250,13 +250,13 @@ class ModelPerformanceResponse(BaseModel):
     model_id: UUID = Field(..., description="Model UUID")
     model_version: str = Field(..., description="Model version")
     total_predictions: int = Field(..., description="Total number of predictions")
-    accuracy: Optional[float] = Field(..., description="Model accuracy")
-    precision: Optional[float] = Field(..., description="Model precision")
-    recall: Optional[float] = Field(..., description="Model recall")
-    f1_score: Optional[float] = Field(..., description="Model F1 score")
-    avg_latency_ms: Optional[float] = Field(..., description="Average prediction latency")
-    fraud_detection_rate: Optional[float] = Field(..., description="Fraud detection rate")
-    false_positive_rate: Optional[float] = Field(..., description="False positive rate")
+    accuracy: float | None = Field(..., description="Model accuracy")
+    precision: float | None = Field(..., description="Model precision")
+    recall: float | None = Field(..., description="Model recall")
+    f1_score: float | None = Field(..., description="Model F1 score")
+    avg_latency_ms: float | None = Field(..., description="Average prediction latency")
+    fraud_detection_rate: float | None = Field(..., description="Fraud detection rate")
+    false_positive_rate: float | None = Field(..., description="False positive rate")
     analysis_period_start: datetime = Field(..., description="Analysis period start")
     analysis_period_end: datetime = Field(..., description="Analysis period end")
 
@@ -287,8 +287,8 @@ class PredictionExplanationResponse(BaseModel):
     feature_importance: dict[str, float] = Field(..., description="Feature importance scores")
     top_contributing_features: list[str] = Field(..., description="Top contributing features")
     rule_explanations: list[str] = Field(..., description="Business rule explanations")
-    confidence_intervals: Optional[dict[str, float]] = Field(..., description="Confidence intervals")
-    similar_cases: Optional[list[UUID]] = Field(..., description="Similar historical cases")
+    confidence_intervals: dict[str, float] | None = Field(..., description="Confidence intervals")
+    similar_cases: list[UUID] | None = Field(..., description="Similar historical cases")
     recommendation: str = Field(..., description="Analyst recommendation")
 
     model_config = {

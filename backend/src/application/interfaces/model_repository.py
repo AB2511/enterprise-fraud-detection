@@ -1,8 +1,6 @@
 """Model Repository Interface."""
 
 from abc import ABC, abstractmethod
-from datetime import datetime
-from typing import Optional
 from uuid import UUID
 
 from src.domain.entities.model import Model
@@ -27,7 +25,7 @@ class ModelRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_by_id(self, model_id: UUID) -> Optional[Model]:
+    async def get_by_id(self, model_id: UUID) -> Model | None:
         """Retrieve model by ID.
 
         Args:
@@ -39,7 +37,7 @@ class ModelRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_by_version(self, version: str) -> Optional[Model]:
+    async def get_by_version(self, version: str) -> Model | None:
         """Retrieve model by version string.
 
         Args:
@@ -129,7 +127,7 @@ class ModelRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_latest_model(self, model_type: Optional[str] = None) -> Optional[Model]:
+    async def get_latest_model(self, model_type: str | None = None) -> Model | None:
         """Get latest model by training date.
 
         Args:

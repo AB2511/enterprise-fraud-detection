@@ -1,17 +1,18 @@
 """Customer Repository Implementation using SQLAlchemy Async."""
 
 from datetime import datetime
-from typing import Optional
 from uuid import UUID
 
-from sqlalchemy import and_, desc, func, or_, select, update
+from sqlalchemy import and_, desc, func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from src.application.interfaces.customer_repository import CustomerRepository
 from src.domain.entities.customer import Customer
-from src.domain.exceptions.base import ConflictError, DomainException, NotFoundError, RepositoryError
+from src.domain.exceptions.base import (
+    ConflictError,
+    DomainException,
+)
 from src.infrastructure.database.models import CustomerModel
 
 
@@ -107,7 +108,7 @@ class CustomerRepositoryImpl(CustomerRepository):
             await self._session.rollback()
             raise DomainException(f"Failed to create customer: {e}", "REPOSITORY_ERROR")
 
-    async def get_by_id(self, customer_id: UUID) -> Optional[Customer]:
+    async def get_by_id(self, customer_id: UUID) -> Customer | None:
         """Retrieve customer by ID.
 
         Args:
@@ -126,7 +127,7 @@ class CustomerRepositoryImpl(CustomerRepository):
                 )
             )
             customer_model = result.scalar_one_or_none()
-            
+
             if customer_model:
                 return self._model_to_entity(customer_model)
             return None
@@ -134,7 +135,7 @@ class CustomerRepositoryImpl(CustomerRepository):
         except Exception as e:
             raise DomainException(f"Failed to get customer by ID: {e}", "REPOSITORY_ERROR")
 
-    async def get_by_email(self, email: str) -> Optional[Customer]:
+    async def get_by_email(self, email: str) -> Customer | None:
         """Retrieve customer by email.
 
         Args:
@@ -153,7 +154,7 @@ class CustomerRepositoryImpl(CustomerRepository):
                 )
             )
             customer_model = result.scalar_one_or_none()
-            
+
             if customer_model:
                 return self._model_to_entity(customer_model)
             return None
@@ -212,7 +213,7 @@ class CustomerRepositoryImpl(CustomerRepository):
                 select(CustomerModel).where(CustomerModel.id == customer.customer_id)
             )
             updated_model = result.scalar_one()
-            
+
             return self._model_to_entity(updated_model)
 
         except CustomerNotFoundError:
@@ -390,13 +391,13 @@ class CustomerRepositoryImpl(CustomerRepository):
 
     async def find_by_criteria(
         self,
-        email_pattern: Optional[str] = None,
-        country: Optional[str] = None,
-        kyc_status: Optional[str] = None,
-        risk_category: Optional[str] = None,
-        min_credit_score: Optional[int] = None,
-        max_credit_score: Optional[int] = None,
-        is_active: Optional[bool] = None,
+        email_pattern: str | None = None,
+        country: str | None = None,
+        kyc_status: str | None = None,
+        risk_category: str | None = None,
+        min_credit_score: int | None = None,
+        max_credit_score: int | None = None,
+        is_active: bool | None = None,
         limit: int = 100,
         offset: int = 0,
     ) -> list[Customer]:
@@ -439,7 +440,7 @@ class CustomerRepositoryImpl(CustomerRepository):
 
             result = await self._session.execute(query)
             customers = result.scalars().all()
-            
+
             return [self._model_to_entity(customer) for customer in customers]
 
         except Exception as e:

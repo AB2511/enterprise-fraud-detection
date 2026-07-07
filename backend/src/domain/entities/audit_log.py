@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 from uuid import UUID, uuid4
 
 
@@ -32,13 +32,13 @@ class AuditLog:
     entity_type: str = field(default="")
     entity_id: UUID = field(default_factory=uuid4)
     action: str = field(default="")
-    user_id: Optional[UUID] = field(default=None)
-    username: Optional[str] = field(default=None)
-    old_value: Optional[dict[str, Any]] = field(default=None)
-    new_value: Optional[dict[str, Any]] = field(default=None)
-    ip_address: Optional[str] = field(default=None)
-    user_agent: Optional[str] = field(default=None)
-    description: Optional[str] = field(default=None)
+    user_id: UUID | None = field(default=None)
+    username: str | None = field(default=None)
+    old_value: dict[str, Any] | None = field(default=None)
+    new_value: dict[str, Any] | None = field(default=None)
+    ip_address: str | None = field(default=None)
+    user_agent: str | None = field(default=None)
+    description: str | None = field(default=None)
     created_at: datetime = field(default_factory=datetime.utcnow)
 
     def __post_init__(self) -> None:
@@ -69,12 +69,12 @@ class AuditLog:
         cls,
         entity_type: str,
         entity_id: UUID,
-        user_id: Optional[UUID] = None,
-        username: Optional[str] = None,
-        new_value: Optional[dict[str, Any]] = None,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None,
-        description: Optional[str] = None,
+        user_id: UUID | None = None,
+        username: str | None = None,
+        new_value: dict[str, Any] | None = None,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
+        description: str | None = None,
     ) -> "AuditLog":
         """Create an audit log entry for entity creation.
 
@@ -111,11 +111,11 @@ class AuditLog:
         entity_id: UUID,
         old_value: dict[str, Any],
         new_value: dict[str, Any],
-        user_id: Optional[UUID] = None,
-        username: Optional[str] = None,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None,
-        description: Optional[str] = None,
+        user_id: UUID | None = None,
+        username: str | None = None,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
+        description: str | None = None,
     ) -> "AuditLog":
         """Create an audit log entry for entity update.
 
@@ -152,11 +152,11 @@ class AuditLog:
         entity_type: str,
         entity_id: UUID,
         old_value: dict[str, Any],
-        user_id: Optional[UUID] = None,
-        username: Optional[str] = None,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None,
-        description: Optional[str] = None,
+        user_id: UUID | None = None,
+        username: str | None = None,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
+        description: str | None = None,
     ) -> "AuditLog":
         """Create an audit log entry for entity deletion.
 
@@ -191,11 +191,11 @@ class AuditLog:
         cls,
         entity_type: str,
         entity_id: UUID,
-        user_id: Optional[UUID] = None,
-        username: Optional[str] = None,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None,
-        description: Optional[str] = None,
+        user_id: UUID | None = None,
+        username: str | None = None,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
+        description: str | None = None,
     ) -> "AuditLog":
         """Create an audit log entry for sensitive entity read operations.
 
@@ -229,11 +229,11 @@ class AuditLog:
         cls,
         entity_type: str,
         entity_id: UUID,
-        user_id: Optional[UUID] = None,
-        username: Optional[str] = None,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None,
-        description: Optional[str] = None,
+        user_id: UUID | None = None,
+        username: str | None = None,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
+        description: str | None = None,
     ) -> "AuditLog":
         """Create an audit log entry for data export operations.
 

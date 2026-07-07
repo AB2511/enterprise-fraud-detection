@@ -1,7 +1,6 @@
 """User Service - Business workflows for user management."""
 
 from datetime import datetime
-from typing import Optional
 from uuid import UUID
 
 from src.application.interfaces.audit_repository import AuditRepository
@@ -39,7 +38,7 @@ class UserService:
         email: str,
         password: str,
         role: str,
-        created_by_id: Optional[UUID] = None,
+        created_by_id: UUID | None = None,
     ) -> User:
         """Create a new user with hashed password.
 
@@ -91,7 +90,7 @@ class UserService:
         self,
         email: str,
         password: str,
-    ) -> Optional[dict]:
+    ) -> dict | None:
         """Authenticate user with email and password.
 
         Args:
@@ -191,7 +190,7 @@ class UserService:
         self,
         user_id: UUID,
         new_role: str,
-        assigned_by_id: Optional[UUID] = None,
+        assigned_by_id: UUID | None = None,
     ) -> User:
         """Assign new role to user.
 
@@ -235,7 +234,7 @@ class UserService:
         self,
         user_id: UUID,
         reason: str,
-        deactivated_by_id: Optional[UUID] = None,
+        deactivated_by_id: UUID | None = None,
     ) -> User:
         """Deactivate user account.
 
@@ -276,7 +275,7 @@ class UserService:
     async def activate_user(
         self,
         user_id: UUID,
-        activated_by_id: Optional[UUID] = None,
+        activated_by_id: UUID | None = None,
     ) -> User:
         """Reactivate user account.
 

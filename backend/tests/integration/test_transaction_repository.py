@@ -1,16 +1,16 @@
 """Integration tests for TransactionRepositoryImpl."""
 
-import pytest
 from datetime import datetime, timedelta
 from decimal import Decimal
 from uuid import uuid4
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.infrastructure.database.repositories.transaction_repository_impl import (
-    TransactionRepositoryImpl,
-    TransactionNotFoundError,
-)
+import pytest
+from sqlalchemy.ext.asyncio import AsyncSession
 from src.domain.entities.transaction import Transaction
+from src.infrastructure.database.repositories.transaction_repository_impl import (
+    TransactionNotFoundError,
+    TransactionRepositoryImpl,
+)
 
 
 @pytest.fixture
@@ -248,11 +248,11 @@ class TestTransactionRepositoryVelocityCalculations:
     ):
         """Test counting recent transactions for velocity."""
         customer_id = uuid4()
-        
+
         # Create transactions at different times
         now = datetime.utcnow()
         transactions = []
-        
+
         for i in range(3):
             transaction = Transaction(
                 transaction_id=uuid4(),
@@ -305,7 +305,7 @@ class TestTransactionRepositoryVelocityCalculations:
         """Test getting velocity data for a customer."""
         customer_id = uuid4()
         reference_time = datetime.utcnow()
-        
+
         # Create transactions at different times
         times = [
             reference_time - timedelta(minutes=30),    # 1h window
@@ -313,7 +313,7 @@ class TestTransactionRepositoryVelocityCalculations:
             reference_time - timedelta(days=3),        # 7d window
             reference_time - timedelta(days=10),       # Outside 7d window
         ]
-        
+
         for i, timestamp in enumerate(times):
             transaction = Transaction(
                 transaction_id=uuid4(),
@@ -366,7 +366,7 @@ class TestTransactionRepositoryFiltering:
         customer_id = uuid4()
         merchant_id_1 = uuid4()
         merchant_id_2 = uuid4()
-        
+
         transactions = [
             # High-value transaction
             Transaction(
@@ -449,7 +449,7 @@ class TestTransactionRepositoryFiltering:
         for transaction in transactions:
             created = await transaction_repository.save(transaction)
             created_transactions.append(created)
-        
+
         await async_session.commit()
         return created_transactions
 
@@ -498,10 +498,10 @@ class TestTransactionRepositoryFiltering:
 
         assert len(fraud_result) >= 1
         assert len(legitimate_result) >= 2
-        
+
         for txn in fraud_result:
             assert txn.is_fraud is True
-        
+
         for txn in legitimate_result:
             assert txn.is_fraud is False
 
@@ -563,7 +563,7 @@ class TestTransactionRepositoryStatistics:
         )
 
         assert len(stats) >= 1
-        
+
         for stat in stats:
             assert "total_transactions" in stat
             assert "fraud_count" in stat
@@ -644,7 +644,7 @@ class TestTransactionRepositoryPagination:
     ):
         """Test pagination with offset and limit."""
         customer_id = uuid4()
-        
+
         # Create multiple transactions
         for i in range(5):
             transaction = Transaction(
@@ -679,7 +679,7 @@ class TestTransactionRepositoryPagination:
         page1 = await transaction_repository.get_by_user(
             str(customer_id), limit=2
         )
-        
+
         # Should get all since we don't have offset parameter in get_by_user
         # Let's use find_by_criteria instead
         page1 = await transaction_repository.find_by_criteria(
@@ -691,7 +691,7 @@ class TestTransactionRepositoryPagination:
 
         assert len(page1) == 2
         assert len(page2) == 2
-        
+
         # Verify no overlap
         page1_ids = {t.transaction_id for t in page1}
         page2_ids = {t.transaction_id for t in page2}

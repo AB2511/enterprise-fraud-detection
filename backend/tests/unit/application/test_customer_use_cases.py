@@ -3,13 +3,11 @@
 Tests the CQRS use case layer in isolation using mocks.
 """
 
-from datetime import date, datetime
-from decimal import Decimal
+from datetime import date
 from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
 import pytest
-
 from src.application.dtos.customer_dtos import (
     CreateCustomerRequest,
     CustomerResponse,
@@ -48,7 +46,7 @@ class TestCreateCustomerUseCase:
             country="USA",
             date_of_birth=date(1990, 1, 15),
         )
-        
+
         mock_customer_service.create_customer = AsyncMock(return_value=expected_customer)
         use_case = CreateCustomerUseCase(mock_customer_service)
 

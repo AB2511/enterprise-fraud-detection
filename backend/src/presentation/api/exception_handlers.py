@@ -4,7 +4,6 @@ Converts application exceptions to RFC7807 Problem Details format
 with consistent error responses.
 """
 
-from typing import Union
 
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
@@ -22,7 +21,6 @@ from src.application.exceptions.application_exceptions import (
     ValidationException,
 )
 from src.config.logging_config import get_logger
-from src.presentation.api.response import error_response
 
 logger = get_logger(__name__)
 
@@ -345,7 +343,7 @@ async def application_exception_handler(
 
 async def pydantic_validation_handler(
     request: Request,
-    exc: Union[RequestValidationError, ValidationError],
+    exc: RequestValidationError | ValidationError,
 ) -> JSONResponse:
     """Handle Pydantic validation errors.
 

@@ -1,15 +1,15 @@
 """Integration tests for PredictionRepositoryImpl."""
 
-import pytest
 from datetime import datetime, timedelta
 from uuid import uuid4
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.infrastructure.database.repositories.prediction_repository_impl import (
-    PredictionRepositoryImpl,
-    PredictionNotFoundError,
-)
+import pytest
+from sqlalchemy.ext.asyncio import AsyncSession
 from src.domain.entities.prediction import Prediction
+from src.infrastructure.database.repositories.prediction_repository_impl import (
+    PredictionNotFoundError,
+    PredictionRepositoryImpl,
+)
 
 
 @pytest.fixture
@@ -292,7 +292,7 @@ class TestPredictionRepositoryListing:
         for prediction in predictions:
             created = await prediction_repository.create(prediction)
             created_predictions.append(created)
-        
+
         await async_session.commit()
         return created_predictions
 
@@ -480,7 +480,7 @@ class TestPredictionRepositoryComplexQueries:
         fraud_result = await prediction_repository.find_by_criteria(
             prediction_class="fraud"
         )
-        
+
         legitimate_result = await prediction_repository.find_by_criteria(
             prediction_class="legitimate"
         )
@@ -556,7 +556,7 @@ class TestPredictionRepositoryPagination:
 
         assert len(page1) == 2
         assert len(page2) == 2
-        
+
         # Verify no overlap
         page1_ids = {p.prediction_id for p in page1}
         page2_ids = {p.prediction_id for p in page2}
@@ -637,7 +637,7 @@ class TestPredictionRepositoryEdgeCases:
     ):
         """Test predictions with various model version formats."""
         versions = ["v1.0", "v2.10.15", "beta-0.1", "experimental"]
-        
+
         predictions = []
         for version in versions:
             prediction = Prediction(

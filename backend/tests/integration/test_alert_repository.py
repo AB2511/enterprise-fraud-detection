@@ -1,15 +1,15 @@
 """Integration tests for AlertRepositoryImpl."""
 
-import pytest
 from datetime import datetime, timedelta
 from uuid import uuid4
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.infrastructure.database.repositories.alert_repository_impl import (
-    AlertRepositoryImpl,
-    AlertNotFoundError,
-)
+import pytest
+from sqlalchemy.ext.asyncio import AsyncSession
 from src.domain.entities.alert import Alert
+from src.infrastructure.database.repositories.alert_repository_impl import (
+    AlertNotFoundError,
+    AlertRepositoryImpl,
+)
 
 
 @pytest.fixture
@@ -329,7 +329,7 @@ class TestAlertRepositoryListing:
         for alert in alerts:
             created = await alert_repository.create(alert)
             created_alerts.append(created)
-        
+
         await async_session.commit()
         return created_alerts
 
@@ -345,7 +345,7 @@ class TestAlertRepositoryListing:
 
         # Find our test alerts specifically
         test_alert_ids = {alert.alert_id for alert in multiple_alerts}
-        
+
         open_test_alerts = [a for a in open_alerts if a.alert_id in test_alert_ids]
         in_review_test_alerts = [a for a in in_review_alerts if a.alert_id in test_alert_ids]
         resolved_test_alerts = [a for a in resolved_alerts if a.alert_id in test_alert_ids]
@@ -367,7 +367,7 @@ class TestAlertRepositoryListing:
 
         # Find our test alerts specifically
         test_alert_ids = {alert.alert_id for alert in multiple_alerts}
-        
+
         critical_test_alerts = [a for a in critical_alerts if a.alert_id in test_alert_ids]
         high_test_alerts = [a for a in high_alerts if a.alert_id in test_alert_ids]
         medium_test_alerts = [a for a in medium_alerts if a.alert_id in test_alert_ids]
@@ -546,7 +546,7 @@ class TestAlertRepositoryCount:
         for alert in alerts:
             created = await alert_repository.create(alert)
             created_alerts.append(created)
-        
+
         await async_session.commit()
         return created_alerts
 
@@ -676,7 +676,7 @@ class TestAlertRepositoryPagination:
 
         assert len(page1) == 2
         assert len(page2) == 2
-        
+
         # Verify no overlap
         page1_ids = {a.alert_id for a in page1}
         page2_ids = {a.alert_id for a in page2}
@@ -693,7 +693,7 @@ class TestAlertRepositoryEdgeCases:
     ):
         """Test alerts with all possible severity levels."""
         severities = ["low", "medium", "high", "critical"]
-        
+
         alerts = []
         for severity in severities:
             alert = Alert(
@@ -727,7 +727,7 @@ class TestAlertRepositoryEdgeCases:
     ):
         """Test alerts with all possible alert types."""
         alert_types = ["rule_based", "ml_based", "anomaly", "velocity", "manual"]
-        
+
         alerts = []
         for alert_type in alert_types:
             alert = Alert(
@@ -761,7 +761,7 @@ class TestAlertRepositoryEdgeCases:
     ):
         """Test alerts with all possible statuses."""
         statuses = ["open", "in_review", "resolved", "false_positive", "confirmed_fraud"]
-        
+
         alerts = []
         for status in statuses:
             alert = Alert(

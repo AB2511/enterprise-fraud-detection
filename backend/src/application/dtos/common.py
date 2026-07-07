@@ -1,7 +1,7 @@
 """Common DTOs for pagination, sorting, and filtering."""
 
 from enum import Enum
-from typing import Any, Generic, Optional, TypeVar
+from typing import Any, Generic, TypeVar
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -32,7 +32,7 @@ class PageRequest(BaseModel):
 
     page: int = Field(default=1, ge=1, description="Page number (1-indexed)")
     page_size: int = Field(default=50, ge=1, le=1000, description="Items per page")
-    sort_by: Optional[str] = Field(default=None, description="Field to sort by")
+    sort_by: str | None = Field(default=None, description="Field to sort by")
     sort_direction: SortDirection = Field(
         default=SortDirection.ASC,
         description="Sort direction",

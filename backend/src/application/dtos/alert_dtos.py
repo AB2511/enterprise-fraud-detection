@@ -1,7 +1,6 @@
 """Alert Data Transfer Objects."""
 
 from datetime import datetime
-from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator
@@ -52,15 +51,15 @@ class CreateAlertRequest(BaseModel):
 class UpdateAlertRequest(BaseModel):
     """Request DTO for updating an alert."""
 
-    status: Optional[str] = Field(
+    status: str | None = Field(
         default=None,
         description="Alert status (open, in_progress, resolved, closed, escalated)",
     )
-    assigned_analyst_id: Optional[UUID] = Field(
+    assigned_analyst_id: UUID | None = Field(
         default=None,
         description="Analyst assigned to this alert",
     )
-    resolution: Optional[str] = Field(
+    resolution: str | None = Field(
         default=None,
         max_length=500,
         description="Resolution description",
@@ -68,7 +67,7 @@ class UpdateAlertRequest(BaseModel):
 
     @field_validator("status")
     @classmethod
-    def validate_status(cls, v: Optional[str]) -> Optional[str]:
+    def validate_status(cls, v: str | None) -> str | None:
         """Validate alert status."""
         if v is not None:
             allowed_statuses = ["open", "in_progress", "resolved", "closed", "escalated"]
@@ -91,11 +90,11 @@ class AssignAlertRequest(BaseModel):
     """Request DTO for assigning an alert to an analyst."""
 
     analyst_id: UUID = Field(..., description="Analyst UUID to assign")
-    priority: Optional[str] = Field(
+    priority: str | None = Field(
         default=None,
         description="Alert priority (low, normal, high, urgent)",
     )
-    notes: Optional[str] = Field(
+    notes: str | None = Field(
         default=None,
         max_length=1000,
         description="Assignment notes",
@@ -103,7 +102,7 @@ class AssignAlertRequest(BaseModel):
 
     @field_validator("priority")
     @classmethod
-    def validate_priority(cls, v: Optional[str]) -> Optional[str]:
+    def validate_priority(cls, v: str | None) -> str | None:
         """Validate alert priority."""
         if v is not None:
             allowed_priorities = ["low", "normal", "high", "urgent"]
@@ -136,7 +135,7 @@ class ResolveAlertRequest(BaseModel):
         ...,
         description="Analyst confidence in decision (low, medium, high)",
     )
-    notes: Optional[str] = Field(
+    notes: str | None = Field(
         default=None,
         max_length=1000,
         description="Additional resolution notes",
@@ -172,14 +171,14 @@ class AlertResponse(BaseModel):
     alert_type: str = Field(..., description="Alert type")
     severity: str = Field(..., description="Alert severity")
     status: str = Field(..., description="Alert status")
-    assigned_analyst_id: Optional[UUID] = Field(..., description="Assigned analyst UUID")
-    assigned_at: Optional[datetime] = Field(..., description="Assignment timestamp")
-    resolution: Optional[str] = Field(..., description="Resolution description")
-    resolved_at: Optional[datetime] = Field(..., description="Resolution timestamp")
-    resolved_by_id: Optional[UUID] = Field(..., description="Resolver UUID")
+    assigned_analyst_id: UUID | None = Field(..., description="Assigned analyst UUID")
+    assigned_at: datetime | None = Field(..., description="Assignment timestamp")
+    resolution: str | None = Field(..., description="Resolution description")
+    resolved_at: datetime | None = Field(..., description="Resolution timestamp")
+    resolved_by_id: UUID | None = Field(..., description="Resolver UUID")
     sla_deadline: datetime = Field(..., description="SLA deadline")
     is_sla_breached: bool = Field(..., description="Whether SLA was breached")
-    time_to_resolution_hours: Optional[float] = Field(..., description="Resolution time in hours")
+    time_to_resolution_hours: float | None = Field(..., description="Resolution time in hours")
     created_at: datetime = Field(..., description="Alert creation timestamp")
     updated_at: datetime = Field(..., description="Last update timestamp")
 
@@ -211,38 +210,38 @@ class AlertResponse(BaseModel):
 class AlertListRequest(BaseModel):
     """Request DTO for listing alerts."""
 
-    status: Optional[str] = Field(
+    status: str | None = Field(
         default=None,
         description="Filter by status",
     )
-    severity: Optional[str] = Field(
+    severity: str | None = Field(
         default=None,
         description="Filter by severity",
     )
-    alert_type: Optional[str] = Field(
+    alert_type: str | None = Field(
         default=None,
         description="Filter by alert type",
     )
-    assigned_analyst_id: Optional[UUID] = Field(
+    assigned_analyst_id: UUID | None = Field(
         default=None,
         description="Filter by assigned analyst",
     )
-    is_sla_breached: Optional[bool] = Field(
+    is_sla_breached: bool | None = Field(
         default=None,
         description="Filter by SLA breach status",
     )
-    start_date: Optional[datetime] = Field(
+    start_date: datetime | None = Field(
         default=None,
         description="Filter alerts created after this date",
     )
-    end_date: Optional[datetime] = Field(
+    end_date: datetime | None = Field(
         default=None,
         description="Filter alerts created before this date",
     )
 
     @field_validator("status")
     @classmethod
-    def validate_status(cls, v: Optional[str]) -> Optional[str]:
+    def validate_status(cls, v: str | None) -> str | None:
         """Validate alert status."""
         if v is not None:
             allowed_statuses = ["open", "in_progress", "resolved", "closed", "escalated"]
@@ -252,7 +251,7 @@ class AlertListRequest(BaseModel):
 
     @field_validator("severity")
     @classmethod
-    def validate_severity(cls, v: Optional[str]) -> Optional[str]:
+    def validate_severity(cls, v: str | None) -> str | None:
         """Validate alert severity."""
         if v is not None:
             allowed_severities = ["low", "medium", "high", "critical"]
@@ -282,7 +281,7 @@ class AlertStatisticsResponse(BaseModel):
     alerts_by_severity: dict[str, int] = Field(..., description="Count by severity")
     alerts_by_type: dict[str, int] = Field(..., description="Count by alert type")
     sla_breach_rate: float = Field(..., description="SLA breach rate (0.0-1.0)")
-    avg_resolution_time_hours: Optional[float] = Field(..., description="Average resolution time")
+    avg_resolution_time_hours: float | None = Field(..., description="Average resolution time")
     open_alerts: int = Field(..., description="Currently open alerts")
     overdue_alerts: int = Field(..., description="Overdue alerts")
     analysis_period_start: datetime = Field(..., description="Analysis period start")

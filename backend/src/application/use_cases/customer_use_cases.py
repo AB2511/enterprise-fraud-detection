@@ -1,6 +1,5 @@
 """Customer Use Cases (CQRS Pattern)."""
 
-from typing import Optional
 from uuid import UUID
 
 from src.application.dtos.customer_dtos import (
@@ -8,7 +7,6 @@ from src.application.dtos.customer_dtos import (
     CustomerResponse,
     UpdateCustomerRequest,
 )
-from src.application.exceptions import EntityNotFoundException
 from src.application.services.customer_service import CustomerService
 from src.domain.entities.customer import Customer
 
@@ -30,7 +28,7 @@ class CreateCustomerUseCase:
     async def execute(
         self,
         request: CreateCustomerRequest,
-        user_id: Optional[UUID] = None,
+        user_id: UUID | None = None,
     ) -> CustomerResponse:
         """Execute create customer use case.
 
@@ -97,7 +95,7 @@ class UpdateCustomerUseCase:
         self,
         customer_id: UUID,
         request: UpdateCustomerRequest,
-        user_id: Optional[UUID] = None,
+        user_id: UUID | None = None,
     ) -> CustomerResponse:
         """Execute update customer use case.
 
@@ -149,7 +147,7 @@ class DeleteCustomerUseCase:
         self,
         customer_id: UUID,
         reason: str = "User requested deletion",
-        user_id: Optional[UUID] = None,
+        user_id: UUID | None = None,
     ) -> None:
         """Execute delete customer use case.
 

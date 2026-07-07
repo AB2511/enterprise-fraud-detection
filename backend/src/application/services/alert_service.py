@@ -1,7 +1,6 @@
 """Alert Service - Business workflows for fraud alert management."""
 
-from datetime import datetime, timedelta
-from typing import Optional
+from datetime import datetime
 from uuid import UUID
 
 from src.application.interfaces.alert_repository import AlertRepository
@@ -41,7 +40,7 @@ class AlertService:
         prediction_id: UUID,
         alert_type: str,
         severity: str,
-        user_id: Optional[UUID] = None,
+        user_id: UUID | None = None,
     ) -> Alert:
         """Create a new fraud alert.
 
@@ -91,7 +90,7 @@ class AlertService:
         self,
         alert_id: UUID,
         analyst_id: UUID,
-        user_id: Optional[UUID] = None,
+        user_id: UUID | None = None,
     ) -> Alert:
         """Assign alert to analyst.
 
@@ -143,7 +142,7 @@ class AlertService:
         alert_id: UUID,
         resolution: str,
         resolved_by_id: UUID,
-        user_id: Optional[UUID] = None,
+        user_id: UUID | None = None,
     ) -> Alert:
         """Close/resolve an alert.
 
@@ -189,7 +188,7 @@ class AlertService:
     async def escalate_alert(
         self,
         alert_id: UUID,
-        user_id: Optional[UUID] = None,
+        user_id: UUID | None = None,
     ) -> Alert:
         """Escalate alert to higher severity.
 

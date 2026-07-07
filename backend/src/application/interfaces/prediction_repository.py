@@ -2,7 +2,6 @@
 
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Optional
 from uuid import UUID
 
 from src.domain.entities.prediction import Prediction
@@ -27,7 +26,7 @@ class PredictionRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_by_id(self, prediction_id: UUID) -> Optional[Prediction]:
+    async def get_by_id(self, prediction_id: UUID) -> Prediction | None:
         """Retrieve prediction by ID.
 
         Args:
@@ -39,7 +38,7 @@ class PredictionRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_by_transaction_id(self, transaction_id: UUID) -> Optional[Prediction]:
+    async def get_by_transaction_id(self, transaction_id: UUID) -> Prediction | None:
         """Retrieve prediction by transaction ID.
 
         Args:
@@ -175,8 +174,8 @@ class PredictionRepository(ABC):
     async def get_model_performance_stats(
         self,
         model_version: str,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
     ) -> dict[str, any]:
         """Get performance statistics for a model version.
 

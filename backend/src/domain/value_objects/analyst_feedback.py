@@ -2,7 +2,6 @@
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Optional
 from uuid import UUID, uuid4
 
 
@@ -27,7 +26,7 @@ class AnalystFeedback:
     analyst_id: str = ""
     confirmed_fraud: bool = False
     confidence: int = 3
-    notes: Optional[str] = None
+    notes: str | None = None
     timestamp: datetime = field(default_factory=datetime.utcnow)
 
     def __post_init__(self) -> None:

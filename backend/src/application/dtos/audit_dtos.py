@@ -1,7 +1,7 @@
 """Audit Data Transfer Objects."""
 
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator
@@ -23,34 +23,34 @@ class CreateAuditLogRequest(BaseModel):
         max_length=100,
         description="Action performed (create, update, delete, etc.)",
     )
-    user_id: Optional[UUID] = Field(
+    user_id: UUID | None = Field(
         default=None,
         description="User who performed the action",
     )
-    username: Optional[str] = Field(
+    username: str | None = Field(
         default=None,
         max_length=255,
         description="Username who performed the action",
     )
-    old_value: Optional[dict[str, Any]] = Field(
+    old_value: dict[str, Any] | None = Field(
         default=None,
         description="Previous entity state (for updates)",
     )
-    new_value: Optional[dict[str, Any]] = Field(
+    new_value: dict[str, Any] | None = Field(
         default=None,
         description="New entity state",
     )
-    ip_address: Optional[str] = Field(
+    ip_address: str | None = Field(
         default=None,
         max_length=45,
         description="IP address of the user",
     )
-    user_agent: Optional[str] = Field(
+    user_agent: str | None = Field(
         default=None,
         max_length=255,
         description="User agent string",
     )
-    description: Optional[str] = Field(
+    description: str | None = Field(
         default=None,
         max_length=500,
         description="Human-readable description of the action",
@@ -61,7 +61,7 @@ class CreateAuditLogRequest(BaseModel):
     def validate_entity_type(cls, v: str) -> str:
         """Validate entity type."""
         allowed_types = [
-            "customer", "merchant", "transaction", "prediction", 
+            "customer", "merchant", "transaction", "prediction",
             "alert", "user", "model", "audit_log"
         ]
         if v not in allowed_types:
@@ -106,13 +106,13 @@ class AuditLogResponse(BaseModel):
     entity_type: str = Field(..., description="Type of entity")
     entity_id: UUID = Field(..., description="Entity UUID")
     action: str = Field(..., description="Action performed")
-    user_id: Optional[UUID] = Field(..., description="User UUID")
-    username: Optional[str] = Field(..., description="Username")
-    old_value: Optional[dict[str, Any]] = Field(..., description="Previous state")
-    new_value: Optional[dict[str, Any]] = Field(..., description="New state")
-    ip_address: Optional[str] = Field(..., description="IP address")
-    user_agent: Optional[str] = Field(..., description="User agent")
-    description: Optional[str] = Field(..., description="Action description")
+    user_id: UUID | None = Field(..., description="User UUID")
+    username: str | None = Field(..., description="Username")
+    old_value: dict[str, Any] | None = Field(..., description="Previous state")
+    new_value: dict[str, Any] | None = Field(..., description="New state")
+    ip_address: str | None = Field(..., description="IP address")
+    user_agent: str | None = Field(..., description="User agent")
+    description: str | None = Field(..., description="Action description")
     created_at: datetime = Field(..., description="Audit entry timestamp")
 
     model_config = {
@@ -139,42 +139,42 @@ class AuditLogResponse(BaseModel):
 class AuditLogListRequest(BaseModel):
     """Request DTO for listing audit logs."""
 
-    entity_type: Optional[str] = Field(
+    entity_type: str | None = Field(
         default=None,
         description="Filter by entity type",
     )
-    entity_id: Optional[UUID] = Field(
+    entity_id: UUID | None = Field(
         default=None,
         description="Filter by entity ID",
     )
-    action: Optional[str] = Field(
+    action: str | None = Field(
         default=None,
         description="Filter by action",
     )
-    user_id: Optional[UUID] = Field(
+    user_id: UUID | None = Field(
         default=None,
         description="Filter by user ID",
     )
-    username: Optional[str] = Field(
+    username: str | None = Field(
         default=None,
         description="Filter by username",
     )
-    start_date: Optional[datetime] = Field(
+    start_date: datetime | None = Field(
         default=None,
         description="Filter entries after this date",
     )
-    end_date: Optional[datetime] = Field(
+    end_date: datetime | None = Field(
         default=None,
         description="Filter entries before this date",
     )
 
     @field_validator("entity_type")
     @classmethod
-    def validate_entity_type(cls, v: Optional[str]) -> Optional[str]:
+    def validate_entity_type(cls, v: str | None) -> str | None:
         """Validate entity type."""
         if v is not None:
             allowed_types = [
-                "customer", "merchant", "transaction", "prediction", 
+                "customer", "merchant", "transaction", "prediction",
                 "alert", "user", "model", "audit_log"
             ]
             if v not in allowed_types:
@@ -183,7 +183,7 @@ class AuditLogListRequest(BaseModel):
 
     @field_validator("action")
     @classmethod
-    def validate_action(cls, v: Optional[str]) -> Optional[str]:
+    def validate_action(cls, v: str | None) -> str | None:
         """Validate action type."""
         if v is not None:
             allowed_actions = [
@@ -215,8 +215,8 @@ class AuditTrailResponse(BaseModel):
     entity_id: UUID = Field(..., description="Entity UUID")
     audit_entries: list[AuditLogResponse] = Field(..., description="Chronological audit entries")
     total_entries: int = Field(..., description="Total number of audit entries")
-    first_entry_date: Optional[datetime] = Field(..., description="First audit entry date")
-    last_entry_date: Optional[datetime] = Field(..., description="Last audit entry date")
+    first_entry_date: datetime | None = Field(..., description="First audit entry date")
+    last_entry_date: datetime | None = Field(..., description="Last audit entry date")
     unique_users: list[str] = Field(..., description="Users who modified this entity")
 
     model_config = {
@@ -300,13 +300,13 @@ class ComplianceReportRequest(BaseModel):
         ...,
         description="Type of compliance report (access, modifications, data_export)",
     )
-    entity_types: Optional[list[str]] = Field(
+    entity_types: list[str] | None = Field(
         default=None,
         description="Filter by entity types",
     )
     start_date: datetime = Field(..., description="Report start date")
     end_date: datetime = Field(..., description="Report end date")
-    user_filter: Optional[str] = Field(
+    user_filter: str | None = Field(
         default=None,
         description="Filter by specific user",
     )

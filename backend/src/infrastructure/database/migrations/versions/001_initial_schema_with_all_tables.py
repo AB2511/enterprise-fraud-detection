@@ -5,22 +5,22 @@ Revises:
 Create Date: 2026-07-07 10:00:00.000000
 
 """
-from typing import Sequence, Union
+from collections.abc import Sequence
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision: str = '001'
-down_revision: Union[str, None] = None
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = None
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
     """Create all tables for fraud detection system."""
-    
+
     # Users table
     op.create_table(
         'users',
@@ -36,7 +36,7 @@ def upgrade() -> None:
     )
     op.create_index('ix_users_email', 'users', ['email'])
     op.create_index('ix_users_role', 'users', ['role'])
-    
+
     # Customers table
     op.create_table(
         'customers',
@@ -61,7 +61,7 @@ def upgrade() -> None:
     op.create_index('ix_customers_country', 'customers', ['country'])
     op.create_index('ix_customers_kyc_status', 'customers', ['kyc_status'])
     op.create_index('ix_customers_risk_category', 'customers', ['customer_risk_category'])
-    
+
     # Merchants table
     op.create_table(
         'merchants',
@@ -83,7 +83,7 @@ def upgrade() -> None:
     op.create_index('ix_merchants_mcc', 'merchants', ['mcc'])
     op.create_index('ix_merchants_category', 'merchants', ['merchant_category'])
     op.create_index('ix_merchants_country', 'merchants', ['country'])
-    
+
     # Transactions table
     op.create_table(
         'transactions',
@@ -121,11 +121,11 @@ def upgrade() -> None:
     op.create_index('ix_transactions_device_id', 'transactions', ['device_id'])
     op.create_index('ix_transactions_is_fraud', 'transactions', ['is_fraud'])
     op.create_index('ix_transactions_created_at', 'transactions', ['created_at'])
-    
+
     # Composite indexes for common queries
     op.create_index('ix_transactions_customer_created', 'transactions', ['customer_id', 'created_at'])
     op.create_index('ix_transactions_merchant_created', 'transactions', ['merchant_id', 'created_at'])
-    
+
     # Predictions table
     op.create_table(
         'predictions',
@@ -148,7 +148,7 @@ def upgrade() -> None:
     op.create_index('ix_predictions_transaction_id', 'predictions', ['transaction_id'])
     op.create_index('ix_predictions_model_id', 'predictions', ['model_id'])
     op.create_index('ix_predictions_class', 'predictions', ['prediction_class'])
-    
+
     # Alerts table
     op.create_table(
         'alerts',
@@ -179,7 +179,7 @@ def upgrade() -> None:
     op.create_index('ix_alerts_severity', 'alerts', ['severity'])
     op.create_index('ix_alerts_status', 'alerts', ['status'])
     op.create_index('ix_alerts_analyst_id', 'alerts', ['assigned_analyst_id'])
-    
+
     # Audit logs table
     op.create_table(
         'audit_logs',
@@ -202,10 +202,10 @@ def upgrade() -> None:
     op.create_index('ix_audit_logs_entity_id', 'audit_logs', ['entity_id'])
     op.create_index('ix_audit_logs_action', 'audit_logs', ['action'])
     op.create_index('ix_audit_logs_user_id', 'audit_logs', ['user_id'])
-    
+
     # Composite index for entity audit trail
     op.create_index('ix_audit_logs_entity', 'audit_logs', ['entity_type', 'entity_id', 'created_at'])
-    
+
     # Analyst feedback table
     op.create_table(
         'analyst_feedback',

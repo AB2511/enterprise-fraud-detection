@@ -2,7 +2,6 @@
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Optional
 from uuid import UUID, uuid4
 
 from passlib.hash import bcrypt
@@ -32,7 +31,7 @@ class User:
     status: str = "active"
     created_at: datetime = field(default_factory=datetime.utcnow)
     updated_at: datetime = field(default_factory=datetime.utcnow)
-    last_login: Optional[datetime] = None
+    last_login: datetime | None = None
 
     def __post_init__(self) -> None:
         """Validate user business rules."""

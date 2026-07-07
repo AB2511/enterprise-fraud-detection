@@ -1,6 +1,6 @@
 """Validation Error Exception."""
 
-from typing import Any, Optional
+from typing import Any
 
 from .base import DomainException
 
@@ -14,8 +14,8 @@ class ValidationError(DomainException):
     def __init__(
         self,
         message: str,
-        field: Optional[str] = None,
-        value: Optional[Any] = None,
+        field: str | None = None,
+        value: Any | None = None,
     ) -> None:
         """Initialize validation error.
 

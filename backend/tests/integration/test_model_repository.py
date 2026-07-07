@@ -1,10 +1,10 @@
 """Integration tests for ModelRepositoryImpl."""
 
-import pytest
 from datetime import datetime
-from uuid import UUID, uuid4
-from sqlalchemy.ext.asyncio import AsyncSession
+from uuid import uuid4
 
+import pytest
+from sqlalchemy.ext.asyncio import AsyncSession
 from src.domain.entities.model import Model
 from src.domain.exceptions.base import NotFoundError, RepositoryError
 from src.infrastructure.database.repositories.model_repository_impl import ModelRepositoryImpl
@@ -43,7 +43,7 @@ class TestModelRepositoryImpl:
         """Test model creation."""
         # Act
         created = await repository.create(sample_model)
-        
+
         # Assert
         assert created.model_id is not None
         assert created.version == "1.0.0"
@@ -57,10 +57,10 @@ class TestModelRepositoryImpl:
         """Test retrieving model by ID."""
         # Arrange
         created = await repository.create(sample_model)
-        
+
         # Act
         retrieved = await repository.get_by_id(created.model_id)
-        
+
         # Assert
         assert retrieved is not None
         assert retrieved.model_id == created.model_id
@@ -70,7 +70,7 @@ class TestModelRepositoryImpl:
         """Test retrieving non-existent model returns None."""
         # Act
         result = await repository.get_by_id(uuid4())
-        
+
         # Assert
         assert result is None
 
@@ -78,10 +78,10 @@ class TestModelRepositoryImpl:
         """Test retrieving model by version."""
         # Arrange
         await repository.create(sample_model)
-        
+
         # Act
         retrieved = await repository.get_by_version("1.0.0")
-        
+
         # Assert
         assert retrieved is not None
         assert retrieved.version == "1.0.0"
@@ -90,7 +90,7 @@ class TestModelRepositoryImpl:
         """Test retrieving model by non-existent version returns None."""
         # Act
         result = await repository.get_by_version("999.0.0")
-        
+
         # Assert
         assert result is None
 
@@ -100,10 +100,10 @@ class TestModelRepositoryImpl:
         created = await repository.create(sample_model)
         created.status = "staging"
         created.metrics["accuracy"] = 0.96
-        
+
         # Act
         updated = await repository.update(created)
-        
+
         # Assert
         assert updated.status == "staging"
         assert updated.metrics["accuracy"] == 0.96
@@ -118,7 +118,7 @@ class TestModelRepositoryImpl:
             model_type="xgboost",
             artifact_path="s3://test/model.pkl"
         )
-        
+
         # Act & Assert
         with pytest.raises(NotFoundError):
             await repository.update(model)
@@ -127,13 +127,13 @@ class TestModelRepositoryImpl:
         """Test hard delete functionality."""
         # Arrange
         created = await repository.create(sample_model)
-        
+
         # Act
         result = await repository.delete(created.model_id)
-        
+
         # Assert
         assert result is True
-        
+
         # Verify hard delete - should not be retrievable
         retrieved = await repository.get_by_id(created.model_id)
         assert retrieved is None
@@ -142,7 +142,7 @@ class TestModelRepositoryImpl:
         """Test deleting non-existent model returns False."""
         # Act
         result = await repository.delete(uuid4())
-        
+
         # Assert
         assert result is False
 
@@ -151,13 +151,13 @@ class TestModelRepositoryImpl:
         # Arrange
         training_model = Model(version="1.0.0", model_type="xgboost", artifact_path="s3://test1.pkl", status="training")
         production_model = Model(version="2.0.0", model_type="xgboost", artifact_path="s3://test2.pkl", status="production")
-        
+
         await repository.create(training_model)
         await repository.create(production_model)
-        
+
         # Act
         production_models = await repository.list_by_status("production")
-        
+
         # Assert
         assert len(production_models) == 1
         assert production_models[0].status == "production"
@@ -167,13 +167,13 @@ class TestModelRepositoryImpl:
         # Arrange
         xgboost_model = Model(version="1.0.0", model_type="xgboost", artifact_path="s3://test1.pkl")
         isolation_forest_model = Model(version="2.0.0", model_type="isolation_forest", artifact_path="s3://test2.pkl")
-        
+
         await repository.create(xgboost_model)
         await repository.create(isolation_forest_model)
-        
+
         # Act
         xgboost_models = await repository.list_by_type("xgboost")
-        
+
         # Assert
         assert len(xgboost_models) == 1
         assert xgboost_models[0].model_type == "xgboost"
@@ -184,14 +184,14 @@ class TestModelRepositoryImpl:
         prod_model1 = Model(version="1.0.0", model_type="xgboost", artifact_path="s3://test1.pkl", status="production")
         prod_model2 = Model(version="2.0.0", model_type="isolation_forest", artifact_path="s3://test2.pkl", status="production")
         staging_model = Model(version="3.0.0", model_type="xgboost", artifact_path="s3://test3.pkl", status="staging")
-        
+
         await repository.create(prod_model1)
         await repository.create(prod_model2)
         await repository.create(staging_model)
-        
+
         # Act
         production_models = await repository.get_production_models()
-        
+
         # Assert
         assert len(production_models) == 2
         for model in production_models:
@@ -201,24 +201,24 @@ class TestModelRepositoryImpl:
         """Test getting latest model by training date."""
         # Arrange
         old_model = Model(
-            version="1.0.0", 
-            model_type="xgboost", 
+            version="1.0.0",
+            model_type="xgboost",
             artifact_path="s3://test1.pkl",
             training_date=datetime(2024, 1, 1)
         )
         new_model = Model(
-            version="2.0.0", 
-            model_type="xgboost", 
+            version="2.0.0",
+            model_type="xgboost",
             artifact_path="s3://test2.pkl",
             training_date=datetime(2024, 2, 1)
         )
-        
+
         await repository.create(old_model)
         await repository.create(new_model)
-        
+
         # Act
         latest = await repository.get_latest_model()
-        
+
         # Assert
         assert latest is not None
         assert latest.version == "2.0.0"
@@ -227,24 +227,24 @@ class TestModelRepositoryImpl:
         """Test getting latest model filtered by type."""
         # Arrange
         xgb_model = Model(
-            version="1.0.0", 
-            model_type="xgboost", 
+            version="1.0.0",
+            model_type="xgboost",
             artifact_path="s3://test1.pkl",
             training_date=datetime(2024, 1, 1)
         )
         iso_model = Model(
-            version="2.0.0", 
-            model_type="isolation_forest", 
+            version="2.0.0",
+            model_type="isolation_forest",
             artifact_path="s3://test2.pkl",
             training_date=datetime(2024, 2, 1)
         )
-        
+
         await repository.create(xgb_model)
         await repository.create(iso_model)
-        
+
         # Act
         latest_xgb = await repository.get_latest_model("xgboost")
-        
+
         # Assert
         assert latest_xgb is not None
         assert latest_xgb.model_type == "xgboost"
@@ -255,10 +255,10 @@ class TestModelRepositoryImpl:
         # Arrange
         sample_model.status = "staging"
         created = await repository.create(sample_model)
-        
+
         # Act
         promoted = await repository.promote_to_production(created.model_id)
-        
+
         # Assert
         assert promoted.status == "production"
         assert promoted.is_production is True
@@ -268,7 +268,7 @@ class TestModelRepositoryImpl:
         # Arrange
         prod_model = Model(version="1.0.0", model_type="xgboost", artifact_path="s3://test.pkl", status="production")
         created = await repository.create(prod_model)
-        
+
         # Act & Assert
         with pytest.raises(RepositoryError, match="already in production"):
             await repository.promote_to_production(created.model_id)
@@ -278,7 +278,7 @@ class TestModelRepositoryImpl:
         # Arrange
         archived_model = Model(version="1.0.0", model_type="xgboost", artifact_path="s3://test.pkl", status="archived")
         created = await repository.create(archived_model)
-        
+
         # Act & Assert
         with pytest.raises(RepositoryError, match="Cannot promote archived model"):
             await repository.promote_to_production(created.model_id)
@@ -287,10 +287,10 @@ class TestModelRepositoryImpl:
         """Test archiving a model."""
         # Arrange
         created = await repository.create(sample_model)
-        
+
         # Act
         archived = await repository.archive_model(created.model_id)
-        
+
         # Assert
         assert archived.status == "archived"
         assert archived.is_archived is True
@@ -301,10 +301,10 @@ class TestModelRepositoryImpl:
         for i in range(3):
             model = Model(version=f"{i}.0.0", model_type="xgboost", artifact_path=f"s3://test{i}.pkl", status="training")
             await repository.create(model)
-        
+
         # Act
         count = await repository.count_by_status("training")
-        
+
         # Assert
         assert count == 3
 
@@ -312,30 +312,30 @@ class TestModelRepositoryImpl:
         """Test getting model lineage by type."""
         # Arrange
         model1 = Model(
-            version="1.0.0", 
-            model_type="xgboost", 
+            version="1.0.0",
+            model_type="xgboost",
             artifact_path="s3://test1.pkl",
             training_date=datetime(2024, 1, 1)
         )
         model2 = Model(
-            version="2.0.0", 
-            model_type="xgboost", 
+            version="2.0.0",
+            model_type="xgboost",
             artifact_path="s3://test2.pkl",
             training_date=datetime(2024, 2, 1)
         )
         different_type = Model(
-            version="1.0.0", 
-            model_type="isolation_forest", 
+            version="1.0.0",
+            model_type="isolation_forest",
             artifact_path="s3://test3.pkl"
         )
-        
+
         created1 = await repository.create(model1)
         await repository.create(model2)
         await repository.create(different_type)
-        
+
         # Act
         lineage = await repository.get_model_lineage(created1.model_id)
-        
+
         # Assert
         assert len(lineage) == 2  # Only xgboost models
         for model in lineage:
@@ -346,13 +346,13 @@ class TestModelRepositoryImpl:
         # Arrange
         training_model = Model(version="1.0.0", model_type="xgboost", artifact_path="s3://test1.pkl", status="training")
         production_model = Model(version="2.0.0", model_type="isolation_forest", artifact_path="s3://test2.pkl", status="production")
-        
+
         await repository.create(training_model)
         await repository.create(production_model)
-        
+
         # Act
         stats = await repository.get_model_statistics()
-        
+
         # Assert
         assert stats["total"] == 2
         assert "by_status" in stats
@@ -368,18 +368,18 @@ class TestModelRepositoryImpl:
         model1 = Model(version="1.0.0", model_type="xgboost", artifact_path="s3://test1.pkl", status="production", created_by="user1")
         model2 = Model(version="2.0.0", model_type="xgboost", artifact_path="s3://test2.pkl", status="staging", created_by="user2")
         model3 = Model(version="3.0.0", model_type="isolation_forest", artifact_path="s3://test3.pkl", status="production", created_by="user1")
-        
+
         await repository.create(model1)
         await repository.create(model2)
         await repository.create(model3)
-        
+
         # Act - Search by multiple filters
         results = await repository.search_models(
             model_type="xgboost",
             status="production",
             created_by="user1"
         )
-        
+
         # Assert
         assert len(results) == 1
         assert results[0].version == "1.0.0"
@@ -388,27 +388,27 @@ class TestModelRepositoryImpl:
         """Test getting models by date range."""
         # Arrange
         old_model = Model(
-            version="1.0.0", 
-            model_type="xgboost", 
+            version="1.0.0",
+            model_type="xgboost",
             artifact_path="s3://test1.pkl",
             training_date=datetime(2024, 1, 1)
         )
         recent_model = Model(
-            version="2.0.0", 
-            model_type="xgboost", 
+            version="2.0.0",
+            model_type="xgboost",
             artifact_path="s3://test2.pkl",
             training_date=datetime(2024, 6, 1)
         )
-        
+
         await repository.create(old_model)
         await repository.create(recent_model)
-        
+
         # Act
         recent_models = await repository.get_models_by_date_range(
             start_date=datetime(2024, 5, 1),
             end_date=datetime(2024, 12, 31)
         )
-        
+
         # Assert
         assert len(recent_models) == 1
         assert recent_models[0].version == "2.0.0"
@@ -419,11 +419,11 @@ class TestModelRepositoryImpl:
         for i in range(5):
             model = Model(version=f"{i}.0.0", model_type="xgboost", artifact_path=f"s3://test{i}.pkl")
             await repository.create(model)
-        
+
         # Act
         page1 = await repository.list_by_type("xgboost", limit=2, offset=0)
         page2 = await repository.list_by_type("xgboost", limit=2, offset=2)
-        
+
         # Assert
         assert len(page1) == 2
         assert len(page2) == 2
@@ -434,10 +434,10 @@ class TestModelRepositoryImpl:
         # Arrange
         model1 = Model(version="1.0.0", model_type="xgboost", artifact_path="s3://test1.pkl")
         model2 = Model(version="1.0.0", model_type="isolation_forest", artifact_path="s3://test2.pkl")
-        
+
         # Act
         await repository.create(model1)
-        
+
         # Assert - Should handle duplicate versions (database constraint)
         with pytest.raises(RepositoryError):
             await repository.create(model2)
@@ -461,11 +461,11 @@ class TestModelRepositoryImpl:
                 "confusion_matrix": [[100, 5], [8, 87]]
             }
         )
-        
+
         # Act
         created = await repository.create(complex_model)
         retrieved = await repository.get_by_id(created.model_id)
-        
+
         # Assert
         assert retrieved.metadata["layers"][0]["type"] == "dense"
         assert retrieved.metadata["nested"]["deep"]["value"] == 42

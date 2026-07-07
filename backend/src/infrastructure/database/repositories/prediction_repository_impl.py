@@ -1,7 +1,6 @@
 """Prediction Repository Implementation using SQLAlchemy Async."""
 
 from datetime import datetime
-from typing import Optional
 from uuid import UUID
 
 from sqlalchemy import and_, desc, func, select, update
@@ -10,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.application.interfaces.prediction_repository import PredictionRepository
 from src.domain.entities.prediction import Prediction
-from src.domain.exceptions.base import DomainException, NotFoundError, RepositoryError
+from src.domain.exceptions.base import DomainException
 from src.infrastructure.database.models import PredictionModel
 
 
@@ -81,7 +80,7 @@ class PredictionRepositoryImpl(PredictionRepository):
             await self._session.rollback()
             raise DomainException(f"Failed to create prediction: {e}", "REPOSITORY_ERROR")
 
-    async def get_by_id(self, prediction_id: UUID) -> Optional[Prediction]:
+    async def get_by_id(self, prediction_id: UUID) -> Prediction | None:
         """Retrieve prediction by ID.
 
         Args:
@@ -95,7 +94,7 @@ class PredictionRepositoryImpl(PredictionRepository):
                 select(PredictionModel).where(PredictionModel.id == prediction_id)
             )
             prediction_model = result.scalar_one_or_none()
-            
+
             if prediction_model:
                 return self._model_to_entity(prediction_model)
             return None
@@ -103,7 +102,7 @@ class PredictionRepositoryImpl(PredictionRepository):
         except Exception as e:
             raise DomainException(f"Failed to get prediction by ID: {e}", "REPOSITORY_ERROR")
 
-    async def get_by_transaction_id(self, transaction_id: UUID) -> Optional[Prediction]:
+    async def get_by_transaction_id(self, transaction_id: UUID) -> Prediction | None:
         """Retrieve prediction by transaction ID.
 
         Args:
@@ -118,7 +117,7 @@ class PredictionRepositoryImpl(PredictionRepository):
                 .order_by(desc(PredictionModel.created_at))
             )
             prediction_model = result.scalar_one_or_none()
-            
+
             if prediction_model:
                 return self._model_to_entity(prediction_model)
             return None
@@ -163,7 +162,7 @@ class PredictionRepositoryImpl(PredictionRepository):
                 select(PredictionModel).where(PredictionModel.id == prediction.prediction_id)
             )
             updated_model = result.scalar_one()
-            
+
             return self._model_to_entity(updated_model)
 
         except PredictionNotFoundError:
@@ -186,7 +185,7 @@ class PredictionRepositoryImpl(PredictionRepository):
                 select(PredictionModel).where(PredictionModel.id == prediction_id)
             )
             prediction = result.scalar_one_or_none()
-            
+
             if prediction:
                 await self._session.delete(prediction)
                 return True
@@ -350,8 +349,8 @@ class PredictionRepositoryImpl(PredictionRepository):
     async def get_model_performance_stats(
         self,
         model_version: str,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
     ) -> dict[str, any]:
         """Get performance statistics for a model version.
 
@@ -454,16 +453,16 @@ class PredictionRepositoryImpl(PredictionRepository):
 
     async def find_by_criteria(
         self,
-        model_version: Optional[str] = None,
-        prediction_class: Optional[str] = None,
-        decision: Optional[str] = None,
-        min_fraud_probability: Optional[float] = None,
-        max_fraud_probability: Optional[float] = None,
-        min_risk_score: Optional[int] = None,
-        max_risk_score: Optional[int] = None,
-        min_confidence: Optional[float] = None,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
+        model_version: str | None = None,
+        prediction_class: str | None = None,
+        decision: str | None = None,
+        min_fraud_probability: float | None = None,
+        max_fraud_probability: float | None = None,
+        min_risk_score: int | None = None,
+        max_risk_score: int | None = None,
+        min_confidence: float | None = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
         limit: int = 100,
         offset: int = 0,
         sort_by: str = "created_at",
@@ -526,7 +525,7 @@ class PredictionRepositoryImpl(PredictionRepository):
 
             result = await self._session.execute(query)
             predictions = result.scalars().all()
-            
+
             return [self._model_to_entity(pred) for pred in predictions]
 
         except Exception as e:

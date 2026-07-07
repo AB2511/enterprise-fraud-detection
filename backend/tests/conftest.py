@@ -1,14 +1,12 @@
 """Test configuration and fixtures."""
 
 import asyncio
-import os
-from typing import AsyncGenerator, Generator
+from collections.abc import AsyncGenerator, Generator
+
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.pool import StaticPool
-
 from src.infrastructure.database.models import Base
-
 
 # Test database configuration
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
@@ -31,13 +29,13 @@ async def test_engine():
         poolclass=StaticPool,
         connect_args={"check_same_thread": False},
     )
-    
+
     # Create tables
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    
+
     yield engine
-    
+
     # Cleanup
     await engine.dispose()
 

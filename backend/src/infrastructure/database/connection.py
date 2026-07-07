@@ -1,6 +1,6 @@
 """Database Connection Management."""
 
-from typing import AsyncGenerator, Generator
+from collections.abc import AsyncGenerator, Generator
 
 from sqlalchemy import create_engine, event
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine

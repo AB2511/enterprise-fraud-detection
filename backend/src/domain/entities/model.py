@@ -2,7 +2,6 @@
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Optional
 from uuid import UUID, uuid4
 
 
@@ -77,6 +76,6 @@ class Model:
         """Check if model is archived."""
         return self.status == "archived"
 
-    def get_metric(self, metric_name: str) -> Optional[float]:
+    def get_metric(self, metric_name: str) -> float | None:
         """Get a specific metric value."""
         return self.metrics.get(metric_name)

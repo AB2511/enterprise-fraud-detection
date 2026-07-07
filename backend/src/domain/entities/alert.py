@@ -2,7 +2,6 @@
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Optional
 from uuid import UUID, uuid4
 
 
@@ -34,13 +33,13 @@ class Alert:
     transaction_id: UUID = field(default_factory=uuid4)
     severity: str = "medium"
     alert_type: str = "ml_based"
-    assigned_analyst_id: Optional[UUID] = None
+    assigned_analyst_id: UUID | None = None
     status: str = "open"
-    resolution: Optional[str] = None
-    resolution_notes: Optional[str] = None
+    resolution: str | None = None
+    resolution_notes: str | None = None
     created_at: datetime = field(default_factory=datetime.utcnow)
-    assigned_at: Optional[datetime] = None
-    resolved_at: Optional[datetime] = None
+    assigned_at: datetime | None = None
+    resolved_at: datetime | None = None
     updated_at: datetime = field(default_factory=datetime.utcnow)
 
     def __post_init__(self) -> None:
@@ -74,7 +73,7 @@ class Alert:
         self.status = "in_review"
         self.updated_at = datetime.utcnow()
 
-    def resolve_as_fraud(self, analyst_id: UUID, notes: Optional[str] = None) -> None:
+    def resolve_as_fraud(self, analyst_id: UUID, notes: str | None = None) -> None:
         """Resolve alert as confirmed fraud.
 
         Args:
@@ -96,7 +95,7 @@ class Alert:
         self.resolved_at = datetime.utcnow()
         self.updated_at = datetime.utcnow()
 
-    def resolve_as_false_positive(self, analyst_id: UUID, notes: Optional[str] = None) -> None:
+    def resolve_as_false_positive(self, analyst_id: UUID, notes: str | None = None) -> None:
         """Resolve alert as false positive.
 
         Args:
@@ -128,7 +127,7 @@ class Alert:
             ValueError: If new severity is not higher
         """
         severity_order = {"low": 0, "medium": 1, "high": 2, "critical": 3}
-        
+
         if new_severity not in severity_order:
             raise ValueError(f"Invalid severity: {new_severity}")
 
@@ -154,11 +153,11 @@ class Alert:
         return self.assigned_analyst_id is not None
 
     @property
-    def resolution_time_hours(self) -> Optional[float]:
+    def resolution_time_hours(self) -> float | None:
         """Calculate resolution time in hours."""
         if not self.resolved_at:
             return None
-        
+
         delta = self.resolved_at - self.created_at
         return delta.total_seconds() / 3600
 

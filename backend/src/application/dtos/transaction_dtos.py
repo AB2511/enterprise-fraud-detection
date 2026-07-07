@@ -2,7 +2,6 @@
 
 from datetime import datetime
 from decimal import Decimal
-from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator
@@ -32,23 +31,23 @@ class CreateTransactionRequest(BaseModel):
         default="credit_card",
         description="Payment method (credit_card, debit_card, bank_transfer, wallet, cash, crypto)",
     )
-    device_id: Optional[str] = Field(
+    device_id: str | None = Field(
         default=None,
         max_length=255,
         description="Device identifier",
     )
-    ip_address: Optional[str] = Field(
+    ip_address: str | None = Field(
         default=None,
         max_length=45,
         description="IP address",
     )
-    latitude: Optional[float] = Field(
+    latitude: float | None = Field(
         default=None,
         ge=-90,
         le=90,
         description="Latitude (-90 to 90)",
     )
-    longitude: Optional[float] = Field(
+    longitude: float | None = Field(
         default=None,
         ge=-180,
         le=180,
@@ -92,18 +91,18 @@ class CreateTransactionRequest(BaseModel):
 class UpdateTransactionRequest(BaseModel):
     """Request DTO for updating a transaction."""
 
-    status: Optional[str] = Field(
+    status: str | None = Field(
         default=None,
         description="Transaction status (pending, approved, declined, failed, reversed)",
     )
-    is_fraud: Optional[bool] = Field(
+    is_fraud: bool | None = Field(
         default=None,
         description="Mark transaction as fraud",
     )
 
     @field_validator("status")
     @classmethod
-    def validate_status(cls, v: Optional[str]) -> Optional[str]:
+    def validate_status(cls, v: str | None) -> str | None:
         """Validate transaction status."""
         if v is None:
             return v
@@ -125,16 +124,16 @@ class UpdateTransactionRequest(BaseModel):
 class SearchTransactionRequest(BaseModel):
     """Request DTO for searching transactions."""
 
-    customer_id: Optional[UUID] = Field(default=None, description="Filter by customer")
-    merchant_id: Optional[UUID] = Field(default=None, description="Filter by merchant")
-    min_amount: Optional[Decimal] = Field(default=None, description="Minimum amount")
-    max_amount: Optional[Decimal] = Field(default=None, description="Maximum amount")
-    currency: Optional[str] = Field(default=None, description="Filter by currency")
-    transaction_type: Optional[str] = Field(default=None, description="Filter by type")
-    payment_channel: Optional[str] = Field(default=None, description="Filter by channel")
-    is_fraud: Optional[bool] = Field(default=None, description="Filter by fraud status")
-    start_date: Optional[datetime] = Field(default=None, description="Start date")
-    end_date: Optional[datetime] = Field(default=None, description="End date")
+    customer_id: UUID | None = Field(default=None, description="Filter by customer")
+    merchant_id: UUID | None = Field(default=None, description="Filter by merchant")
+    min_amount: Decimal | None = Field(default=None, description="Minimum amount")
+    max_amount: Decimal | None = Field(default=None, description="Maximum amount")
+    currency: str | None = Field(default=None, description="Filter by currency")
+    transaction_type: str | None = Field(default=None, description="Filter by type")
+    payment_channel: str | None = Field(default=None, description="Filter by channel")
+    is_fraud: bool | None = Field(default=None, description="Filter by fraud status")
+    start_date: datetime | None = Field(default=None, description="Start date")
+    end_date: datetime | None = Field(default=None, description="End date")
 
     model_config = {
         "json_schema_extra": {
@@ -163,13 +162,13 @@ class TransactionResponse(BaseModel):
     status: str = Field(..., description="Transaction status")
     payment_channel: str = Field(..., description="Payment channel")
     payment_method: str = Field(..., description="Payment method")
-    device_id: Optional[str] = Field(None, description="Device identifier")
-    ip_address: Optional[str] = Field(None, description="IP address")
-    latitude: Optional[float] = Field(None, description="Latitude")
-    longitude: Optional[float] = Field(None, description="Longitude")
-    velocity_1h: Optional[float] = Field(None, description="Transactions in last hour")
-    velocity_24h: Optional[float] = Field(None, description="Transactions in last 24 hours")
-    velocity_7d: Optional[float] = Field(None, description="Transactions in last 7 days")
+    device_id: str | None = Field(None, description="Device identifier")
+    ip_address: str | None = Field(None, description="IP address")
+    latitude: float | None = Field(None, description="Latitude")
+    longitude: float | None = Field(None, description="Longitude")
+    velocity_1h: float | None = Field(None, description="Transactions in last hour")
+    velocity_24h: float | None = Field(None, description="Transactions in last 24 hours")
+    velocity_7d: float | None = Field(None, description="Transactions in last 7 days")
     is_fraud: bool = Field(..., description="Whether transaction is fraud")
     timestamp: datetime = Field(..., description="Transaction timestamp")
     created_at: datetime = Field(..., description="Record creation timestamp")

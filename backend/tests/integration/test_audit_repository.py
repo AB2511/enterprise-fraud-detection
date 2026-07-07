@@ -1,12 +1,12 @@
 """Integration tests for AuditRepositoryImpl."""
 
-import pytest
 from datetime import datetime, timedelta
 from uuid import uuid4
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.infrastructure.database.repositories.audit_repository_impl import AuditRepositoryImpl
+import pytest
+from sqlalchemy.ext.asyncio import AsyncSession
 from src.domain.entities.audit_log import AuditLog
+from src.infrastructure.database.repositories.audit_repository_impl import AuditRepositoryImpl
 
 
 @pytest.fixture
@@ -57,7 +57,7 @@ class TestAuditRepositoryCreate:
         """Test audit log creation for CREATE action."""
         entity_id = uuid4()
         user_id = uuid4()
-        
+
         audit_log = AuditLog.for_creation(
             entity_type="customer",
             entity_id=entity_id,
@@ -85,7 +85,7 @@ class TestAuditRepositoryCreate:
         """Test audit log creation for UPDATE action."""
         entity_id = uuid4()
         user_id = uuid4()
-        
+
         audit_log = AuditLog.for_update(
             entity_type="merchant",
             entity_id=entity_id,
@@ -115,7 +115,7 @@ class TestAuditRepositoryCreate:
         """Test audit log creation for DELETE action."""
         entity_id = uuid4()
         user_id = uuid4()
-        
+
         audit_log = AuditLog.for_deletion(
             entity_type="alert",
             entity_id=entity_id,
@@ -143,7 +143,7 @@ class TestAuditRepositoryCreate:
         """Test audit log creation for READ action."""
         entity_id = uuid4()
         user_id = uuid4()
-        
+
         audit_log = AuditLog.for_read(
             entity_type="customer",
             entity_id=entity_id,
@@ -169,7 +169,7 @@ class TestAuditRepositoryCreate:
         """Test audit log creation for EXPORT action."""
         entity_id = uuid4()
         user_id = uuid4()
-        
+
         audit_log = AuditLog.for_export(
             entity_type="transaction",
             entity_id=entity_id,
@@ -288,7 +288,7 @@ class TestAuditRepositoryListing:
         for audit_log in audit_logs:
             created = await audit_repository.create(audit_log)
             created_logs.append(created)
-        
+
         await async_session.commit()
         return created_logs
 
@@ -303,7 +303,7 @@ class TestAuditRepositoryListing:
         if transaction_logs:
             entity_id = transaction_logs[0].entity_id
             result = await audit_repository.list_by_entity("transaction", entity_id)
-            
+
             # Should find at least one log for this transaction
             assert len(result) >= 1
             for log in result:
@@ -422,7 +422,7 @@ class TestAuditRepositorySearch:
         for audit_log in audit_logs:
             created = await audit_repository.create(audit_log)
             created_logs.append(created)
-        
+
         await async_session.commit()
         return created_logs
 
@@ -451,7 +451,7 @@ class TestAuditRepositorySearch:
         """Test search by user and date range."""
         user_log = next(log for log in multiple_audit_logs if log.user_id is not None)
         user_id = user_log.user_id
-        
+
         start_date = datetime.utcnow() - timedelta(hours=1)
         end_date = datetime.utcnow() + timedelta(hours=1)
 
@@ -533,7 +533,7 @@ class TestAuditRepositoryCount:
         for audit_log in audit_logs:
             created = await audit_repository.create(audit_log)
             created_logs.append(created)
-        
+
         await async_session.commit()
         return created_logs
 
@@ -548,7 +548,7 @@ class TestAuditRepositoryCount:
         if transaction_logs:
             entity_id = transaction_logs[0].entity_id
             count = await audit_repository.count_by_entity("transaction", entity_id)
-            
+
             # Should count at least one log for this entity
             assert count >= 1
 
@@ -615,7 +615,7 @@ class TestAuditRepositoryAnalytics:
         for audit_log in audit_logs:
             created = await audit_repository.create(audit_log)
             created_logs.append(created)
-        
+
         await async_session.commit()
         return created_logs
 
@@ -629,9 +629,9 @@ class TestAuditRepositoryAnalytics:
         transaction_logs = [log for log in multiple_audit_logs if log.entity_type == "transaction"]
         if transaction_logs:
             entity_id = transaction_logs[0].entity_id
-            
+
             summary = await audit_repository.get_audit_trail_summary("transaction", entity_id)
-            
+
             assert summary["total_events"] >= 1
             assert summary["unique_users"] >= 1
             assert summary["first_event"] is not None
@@ -647,7 +647,7 @@ class TestAuditRepositoryAnalytics:
     ):
         """Test audit trail summary with no data."""
         summary = await audit_repository.get_audit_trail_summary("nonexistent", uuid4())
-        
+
         assert summary["total_events"] == 0
         assert summary["unique_users"] == 0
         assert summary["first_event"] is None
@@ -662,9 +662,9 @@ class TestAuditRepositoryAnalytics:
         """Test getting user activity summary."""
         user_log = next(log for log in multiple_audit_logs if log.user_id is not None)
         user_id = user_log.user_id
-        
+
         summary = await audit_repository.get_user_activity_summary(user_id)
-        
+
         assert summary["total_actions"] >= 1
         assert summary["entity_types"] >= 1
         assert isinstance(summary["create_count"], int)
@@ -680,14 +680,14 @@ class TestAuditRepositoryAnalytics:
         """Test user activity summary with date filtering."""
         user_log = next(log for log in multiple_audit_logs if log.user_id is not None)
         user_id = user_log.user_id
-        
+
         start_date = datetime.utcnow() - timedelta(hours=1)
         end_date = datetime.utcnow() + timedelta(hours=1)
-        
+
         summary = await audit_repository.get_user_activity_summary(
             user_id, start_date=start_date, end_date=end_date
         )
-        
+
         assert summary["total_actions"] >= 1
 
     async def test_get_user_activity_summary_no_data(
@@ -696,7 +696,7 @@ class TestAuditRepositoryAnalytics:
     ):
         """Test user activity summary with no data."""
         summary = await audit_repository.get_user_activity_summary(uuid4())
-        
+
         assert summary["total_actions"] == 0
         assert summary["entity_types"] == 0
         assert summary["create_count"] == 0
@@ -733,7 +733,7 @@ class TestAuditRepositoryPagination:
 
         assert len(page1) == 2
         assert len(page2) == 2
-        
+
         # Verify no overlap
         page1_ids = {log.audit_id for log in page1}
         page2_ids = {log.audit_id for log in page2}
@@ -780,7 +780,7 @@ class TestAuditRepositoryEdgeCases:
         large_data = {
             "field_" + str(i): f"value_{i}" * 100 for i in range(10)
         }
-        
+
         audit_log = AuditLog.for_update(
             entity_type="large_entity",
             entity_id=uuid4(),
@@ -811,7 +811,7 @@ class TestAuditRepositoryEdgeCases:
         entity_id = uuid4()
         entity_type_unique = f"ordering_test_{uuid4().hex[:8]}"
         audit_logs = []
-        
+
         for i in range(3):
             audit_log = AuditLog(
                 audit_id=uuid4(),
@@ -839,7 +839,7 @@ class TestAuditRepositoryEdgeCases:
 
         # Should find exactly 3 logs for our specific entity
         assert len(result) == 3
-        
+
         # Verify ordering (most recent first - created_at desc)
         assert result[0].new_value["sequence"] == 0  # Most recent (created_at - 0 minutes)
         assert result[1].new_value["sequence"] == 1  # Middle (created_at - 1 minute)
@@ -852,10 +852,10 @@ class TestAuditRepositoryEdgeCases:
     ):
         """Test audit logs for all common entity types."""
         entity_types = [
-            "transaction", "customer", "merchant", "alert", 
+            "transaction", "customer", "merchant", "alert",
             "prediction", "user", "model", "rule"
         ]
-        
+
         audit_logs = []
         for entity_type in entity_types:
             audit_log = AuditLog.for_creation(
@@ -891,7 +891,7 @@ class TestAuditRepositoryEdgeCases:
 
         # Verify repository doesn't have update method
         assert not hasattr(audit_repository, 'update')
-        
+
         # Verify audit log entity is frozen (immutable dataclass)
         with pytest.raises(Exception):  # Should raise FrozenInstanceError or similar
             created.action = "MODIFIED"  # This should fail

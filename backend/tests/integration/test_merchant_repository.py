@@ -1,17 +1,17 @@
 """Integration tests for MerchantRepositoryImpl."""
 
-import pytest
 from datetime import datetime
 from decimal import Decimal
 from uuid import uuid4
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.infrastructure.database.repositories.merchant_repository_impl import (
-    MerchantRepositoryImpl,
-    MerchantNotFoundError,
-    MerchantNameExistsError,
-)
+import pytest
+from sqlalchemy.ext.asyncio import AsyncSession
 from src.domain.entities.merchant import Merchant
+from src.infrastructure.database.repositories.merchant_repository_impl import (
+    MerchantNameExistsError,
+    MerchantNotFoundError,
+    MerchantRepositoryImpl,
+)
 
 
 @pytest.fixture
@@ -284,7 +284,7 @@ class TestMerchantRepositoryFiltering:
         for merchant in merchants:
             created = await merchant_repository.create(merchant)
             created_merchants.append(created)
-        
+
         await async_session.commit()
         return created_merchants
 
@@ -530,7 +530,7 @@ class TestMerchantRepositoryPagination:
 
         assert len(page1) == 2
         assert len(page2) == 2
-        
+
         # Verify no overlap
         page1_ids = {m.merchant_id for m in page1}
         page2_ids = {m.merchant_id for m in page2}
@@ -594,7 +594,7 @@ class TestMerchantRepositoryEdgeCases:
         """Test repository error handling."""
         # Test with invalid UUID format would be caught by UUID validation
         # Test with None values would be caught by domain validation
-        
+
         # These tests verify the repository handles domain-level errors properly
         with pytest.raises(MerchantNotFoundError):
             invalid_merchant = Merchant(

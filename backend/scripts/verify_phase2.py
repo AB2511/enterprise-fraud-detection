@@ -5,7 +5,6 @@ and can be imported and used without errors.
 """
 
 import sys
-from datetime import datetime
 from decimal import Decimal
 from pathlib import Path
 from uuid import uuid4
@@ -21,6 +20,15 @@ def test_imports():
 
     try:
         # Entities
+        # Repository Interfaces
+        from src.application.interfaces import (
+            AlertRepository,
+            AuditRepository,
+            CustomerRepository,
+            MerchantRepository,
+            TransactionRepository,
+            UserRepository,
+        )
         from src.domain.entities import (
             Alert,
             AuditLog,
@@ -29,15 +37,6 @@ def test_imports():
             Prediction,
             Transaction,
             User,
-        )
-
-        # Value Objects
-        from src.domain.value_objects import (
-            DeviceID,
-            IPAddress,
-            ModelVersion,
-            Money,
-            RiskScore,
         )
 
         # Enumerations
@@ -54,14 +53,13 @@ def test_imports():
             UserRole,
         )
 
-        # Repository Interfaces
-        from src.application.interfaces import (
-            AlertRepository,
-            AuditRepository,
-            CustomerRepository,
-            MerchantRepository,
-            TransactionRepository,
-            UserRepository,
+        # Value Objects
+        from src.domain.value_objects import (
+            DeviceID,
+            IPAddress,
+            ModelVersion,
+            Money,
+            RiskScore,
         )
 
         print("   ✅ All imports successful!")
@@ -398,7 +396,6 @@ def test_database_models():
             AlertModel,
             AnalystFeedbackModel,
             AuditLogModel,
-            Base,
             CustomerModel,
             MerchantModel,
             PredictionModel,

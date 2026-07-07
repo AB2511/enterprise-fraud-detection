@@ -1,17 +1,15 @@
 """Transaction Repository Implementation using SQLAlchemy Async."""
 
 from datetime import datetime, timedelta
-from typing import Optional
 from uuid import UUID
 
 from sqlalchemy import and_, desc, func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from src.application.interfaces.transaction_repository import TransactionRepository
 from src.domain.entities.transaction import Transaction
-from src.domain.exceptions.base import DomainException, NotFoundError, RepositoryError
+from src.domain.exceptions.base import DomainException
 from src.infrastructure.database.models import TransactionModel
 
 
@@ -86,7 +84,7 @@ class TransactionRepositoryImpl(TransactionRepository):
             await self._session.rollback()
             raise DomainException(f"Failed to save transaction: {e}", "REPOSITORY_ERROR")
 
-    async def get_by_id(self, transaction_id: UUID) -> Optional[Transaction]:
+    async def get_by_id(self, transaction_id: UUID) -> Transaction | None:
         """Retrieve transaction by ID.
 
         Args:
@@ -105,7 +103,7 @@ class TransactionRepositoryImpl(TransactionRepository):
                 )
             )
             transaction_model = result.scalar_one_or_none()
-            
+
             if transaction_model:
                 return self._model_to_entity(transaction_model)
             return None
@@ -116,8 +114,8 @@ class TransactionRepositoryImpl(TransactionRepository):
     async def get_by_user(
         self,
         user_id: str,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
         limit: int = 100,
     ) -> list[Transaction]:
         """Get transactions for a specific user.
@@ -149,7 +147,7 @@ class TransactionRepositoryImpl(TransactionRepository):
 
             result = await self._session.execute(query)
             transactions = result.scalars().all()
-            
+
             return [self._model_to_entity(txn) for txn in transactions]
 
         except Exception as e:
@@ -171,7 +169,7 @@ class TransactionRepositoryImpl(TransactionRepository):
         """
         try:
             cutoff_time = datetime.utcnow() - timedelta(minutes=minutes)
-            
+
             result = await self._session.execute(
                 select(func.count(TransactionModel.id))
                 .where(
@@ -261,7 +259,7 @@ class TransactionRepositoryImpl(TransactionRepository):
                 select(TransactionModel).where(TransactionModel.id == transaction.transaction_id)
             )
             updated_model = result.scalar_one()
-            
+
             return self._model_to_entity(updated_model)
 
         except TransactionNotFoundError:
@@ -272,18 +270,18 @@ class TransactionRepositoryImpl(TransactionRepository):
 
     async def find_by_criteria(
         self,
-        customer_id: Optional[UUID] = None,
-        merchant_id: Optional[UUID] = None,
-        min_amount: Optional[float] = None,
-        max_amount: Optional[float] = None,
-        currency: Optional[str] = None,
-        payment_channel: Optional[str] = None,
-        payment_method: Optional[str] = None,
-        status: Optional[str] = None,
-        is_fraud: Optional[bool] = None,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
-        country: Optional[str] = None,
+        customer_id: UUID | None = None,
+        merchant_id: UUID | None = None,
+        min_amount: float | None = None,
+        max_amount: float | None = None,
+        currency: str | None = None,
+        payment_channel: str | None = None,
+        payment_method: str | None = None,
+        status: str | None = None,
+        is_fraud: bool | None = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+        country: str | None = None,
         limit: int = 100,
         offset: int = 0,
         sort_by: str = "created_at",
@@ -350,7 +348,7 @@ class TransactionRepositoryImpl(TransactionRepository):
 
             result = await self._session.execute(query)
             transactions = result.scalars().all()
-            
+
             return [self._model_to_entity(txn) for txn in transactions]
 
         except Exception as e:
@@ -430,8 +428,8 @@ class TransactionRepositoryImpl(TransactionRepository):
 
     async def get_fraud_statistics(
         self,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
         group_by: str = "day"
     ) -> list[dict[str, any]]:
         """Get fraud statistics over time.
@@ -499,10 +497,10 @@ class TransactionRepositoryImpl(TransactionRepository):
             raise DomainException(f"Failed to get fraud statistics: {e}", "REPOSITORY_ERROR")
 
     async def bulk_update_fraud_status(
-        self, 
-        transaction_ids: list[UUID], 
+        self,
+        transaction_ids: list[UUID],
         is_fraud: bool,
-        confirmed_by: Optional[str] = None
+        confirmed_by: str | None = None
     ) -> int:
         """Bulk update fraud status for multiple transactions.
 

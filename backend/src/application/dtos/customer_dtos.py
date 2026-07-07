@@ -1,7 +1,6 @@
 """Customer Data Transfer Objects."""
 
 from datetime import date, datetime
-from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
@@ -23,7 +22,7 @@ class CreateCustomerRequest(BaseModel):
         max_length=3,
         description="Country code (ISO 3166-1 alpha-2 or alpha-3)",
     )
-    date_of_birth: Optional[date] = Field(
+    date_of_birth: date | None = Field(
         default=None,
         description="Customer date of birth",
     )
@@ -36,7 +35,7 @@ class CreateCustomerRequest(BaseModel):
 
     @field_validator("date_of_birth")
     @classmethod
-    def validate_dob(cls, v: Optional[date]) -> Optional[date]:
+    def validate_dob(cls, v: date | None) -> date | None:
         """Validate date of birth is in the past."""
         if v and v >= date.today():
             raise ValueError("Date of birth must be in the past")
@@ -57,13 +56,13 @@ class CreateCustomerRequest(BaseModel):
 class UpdateCustomerRequest(BaseModel):
     """Request DTO for updating a customer."""
 
-    customer_name: Optional[str] = Field(
+    customer_name: str | None = Field(
         default=None,
         min_length=1,
         max_length=255,
         description="Customer full name",
     )
-    credit_score: Optional[int] = Field(
+    credit_score: int | None = Field(
         default=None,
         ge=300,
         le=850,

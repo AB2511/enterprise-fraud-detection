@@ -3,7 +3,6 @@
 from dataclasses import dataclass, field
 from datetime import datetime
 from decimal import Decimal
-from typing import Optional
 from uuid import UUID, uuid4
 
 
@@ -145,7 +144,7 @@ class Merchant:
             ).quantize(Decimal("0.01"))
 
         self.updated_at = datetime.utcnow()
-        
+
         # Recalculate risk rating
         self.risk_rating = self.calculate_risk()
 
@@ -158,7 +157,7 @@ class Merchant:
         """Reactivate merchant."""
         if self.historical_fraud_rate > Decimal("10.0"):
             raise ValueError("Cannot reactivate merchant with fraud rate > 10%")
-        
+
         self.is_active = True
         self.updated_at = datetime.utcnow()
 
@@ -182,7 +181,7 @@ class Merchant:
         """Calculate average transaction amount."""
         if self.total_transactions == 0:
             return Decimal("0.00")
-        
+
         return (self.total_volume / self.total_transactions).quantize(Decimal("0.01"))
 
     def get_risk_level(self) -> str:

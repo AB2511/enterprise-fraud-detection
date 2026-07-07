@@ -4,7 +4,7 @@ Provides consistent response structure across all API endpoints.
 """
 
 from datetime import datetime
-from typing import Any, Generic, Optional, TypeVar
+from typing import Any, Generic, TypeVar
 from uuid import uuid4
 
 from pydantic import BaseModel, Field
@@ -49,7 +49,7 @@ class APIResponse(BaseModel, Generic[T]):
         ...,
         description="Human-readable status message",
     )
-    data: Optional[T] = Field(
+    data: T | None = Field(
         default=None,
         description="Response payload",
     )
@@ -77,7 +77,7 @@ class APIResponse(BaseModel, Generic[T]):
 def success_response(
     data: Any,
     message: str = "Operation completed successfully",
-    request_id: Optional[str] = None,
+    request_id: str | None = None,
 ) -> APIResponse:
     """Create a success response.
 
@@ -103,7 +103,7 @@ def success_response(
 
 def error_response(
     message: str,
-    request_id: Optional[str] = None,
+    request_id: str | None = None,
 ) -> APIResponse:
     """Create an error response.
 

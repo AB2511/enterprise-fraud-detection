@@ -1,12 +1,10 @@
 """User Repository Implementation using SQLAlchemy."""
 
 from datetime import datetime
-from typing import Optional
 from uuid import UUID
 
 from sqlalchemy import and_, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from src.application.interfaces.user_repository import UserRepository
 from src.domain.entities.user import User
@@ -69,7 +67,7 @@ class UserRepositoryImpl(UserRepository):
         except Exception as e:
             raise RepositoryError(f"Failed to create user: {e}") from e
 
-    async def get_by_id(self, user_id: UUID) -> Optional[User]:
+    async def get_by_id(self, user_id: UUID) -> User | None:
         """Retrieve user by ID, excluding soft-deleted records.
 
         Args:
@@ -93,7 +91,7 @@ class UserRepositoryImpl(UserRepository):
         except Exception as e:
             raise RepositoryError(f"Failed to get user by id: {e}") from e
 
-    async def get_by_email(self, email: str) -> Optional[User]:
+    async def get_by_email(self, email: str) -> User | None:
         """Retrieve user by email, case-insensitive lookup.
 
         Args:

@@ -148,23 +148,23 @@ class TransactionModel(Base, UUIDMixin, TimestampMixin, SoftDeleteMixin):
     currency: Mapped[str] = mapped_column(String(3), nullable=False)
     transaction_type: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
     status: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
-    
+
     # Payment details
     payment_channel: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
     payment_method: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
     terminal_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
-    
+
     # Device and location
     device_id: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
     ip_address: Mapped[str | None] = mapped_column(String(45), nullable=True)
     latitude: Mapped[float | None] = mapped_column(nullable=True)
     longitude: Mapped[float | None] = mapped_column(nullable=True)
-    
+
     # Velocity metrics
     velocity_1h: Mapped[float | None] = mapped_column(nullable=True)
     velocity_24h: Mapped[float | None] = mapped_column(nullable=True)
     velocity_7d: Mapped[float | None] = mapped_column(nullable=True)
-    
+
     # Fraud information
     is_fraud: Mapped[bool] = mapped_column(default=False, nullable=False, index=True)
     fraud_confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
@@ -178,20 +178,20 @@ class PredictionModel(Base, UUIDMixin, TimestampMixin):
     transaction_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
     model_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
     model_version: Mapped[str] = mapped_column(String(50), nullable=False)
-    
+
     # Prediction results
     prediction_class: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
     fraud_probability: Mapped[float] = mapped_column(nullable=False)
     anomaly_score: Mapped[float | None] = mapped_column(nullable=True)
     risk_score: Mapped[float | None] = mapped_column(nullable=True)
     confidence: Mapped[float | None] = mapped_column(nullable=True)
-    
+
     # Decision
     decision: Mapped[str] = mapped_column(String(50), nullable=False)
-    
+
     # Performance
     latency_ms: Mapped[float | None] = mapped_column(nullable=True)
-    
+
     # Flexible explanation data
     explanation_data: Mapped[dict | None] = mapped_column(PortableJSON, nullable=True)
 
@@ -203,21 +203,21 @@ class AlertModel(Base, UUIDMixin, TimestampMixin, SoftDeleteMixin):
 
     transaction_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
     prediction_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
-    
+
     # Alert details
     alert_type: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
     severity: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
     status: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
-    
+
     # Assignment
     assigned_analyst_id: Mapped[UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True, index=True)
     assigned_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    
+
     # Resolution
     resolution: Mapped[str | None] = mapped_column(String(255), nullable=True)
     resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     resolved_by_id: Mapped[UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
-    
+
     # SLA tracking
     sla_deadline: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     is_sla_breached: Mapped[bool] = mapped_column(default=False, nullable=False)
@@ -235,20 +235,20 @@ class AuditLogModel(Base, UUIDMixin):
         nullable=False,
         index=True,
     )
-    
+
     # Entity information
     entity_type: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
     entity_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
-    
+
     # Action details
     action: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
     user_id: Mapped[UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True, index=True)
     username: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    
+
     # Changes
     old_value: Mapped[dict | None] = mapped_column(PortableJSON, nullable=True)
     new_value: Mapped[dict | None] = mapped_column(PortableJSON, nullable=True)
-    
+
     # Context
     ip_address: Mapped[str | None] = mapped_column(String(45), nullable=True)
     user_agent: Mapped[str | None] = mapped_column(String(255), nullable=True)
@@ -263,18 +263,18 @@ class ModelModel(Base, UUIDMixin, TimestampMixin):
     # Model identification
     version: Mapped[str] = mapped_column(String(50), nullable=False, unique=True, index=True)
     model_type: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
-    
+
     # Artifact storage
     artifact_path: Mapped[str] = mapped_column(String(500), nullable=False)
-    
+
     # Model metadata and metrics (stored as JSON) - renamed to avoid SQLAlchemy reserved word
     model_metadata: Mapped[dict] = mapped_column(PortableJSON, nullable=False, default=dict)
     metrics: Mapped[dict] = mapped_column(PortableJSON, nullable=False, default=dict)
-    
+
     # Lifecycle
     training_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     status: Mapped[str] = mapped_column(String(50), nullable=False, default="training", index=True)
-    
+
     # Tracking
     created_by: Mapped[str] = mapped_column(String(255), nullable=False, default="system")
 
@@ -286,11 +286,11 @@ class AnalystFeedbackModel(Base, UUIDMixin, TimestampMixin):
 
     prediction_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
     analyst_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
-    
+
     # Feedback
     is_fraud: Mapped[bool] = mapped_column(nullable=False)
     confidence: Mapped[str] = mapped_column(String(50), nullable=False)
     notes: Mapped[str | None] = mapped_column(String(1000), nullable=True)
-    
+
     # Context
     reviewed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)

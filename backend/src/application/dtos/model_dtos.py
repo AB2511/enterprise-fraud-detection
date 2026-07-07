@@ -1,7 +1,7 @@
 """Model Data Transfer Objects."""
 
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator
@@ -36,7 +36,7 @@ class CreateModelRequest(BaseModel):
         default_factory=dict,
         description="Model performance metrics (accuracy, precision, recall)",
     )
-    training_date: Optional[datetime] = Field(
+    training_date: datetime | None = Field(
         default=None,
         description="When model was trained (defaults to current time)",
     )
@@ -80,28 +80,28 @@ class CreateModelRequest(BaseModel):
 class UpdateModelRequest(BaseModel):
     """Request DTO for updating a model."""
 
-    artifact_path: Optional[str] = Field(
+    artifact_path: str | None = Field(
         default=None,
         min_length=1,
         max_length=500,
         description="Updated path to model artifact",
     )
-    metadata: Optional[dict[str, Any]] = Field(
+    metadata: dict[str, Any] | None = Field(
         default=None,
         description="Updated model metadata",
     )
-    metrics: Optional[dict[str, float]] = Field(
+    metrics: dict[str, float] | None = Field(
         default=None,
         description="Updated model performance metrics",
     )
-    status: Optional[str] = Field(
+    status: str | None = Field(
         default=None,
         description="Model status (training, staging, production, archived)",
     )
 
     @field_validator("status")
     @classmethod
-    def validate_status(cls, v: Optional[str]) -> Optional[str]:
+    def validate_status(cls, v: str | None) -> str | None:
         """Validate model status."""
         if v is not None:
             allowed_statuses = ["training", "staging", "production", "archived"]
@@ -130,7 +130,7 @@ class ModelPromotionRequest(BaseModel):
         ...,
         description="Target status (staging, production)",
     )
-    approval_reason: Optional[str] = Field(
+    approval_reason: str | None = Field(
         default=None,
         max_length=500,
         description="Reason for promotion",
@@ -202,22 +202,22 @@ class ModelResponse(BaseModel):
 class ModelListRequest(BaseModel):
     """Request DTO for listing models."""
 
-    model_type: Optional[str] = Field(
+    model_type: str | None = Field(
         default=None,
         description="Filter by model type",
     )
-    status: Optional[str] = Field(
+    status: str | None = Field(
         default=None,
         description="Filter by status (training, staging, production, archived)",
     )
-    created_by: Optional[str] = Field(
+    created_by: str | None = Field(
         default=None,
         description="Filter by creator",
     )
 
     @field_validator("status")
     @classmethod
-    def validate_status(cls, v: Optional[str]) -> Optional[str]:
+    def validate_status(cls, v: str | None) -> str | None:
         """Validate model status."""
         if v is not None:
             allowed_statuses = ["training", "staging", "production", "archived"]
@@ -241,7 +241,7 @@ class ModelStatisticsResponse(BaseModel):
     total: int = Field(..., description="Total number of models")
     by_status: dict[str, int] = Field(..., description="Count by status")
     by_type: dict[str, int] = Field(..., description="Count by model type")
-    latest_training_date: Optional[str] = Field(..., description="Latest training date")
+    latest_training_date: str | None = Field(..., description="Latest training date")
 
     model_config = {
         "json_schema_extra": {

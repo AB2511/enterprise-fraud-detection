@@ -3,7 +3,6 @@
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Optional
 from uuid import UUID, uuid4
 
 
@@ -34,7 +33,7 @@ class Customer:
     customer_id: UUID = field(default_factory=uuid4)
     customer_name: str = ""
     email: str = ""
-    date_of_birth: Optional[date] = None
+    date_of_birth: date | None = None
     country: str = ""
     kyc_status: str = "pending"
     customer_risk_category: str = "medium"
@@ -91,7 +90,7 @@ class Customer:
 
         self.credit_score = new_score
         self.updated_at = datetime.utcnow()
-        
+
         # Recalculate risk category based on new score
         self._recalculate_risk_category()
 
@@ -99,7 +98,7 @@ class Customer:
         """Increment historical fraud count."""
         self.historical_fraud_count += 1
         self.updated_at = datetime.utcnow()
-        
+
         # Recalculate risk category
         self._recalculate_risk_category()
 
@@ -184,7 +183,7 @@ class Customer:
         """Reactivate customer account."""
         if self.kyc_status != "verified":
             raise ValueError("Cannot reactivate account without verified KYC")
-        
+
         self.is_active = True
         self.updated_at = datetime.utcnow()
 
@@ -199,18 +198,18 @@ class Customer:
         return self.customer_risk_category in ["high", "critical"]
 
     @property
-    def age_years(self) -> Optional[int]:
+    def age_years(self) -> int | None:
         """Calculate customer age in years."""
         if not self.date_of_birth:
             return None
-        
+
         today = date.today()
         age = today.year - self.date_of_birth.year
-        
+
         # Adjust for birthday not yet occurred this year
         if (today.month, today.day) < (self.date_of_birth.month, self.date_of_birth.day):
             age -= 1
-            
+
         return age
 
     @property

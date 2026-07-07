@@ -1,16 +1,15 @@
 """Audit Repository Implementation using SQLAlchemy Async."""
 
 from datetime import datetime
-from typing import Optional
 from uuid import UUID
 
-from sqlalchemy import and_, desc, select, func, text
+from sqlalchemy import and_, desc, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.application.interfaces.audit_repository import AuditRepository
 from src.domain.entities.audit_log import AuditLog
-from src.domain.exceptions.base import DomainException, NotFoundError, RepositoryError
+from src.domain.exceptions.base import DomainException
 from src.infrastructure.database.models import AuditLogModel
 
 
@@ -72,7 +71,7 @@ class AuditRepositoryImpl(AuditRepository):
             await self._session.rollback()
             raise DomainException(f"Failed to create audit log: {e}", "REPOSITORY_ERROR")
 
-    async def get_by_id(self, log_id: UUID) -> Optional[AuditLog]:
+    async def get_by_id(self, log_id: UUID) -> AuditLog | None:
         """Retrieve audit log by ID.
 
         Args:
@@ -86,7 +85,7 @@ class AuditRepositoryImpl(AuditRepository):
                 select(AuditLogModel).where(AuditLogModel.id == log_id)
             )
             audit_model = result.scalar_one_or_none()
-            
+
             if audit_model:
                 return self._model_to_entity(audit_model)
             return None
@@ -234,11 +233,11 @@ class AuditRepositoryImpl(AuditRepository):
 
     async def search(
         self,
-        entity_type: Optional[str] = None,
-        action: Optional[str] = None,
-        user_id: Optional[UUID] = None,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
+        entity_type: str | None = None,
+        action: str | None = None,
+        user_id: UUID | None = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
         limit: int = 100,
         offset: int = 0,
     ) -> list[AuditLog]:
@@ -279,7 +278,7 @@ class AuditRepositoryImpl(AuditRepository):
 
             result = await self._session.execute(query)
             audit_logs = result.scalars().all()
-            
+
             return [self._model_to_entity(log) for log in audit_logs]
 
         except Exception as e:
@@ -423,8 +422,8 @@ class AuditRepositoryImpl(AuditRepository):
     async def get_user_activity_summary(
         self,
         user_id: UUID,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None
+        start_date: datetime | None = None,
+        end_date: datetime | None = None
     ) -> dict[str, any]:
         """Get user activity summary.
 
@@ -439,7 +438,7 @@ class AuditRepositoryImpl(AuditRepository):
         try:
             # Simplified approach using separate queries
             base_query = select(func.count(AuditLogModel.id)).where(AuditLogModel.user_id == user_id)
-            
+
             if start_date:
                 base_query = base_query.where(AuditLogModel.created_at >= start_date)
             if end_date:

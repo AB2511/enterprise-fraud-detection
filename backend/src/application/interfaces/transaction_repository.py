@@ -2,7 +2,6 @@
 
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Optional
 from uuid import UUID
 
 from src.domain.entities.transaction import Transaction
@@ -28,7 +27,7 @@ class TransactionRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_by_id(self, transaction_id: UUID) -> Optional[Transaction]:
+    async def get_by_id(self, transaction_id: UUID) -> Transaction | None:
         """Retrieve transaction by ID.
 
         Args:
@@ -43,8 +42,8 @@ class TransactionRepository(ABC):
     async def get_by_user(
         self,
         user_id: str,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
         limit: int = 100,
     ) -> list[Transaction]:
         """Get transactions for a specific user.

@@ -2,7 +2,6 @@
 
 from datetime import datetime, timedelta
 from decimal import Decimal
-from typing import Optional
 from uuid import UUID
 
 from src.application.interfaces.audit_repository import AuditRepository
@@ -100,11 +99,11 @@ class TransactionService:
         transaction_type: str = "purchase",
         payment_channel: str = "online",
         payment_method: str = "credit_card",
-        device_id: Optional[str] = None,
-        ip_address: Optional[str] = None,
-        latitude: Optional[float] = None,
-        longitude: Optional[float] = None,
-        user_id: Optional[UUID] = None,
+        device_id: str | None = None,
+        ip_address: str | None = None,
+        latitude: float | None = None,
+        longitude: float | None = None,
+        user_id: UUID | None = None,
     ) -> Transaction:
         """Create a new transaction.
 
@@ -180,7 +179,7 @@ class TransactionService:
         self,
         transaction_id: UUID,
         updates: dict,
-        user_id: Optional[UUID] = None,
+        user_id: UUID | None = None,
     ) -> Transaction:
         """Update transaction information.
 
@@ -236,10 +235,10 @@ class TransactionService:
 
     async def get_transaction_history(
         self,
-        customer_id: Optional[UUID] = None,
-        merchant_id: Optional[UUID] = None,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
+        customer_id: UUID | None = None,
+        merchant_id: UUID | None = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
         limit: int = 100,
         offset: int = 0,
     ) -> list[Transaction]:

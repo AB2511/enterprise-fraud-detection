@@ -4,7 +4,7 @@ Provides dependency factories for services, repositories, and other
 application components.
 """
 
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession

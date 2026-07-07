@@ -1,6 +1,5 @@
 """User Use Cases (CQRS Pattern)."""
 
-from typing import Optional
 from uuid import UUID
 
 from src.application.dtos.user_dtos import (
@@ -14,7 +13,6 @@ from src.application.dtos.user_dtos import (
 )
 from src.application.exceptions.application_exceptions import (
     EntityNotFoundException,
-    ValidationException,
 )
 from src.application.services.user_service import UserService
 from src.domain.entities.user import User
@@ -34,7 +32,7 @@ class CreateUserUseCase:
     async def execute(
         self,
         request: CreateUserRequest,
-        created_by: Optional[UUID] = None,
+        created_by: UUID | None = None,
     ) -> UserResponse:
         """Execute create user use case.
 
@@ -91,7 +89,7 @@ class UpdateUserUseCase:
         self,
         user_id: UUID,
         request: UpdateUserRequest,
-        updated_by: Optional[UUID] = None,
+        updated_by: UUID | None = None,
     ) -> UserResponse:
         """Execute update user use case.
 
@@ -137,7 +135,7 @@ class DeleteUserUseCase:
         self,
         user_id: UUID,
         reason: str = "Account deletion requested",
-        deleted_by: Optional[UUID] = None,
+        deleted_by: UUID | None = None,
     ) -> None:
         """Execute delete user use case.
 
@@ -259,7 +257,7 @@ class AuthenticateUserUseCase:
     async def execute(
         self,
         request: LoginRequest,
-        ip_address: Optional[str] = None,
+        ip_address: str | None = None,
     ) -> AuthenticationResponse:
         """Execute authenticate user use case.
 
@@ -354,7 +352,7 @@ class ActivateUserUseCase:
     async def execute(
         self,
         user_id: UUID,
-        activated_by: Optional[UUID] = None,
+        activated_by: UUID | None = None,
     ) -> UserResponse:
         """Execute activate user use case.
 
@@ -391,7 +389,7 @@ class LockUserUseCase:
         self,
         user_id: UUID,
         reason: str,
-        locked_by: Optional[UUID] = None,
+        locked_by: UUID | None = None,
     ) -> UserResponse:
         """Execute lock user use case.
 

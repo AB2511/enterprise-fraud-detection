@@ -29,7 +29,7 @@ class RepositoryError(DomainException):
     
     Indicates infrastructure-level errors during data persistence operations.
     """
-    
+
     def __init__(self, message: str) -> None:
         """Initialize repository error.
         
@@ -44,7 +44,7 @@ class NotFoundError(DomainException):
     
     Indicates the requested entity does not exist.
     """
-    
+
     def __init__(self, message: str) -> None:
         """Initialize not found error.
         
@@ -59,7 +59,7 @@ class ConflictError(DomainException):
     
     Indicates a constraint violation or duplicate resource.
     """
-    
+
     def __init__(self, message: str) -> None:
         """Initialize conflict error.
         

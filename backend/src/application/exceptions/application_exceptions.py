@@ -1,6 +1,6 @@
 """Application Layer Exception Hierarchy."""
 
-from typing import Any, Optional
+from typing import Any
 
 
 class ApplicationException(Exception):
@@ -12,8 +12,8 @@ class ApplicationException(Exception):
     def __init__(
         self,
         message: str,
-        error_code: Optional[str] = None,
-        details: Optional[dict[str, Any]] = None,
+        error_code: str | None = None,
+        details: dict[str, Any] | None = None,
     ) -> None:
         """Initialize application exception.
 
@@ -38,7 +38,7 @@ class EntityNotFoundException(ApplicationException):
         self,
         entity_type: str,
         entity_id: Any,
-        details: Optional[dict[str, Any]] = None,
+        details: dict[str, Any] | None = None,
     ) -> None:
         """Initialize entity not found exception.
 
@@ -66,9 +66,9 @@ class ValidationException(ApplicationException):
     def __init__(
         self,
         message: str,
-        field: Optional[str] = None,
-        validation_errors: Optional[list[dict[str, Any]]] = None,
-        details: Optional[dict[str, Any]] = None,
+        field: str | None = None,
+        validation_errors: list[dict[str, Any]] | None = None,
+        details: dict[str, Any] | None = None,
     ) -> None:
         """Initialize validation exception.
 
@@ -102,10 +102,10 @@ class ConflictException(ApplicationException):
     def __init__(
         self,
         message: str,
-        resource_type: Optional[str] = None,
-        conflicting_field: Optional[str] = None,
-        conflicting_value: Optional[Any] = None,
-        details: Optional[dict[str, Any]] = None,
+        resource_type: str | None = None,
+        conflicting_field: str | None = None,
+        conflicting_value: Any | None = None,
+        details: dict[str, Any] | None = None,
     ) -> None:
         """Initialize conflict exception.
 
@@ -142,7 +142,7 @@ class DuplicateTransactionException(ConflictException):
         self,
         transaction_details: dict[str, Any],
         window_minutes: int = 5,
-        details: Optional[dict[str, Any]] = None,
+        details: dict[str, Any] | None = None,
     ) -> None:
         """Initialize duplicate transaction exception.
 
@@ -176,9 +176,9 @@ class AuthorizationException(ApplicationException):
     def __init__(
         self,
         message: str = "User not authorized for this operation",
-        required_permission: Optional[str] = None,
-        user_id: Optional[Any] = None,
-        details: Optional[dict[str, Any]] = None,
+        required_permission: str | None = None,
+        user_id: Any | None = None,
+        details: dict[str, Any] | None = None,
     ) -> None:
         """Initialize authorization exception.
 
@@ -211,8 +211,8 @@ class AuthenticationException(ApplicationException):
     def __init__(
         self,
         message: str = "Authentication failed",
-        reason: Optional[str] = None,
-        details: Optional[dict[str, Any]] = None,
+        reason: str | None = None,
+        details: dict[str, Any] | None = None,
     ) -> None:
         """Initialize authentication exception.
 
@@ -242,9 +242,9 @@ class BusinessRuleViolationException(ApplicationException):
     def __init__(
         self,
         message: str,
-        rule_name: Optional[str] = None,
-        violated_constraint: Optional[str] = None,
-        details: Optional[dict[str, Any]] = None,
+        rule_name: str | None = None,
+        violated_constraint: str | None = None,
+        details: dict[str, Any] | None = None,
     ) -> None:
         """Initialize business rule violation exception.
 

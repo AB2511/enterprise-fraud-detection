@@ -2,7 +2,6 @@
 
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Optional
 from uuid import UUID
 
 from src.domain.entities.audit_log import AuditLog
@@ -30,7 +29,7 @@ class AuditRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_by_id(self, log_id: UUID) -> Optional[AuditLog]:
+    async def get_by_id(self, log_id: UUID) -> AuditLog | None:
         """Retrieve audit log by ID.
 
         Args:
@@ -124,11 +123,11 @@ class AuditRepository(ABC):
     @abstractmethod
     async def search(
         self,
-        entity_type: Optional[str] = None,
-        action: Optional[str] = None,
-        user_id: Optional[UUID] = None,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
+        entity_type: str | None = None,
+        action: str | None = None,
+        user_id: UUID | None = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
         limit: int = 100,
         offset: int = 0,
     ) -> list[AuditLog]:

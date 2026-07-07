@@ -2,7 +2,6 @@
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Optional
 from uuid import UUID, uuid4
 
 
@@ -43,7 +42,7 @@ class Prediction:
     explanation_data: dict[str, any] = field(default_factory=dict)
     latency_ms: int = 0
     timestamp: datetime = field(default_factory=datetime.utcnow)
-    analyst_feedback_id: Optional[UUID] = None
+    analyst_feedback_id: UUID | None = None
     created_at: datetime = field(default_factory=datetime.utcnow)
     updated_at: datetime = field(default_factory=datetime.utcnow)
 

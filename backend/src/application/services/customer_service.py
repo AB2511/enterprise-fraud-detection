@@ -2,7 +2,6 @@
 
 from datetime import datetime
 from decimal import Decimal
-from typing import Optional
 from uuid import UUID
 
 from src.application.exceptions.application_exceptions import (
@@ -41,8 +40,8 @@ class CustomerService:
         customer_name: str,
         email: str,
         country: str,
-        date_of_birth: Optional[datetime] = None,
-        user_id: Optional[UUID] = None,
+        date_of_birth: datetime | None = None,
+        user_id: UUID | None = None,
     ) -> Customer:
         """Create a new customer with validation and audit.
 
@@ -103,7 +102,7 @@ class CustomerService:
         self,
         customer_id: UUID,
         updates: dict,
-        user_id: Optional[UUID] = None,
+        user_id: UUID | None = None,
     ) -> Customer:
         """Update customer information.
 
@@ -170,7 +169,7 @@ class CustomerService:
         self,
         customer_id: UUID,
         reason: str,
-        user_id: Optional[UUID] = None,
+        user_id: UUID | None = None,
     ) -> None:
         """Deactivate customer account (soft delete).
 
@@ -201,7 +200,7 @@ class CustomerService:
 
         # Soft delete via repository (sets deleted_at timestamp)
         deleted = await self._customer_repo.delete(customer_id)
-        
+
         if not deleted:
             raise EntityNotFoundException(
                 entity_type="Customer",
@@ -312,7 +311,7 @@ class CustomerService:
     async def verify_customer_kyc(
         self,
         customer_id: UUID,
-        user_id: Optional[UUID] = None,
+        user_id: UUID | None = None,
     ) -> Customer:
         """Verify customer KYC status.
 
@@ -356,7 +355,7 @@ class CustomerService:
     async def record_fraud_incident(
         self,
         customer_id: UUID,
-        user_id: Optional[UUID] = None,
+        user_id: UUID | None = None,
     ) -> Customer:
         """Record a confirmed fraud incident for customer.
 

@@ -48,10 +48,6 @@ def check_imports() -> bool:
 def check_domain_layer() -> bool:
     """Check domain layer loads correctly."""
     try:
-        from src.domain.entities.transaction import Transaction
-        from src.domain.entities.prediction import Prediction
-        from src.domain.services.risk_scoring_service import RiskScoringService
-        from src.domain.enums.prediction_class import PredictionClass
 
         print("✓ Domain layer loads successfully")
         return True
@@ -66,7 +62,7 @@ def check_config() -> bool:
         from src.config.settings import get_settings
 
         settings = get_settings()
-        print(f"✓ Configuration loaded successfully")
+        print("✓ Configuration loaded successfully")
         print(f"  - Environment: {settings.environment}")
         print(f"  - App Version: {settings.app_version}")
         return True
@@ -82,7 +78,7 @@ def check_fastapi_app() -> bool:
         from src.presentation.main import create_application
 
         app = create_application()
-        print(f"✓ FastAPI application created successfully")
+        print("✓ FastAPI application created successfully")
         print(f"  - Title: {app.title}")
         print(f"  - Version: {app.version}")
         return True

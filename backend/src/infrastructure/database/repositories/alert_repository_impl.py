@@ -1,7 +1,6 @@
 """Alert Repository Implementation using SQLAlchemy Async."""
 
 from datetime import datetime
-from typing import Optional
 from uuid import UUID
 
 from sqlalchemy import and_, desc, select, update
@@ -10,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.application.interfaces.alert_repository import AlertRepository
 from src.domain.entities.alert import Alert
-from src.domain.exceptions.base import DomainException, NotFoundError, RepositoryError
+from src.domain.exceptions.base import DomainException
 from src.infrastructure.database.models import AlertModel
 
 
@@ -93,7 +92,7 @@ class AlertRepositoryImpl(AlertRepository):
             await self._session.rollback()
             raise DomainException(f"Failed to create alert: {e}", "REPOSITORY_ERROR")
 
-    async def get_by_id(self, alert_id: UUID) -> Optional[Alert]:
+    async def get_by_id(self, alert_id: UUID) -> Alert | None:
         """Retrieve alert by ID.
 
         Args:
@@ -112,7 +111,7 @@ class AlertRepositoryImpl(AlertRepository):
                 )
             )
             alert_model = result.scalar_one_or_none()
-            
+
             if alert_model:
                 return self._model_to_entity(alert_model)
             return None
@@ -166,7 +165,7 @@ class AlertRepositoryImpl(AlertRepository):
                 select(AlertModel).where(AlertModel.id == alert.alert_id)
             )
             updated_model = result.scalar_one()
-            
+
             return self._model_to_entity(updated_model)
 
         except AlertNotFoundError:
@@ -356,7 +355,7 @@ class AlertRepositoryImpl(AlertRepository):
         """
         try:
             current_time = datetime.utcnow()
-            
+
             result = await self._session.execute(
                 select(AlertModel)
                 .where(
@@ -474,7 +473,7 @@ class AlertRepositoryImpl(AlertRepository):
         """
         try:
             current_time = datetime.utcnow()
-            
+
             result = await self._session.execute(
                 update(AlertModel)
                 .where(

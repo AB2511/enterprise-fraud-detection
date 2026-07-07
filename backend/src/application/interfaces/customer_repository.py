@@ -1,7 +1,6 @@
 """Customer Repository Interface."""
 
 from abc import ABC, abstractmethod
-from typing import Optional
 from uuid import UUID
 
 from src.domain.entities.customer import Customer
@@ -30,7 +29,7 @@ class CustomerRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_by_id(self, customer_id: UUID) -> Optional[Customer]:
+    async def get_by_id(self, customer_id: UUID) -> Customer | None:
         """Retrieve customer by ID.
 
         Args:
@@ -42,7 +41,7 @@ class CustomerRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_by_email(self, email: str) -> Optional[Customer]:
+    async def get_by_email(self, email: str) -> Customer | None:
         """Retrieve customer by email.
 
         Args:

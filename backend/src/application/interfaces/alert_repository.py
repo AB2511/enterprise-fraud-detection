@@ -2,7 +2,6 @@
 
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Optional
 from uuid import UUID
 
 from src.domain.entities.alert import Alert
@@ -27,7 +26,7 @@ class AlertRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_by_id(self, alert_id: UUID) -> Optional[Alert]:
+    async def get_by_id(self, alert_id: UUID) -> Alert | None:
         """Retrieve alert by ID.
 
         Args:

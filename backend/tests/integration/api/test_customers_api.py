@@ -8,8 +8,6 @@ from uuid import uuid4
 import pytest
 from fastapi import status
 from httpx import AsyncClient
-
-from src.infrastructure.database.models import CustomerModel
 from src.presentation.api.dependencies import get_db
 from src.presentation.main import create_application
 
@@ -17,9 +15,9 @@ from src.presentation.main import create_application
 @pytest.fixture
 async def test_app(test_db_engine):
     """Create test FastAPI application."""
-    from sqlalchemy.orm import sessionmaker
     from sqlalchemy.ext.asyncio import AsyncSession
-    
+    from sqlalchemy.orm import sessionmaker
+
     app = create_application()
 
     # Override database dependency to create fresh session per request
@@ -46,7 +44,7 @@ async def test_app(test_db_engine):
 async def async_client(test_app):
     """Create async HTTP client for testing."""
     from httpx import ASGITransport
-    
+
     async with AsyncClient(
         transport=ASGITransport(app=test_app),
         base_url="http://test"

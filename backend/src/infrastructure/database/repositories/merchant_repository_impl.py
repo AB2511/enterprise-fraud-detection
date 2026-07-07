@@ -1,7 +1,6 @@
 """Merchant Repository Implementation using SQLAlchemy Async."""
 
 from datetime import datetime
-from typing import Optional
 from uuid import UUID
 
 from sqlalchemy import and_, desc, func, select, update
@@ -10,7 +9,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.application.interfaces.merchant_repository import MerchantRepository
 from src.domain.entities.merchant import Merchant
-from src.domain.exceptions.base import ConflictError, DomainException, NotFoundError, RepositoryError
+from src.domain.exceptions.base import (
+    DomainException,
+    RepositoryError,
+)
 from src.infrastructure.database.models import MerchantModel
 
 
@@ -101,7 +103,7 @@ class MerchantRepositoryImpl(MerchantRepository):
             await self._session.rollback()
             raise DomainException(f"Failed to create merchant: {e}", "REPOSITORY_ERROR")
 
-    async def get_by_id(self, merchant_id: UUID) -> Optional[Merchant]:
+    async def get_by_id(self, merchant_id: UUID) -> Merchant | None:
         """Retrieve merchant by ID.
 
         Args:
@@ -120,7 +122,7 @@ class MerchantRepositoryImpl(MerchantRepository):
                 )
             )
             merchant_model = result.scalar_one_or_none()
-            
+
             if merchant_model:
                 return self._model_to_entity(merchant_model)
             return None
@@ -128,7 +130,7 @@ class MerchantRepositoryImpl(MerchantRepository):
         except Exception as e:
             raise DomainException(f"Failed to get merchant by ID: {e}", "REPOSITORY_ERROR")
 
-    async def get_by_name(self, merchant_name: str) -> Optional[Merchant]:
+    async def get_by_name(self, merchant_name: str) -> Merchant | None:
         """Retrieve merchant by name.
 
         Args:
@@ -147,7 +149,7 @@ class MerchantRepositoryImpl(MerchantRepository):
                 )
             )
             merchant_model = result.scalar_one_or_none()
-            
+
             if merchant_model:
                 return self._model_to_entity(merchant_model)
             return None
@@ -204,7 +206,7 @@ class MerchantRepositoryImpl(MerchantRepository):
                 select(MerchantModel).where(MerchantModel.id == merchant.merchant_id)
             )
             updated_model = result.scalar_one()
-            
+
             return self._model_to_entity(updated_model)
 
         except MerchantNotFoundError:
@@ -377,15 +379,15 @@ class MerchantRepositoryImpl(MerchantRepository):
 
     async def find_by_criteria(
         self,
-        name_pattern: Optional[str] = None,
-        mcc: Optional[str] = None,
-        category: Optional[str] = None,
-        country: Optional[str] = None,
-        min_risk_rating: Optional[int] = None,
-        max_risk_rating: Optional[int] = None,
-        min_fraud_rate: Optional[float] = None,
-        max_fraud_rate: Optional[float] = None,
-        is_active: Optional[bool] = None,
+        name_pattern: str | None = None,
+        mcc: str | None = None,
+        category: str | None = None,
+        country: str | None = None,
+        min_risk_rating: int | None = None,
+        max_risk_rating: int | None = None,
+        min_fraud_rate: float | None = None,
+        max_fraud_rate: float | None = None,
+        is_active: bool | None = None,
         limit: int = 100,
         offset: int = 0,
         sort_by: str = "updated_at",
@@ -445,7 +447,7 @@ class MerchantRepositoryImpl(MerchantRepository):
 
             result = await self._session.execute(query)
             merchants = result.scalars().all()
-            
+
             return [self._model_to_entity(merchant) for merchant in merchants]
 
         except Exception as e:

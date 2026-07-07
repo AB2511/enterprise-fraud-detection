@@ -1,12 +1,10 @@
 """Prediction Service - Manage prediction lifecycle (NO ML inference)."""
 
 from datetime import datetime
-from typing import Optional
 from uuid import UUID
 
 from src.application.interfaces.audit_repository import AuditRepository
 from src.domain.entities.audit_log import AuditLog
-from src.domain.entities.prediction import Prediction
 
 
 class PredictionService:
@@ -38,9 +36,9 @@ class PredictionService:
         prediction_class: str,
         fraud_probability: float,
         confidence: float,
-        explanation_data: Optional[dict] = None,
-        latency_ms: Optional[float] = None,
-        user_id: Optional[UUID] = None,
+        explanation_data: dict | None = None,
+        latency_ms: float | None = None,
+        user_id: UUID | None = None,
     ) -> dict:
         """Store a prediction result (from external ML service).
 
@@ -91,7 +89,7 @@ class PredictionService:
         self,
         prediction_id: UUID,
         new_status: str,
-        user_id: Optional[UUID] = None,
+        user_id: UUID | None = None,
     ) -> dict:
         """Update prediction review status.
 
@@ -130,7 +128,7 @@ class PredictionService:
         model_type: str,
         training_date: datetime,
         metrics: dict,
-        user_id: Optional[UUID] = None,
+        user_id: UUID | None = None,
     ) -> dict:
         """Store model metadata (NOT training logic).
 
@@ -174,7 +172,7 @@ class PredictionService:
         prediction_id: UUID,
         explanation_type: str,
         explanation_data: dict,
-        user_id: Optional[UUID] = None,
+        user_id: UUID | None = None,
     ) -> dict:
         """Store model explanation data (SHAP, LIME, etc.).
 

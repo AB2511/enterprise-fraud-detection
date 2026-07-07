@@ -1,7 +1,6 @@
 """User Data Transfer Objects."""
 
 from datetime import datetime
-from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
@@ -53,18 +52,18 @@ class CreateUserRequest(BaseModel):
 class UpdateUserRequest(BaseModel):
     """Request DTO for updating a user."""
 
-    role: Optional[str] = Field(
+    role: str | None = Field(
         default=None,
         description="User role (admin, analyst, data_scientist, auditor)",
     )
-    status: Optional[str] = Field(
+    status: str | None = Field(
         default=None,
         description="Account status (active, inactive, locked)",
     )
 
     @field_validator("role")
     @classmethod
-    def validate_role(cls, v: Optional[str]) -> Optional[str]:
+    def validate_role(cls, v: str | None) -> str | None:
         """Validate user role."""
         if v is not None:
             allowed_roles = ["admin", "analyst", "data_scientist", "auditor"]
@@ -74,7 +73,7 @@ class UpdateUserRequest(BaseModel):
 
     @field_validator("status")
     @classmethod
-    def validate_status(cls, v: Optional[str]) -> Optional[str]:
+    def validate_status(cls, v: str | None) -> str | None:
         """Validate user status."""
         if v is not None:
             allowed_statuses = ["active", "inactive", "locked"]
@@ -148,7 +147,7 @@ class UserResponse(BaseModel):
     is_locked: bool = Field(..., description="Whether account is locked")
     can_review_alerts: bool = Field(..., description="Whether user can review fraud alerts")
     can_manage_models: bool = Field(..., description="Whether user can manage ML models")
-    last_login: Optional[datetime] = Field(..., description="Last login timestamp")
+    last_login: datetime | None = Field(..., description="Last login timestamp")
     created_at: datetime = Field(..., description="Account creation timestamp")
     updated_at: datetime = Field(..., description="Last update timestamp")
 
@@ -200,18 +199,18 @@ class AuthenticationResponse(BaseModel):
 class UserListRequest(BaseModel):
     """Request DTO for listing users."""
 
-    role: Optional[str] = Field(
+    role: str | None = Field(
         default=None,
         description="Filter by role (admin, analyst, data_scientist, auditor)",
     )
-    status: Optional[str] = Field(
+    status: str | None = Field(
         default=None,
         description="Filter by status (active, inactive, locked)",
     )
 
     @field_validator("role")
     @classmethod
-    def validate_role(cls, v: Optional[str]) -> Optional[str]:
+    def validate_role(cls, v: str | None) -> str | None:
         """Validate user role."""
         if v is not None:
             allowed_roles = ["admin", "analyst", "data_scientist", "auditor"]
@@ -221,7 +220,7 @@ class UserListRequest(BaseModel):
 
     @field_validator("status")
     @classmethod
-    def validate_status(cls, v: Optional[str]) -> Optional[str]:
+    def validate_status(cls, v: str | None) -> str | None:
         """Validate user status."""
         if v is not None:
             allowed_statuses = ["active", "inactive", "locked"]
