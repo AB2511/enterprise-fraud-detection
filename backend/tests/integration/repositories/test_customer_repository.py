@@ -11,9 +11,21 @@ from src.infrastructure.database.repositories.customer_repository_impl import Cu
 
 
 @pytest.fixture
-def customer_repository(test_db_session):
+def customer_repository(async_session):
     """Create customer repository instance."""
-    return CustomerRepositoryImpl(test_db_session)
+    return CustomerRepositoryImpl(async_session)
+
+
+@pytest.fixture
+def sample_customer():
+    """Create sample customer entity for testing."""
+    return Customer(
+        customer_name="Jane Smith",
+        email="jane.smith@example.com",
+        country="CAN",
+        kyc_status="verified",
+        credit_score=780,
+    )
 
 
 class TestCustomerRepositoryCreate:
@@ -40,14 +52,14 @@ class TestCustomerRepositoryCreate:
     @pytest.mark.asyncio
     async def test_create_customer_persists_to_database(
         self,
-        test_db_session,
+        async_session,
         customer_repository,
         sample_customer,
     ):
         """Test that created customer is persisted."""
         # Act
         created = await customer_repository.create(sample_customer)
-        await test_db_session.commit()
+        await async_session.commit()
 
         # Retrieve directly from database
         retrieved = await customer_repository.get_by_id(created.customer_id)
@@ -150,11 +162,13 @@ class TestCustomerRepositoryUpdate:
         sample_customer,
     ):
         """Test updating non-existent customer raises error."""
+        from src.domain.exceptions.base import NotFoundError
+        
         # Arrange
         sample_customer.customer_id = uuid4()  # Non-existent ID
 
         # Act & Assert
-        with pytest.raises(ValueError, match="not found"):
+        with pytest.raises(NotFoundError, match="not found"):
             await customer_repository.update(sample_customer)
 
 

@@ -1,6 +1,6 @@
 """Model Repository Implementation using SQLAlchemy."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy import and_, desc, func, select
@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.application.interfaces.model_repository import ModelRepository
 from src.domain.entities.model import Model
-from src.domain.exceptions.base import NotFoundError, RepositoryError
+from src.domain.exceptions.base import DomainException, NotFoundError, RepositoryError
 from src.infrastructure.database.models import ModelModel
 
 
@@ -130,7 +130,7 @@ class ModelRepositoryImpl(ModelRepository):
             db_model.training_date = model.training_date
             db_model.status = model.status
             db_model.created_by = model.created_by
-            db_model.updated_at = datetime.utcnow()
+            db_model.updated_at = datetime.now(UTC)
 
             await self._session.flush()
             await self._session.refresh(db_model)
@@ -322,7 +322,7 @@ class ModelRepositoryImpl(ModelRepository):
                 raise RepositoryError("Cannot promote archived model")
 
             db_model.status = "production"
-            db_model.updated_at = datetime.utcnow()
+            db_model.updated_at = datetime.now(UTC)
 
             await self._session.flush()
             await self._session.refresh(db_model)
@@ -356,7 +356,7 @@ class ModelRepositoryImpl(ModelRepository):
                 raise NotFoundError(f"Model {model_id} not found")
 
             db_model.status = "archived"
-            db_model.updated_at = datetime.utcnow()
+            db_model.updated_at = datetime.now(UTC)
 
             await self._session.flush()
             await self._session.refresh(db_model)
@@ -419,7 +419,7 @@ class ModelRepositoryImpl(ModelRepository):
             return [self._to_entity(db_model) for db_model in db_models]
 
         except Exception as e:
-            raise RepositoryError(f"Failed to get model lineage: {e}") from e
+            raise DomainException(f"Failed to get model lineage: {e}", "REPOSITORY_ERROR") from e
 
     # Additional methods for model management and analytics
 
@@ -575,6 +575,7 @@ class ModelRepositoryImpl(ModelRepository):
             status=db_model.status,
             created_by=db_model.created_by,
             created_at=db_model.created_at,
+            updated_at=db_model.updated_at,
         )
 
     def _to_model(self, model: Model) -> ModelModel:
@@ -597,5 +598,5 @@ class ModelRepositoryImpl(ModelRepository):
             status=model.status,
             created_by=model.created_by,
             created_at=model.created_at,
-            updated_at=model.created_at,
+            updated_at=model.updated_at,
         )

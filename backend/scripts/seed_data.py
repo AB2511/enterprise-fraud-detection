@@ -313,7 +313,9 @@ def generate_predictions(transactions: list[dict]) -> list[dict]:
             "decision": (
                 "block"
                 if fraud_probability > 0.8
-                else "review" if fraud_probability > 0.5 else "approve"
+                else "review"
+                if fraud_probability > 0.5
+                else "approve"
             ),
             "latency_ms": float(Decimal(random.uniform(10, 100)).quantize(Decimal("0.1"))),
             "explanation_data": {

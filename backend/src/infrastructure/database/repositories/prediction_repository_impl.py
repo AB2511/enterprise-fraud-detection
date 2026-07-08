@@ -1,15 +1,15 @@
 """Prediction Repository Implementation using SQLAlchemy Async."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import UUID
 
-from sqlalchemy import and_, desc, func, select, update
+from sqlalchemy import Integer, and_, desc, func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.application.interfaces.prediction_repository import PredictionRepository
 from src.domain.entities.prediction import Prediction
-from src.domain.exceptions.base import DomainException
+from src.domain.exceptions.base import DomainException, NotFoundError, RepositoryError
 from src.infrastructure.database.models import PredictionModel
 
 
@@ -52,9 +52,7 @@ class PredictionRepositoryImpl(PredictionRepository):
             prediction_model = PredictionModel(
                 id=prediction.prediction_id,
                 transaction_id=prediction.transaction_id,
-                model_id=(
-                    UUID(prediction.model_version) if prediction.model_version != "0.0.0" else None
-                ),
+                model_id=None,
                 model_version=prediction.model_version,
                 prediction_class=prediction.predicted_class,
                 fraud_probability=prediction.fraud_probability,
@@ -160,7 +158,7 @@ class PredictionRepositoryImpl(PredictionRepository):
                 .values(
                     decision=prediction.decision,
                     explanation_data=prediction.explanation_data,
-                    updated_at=datetime.utcnow(),
+                    updated_at=datetime.now(UTC),
                 )
             )
 
@@ -385,16 +383,16 @@ class PredictionRepositoryImpl(PredictionRepository):
                 func.avg(PredictionModel.risk_score).label("avg_risk_score"),
                 func.avg(PredictionModel.confidence).label("avg_confidence"),
                 func.avg(PredictionModel.latency_ms).label("avg_latency"),
-                func.sum(
-                    func.cast(PredictionModel.prediction_class == "fraud", func.Integer)
-                ).label("fraud_predictions"),
-                func.sum(func.cast(PredictionModel.decision == "approve", func.Integer)).label(
+                func.sum(func.cast(PredictionModel.prediction_class == "fraud", Integer)).label(
+                    "fraud_predictions"
+                ),
+                func.sum(func.cast(PredictionModel.decision == "approve", Integer)).label(
                     "approved_count"
                 ),
-                func.sum(func.cast(PredictionModel.decision == "review", func.Integer)).label(
+                func.sum(func.cast(PredictionModel.decision == "review", Integer)).label(
                     "review_count"
                 ),
-                func.sum(func.cast(PredictionModel.decision == "decline", func.Integer)).label(
+                func.sum(func.cast(PredictionModel.decision == "decline", Integer)).label(
                     "declined_count"
                 ),
             ).where(PredictionModel.model_version == model_version)

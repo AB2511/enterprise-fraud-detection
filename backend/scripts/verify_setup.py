@@ -48,7 +48,6 @@ def check_imports() -> bool:
 def check_domain_layer() -> bool:
     """Check domain layer loads correctly."""
     try:
-
         print("✓ Domain layer loads successfully")
         return True
     except Exception as e:

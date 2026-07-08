@@ -1,7 +1,7 @@
 """Model Entity - Aggregate Root."""
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 
@@ -30,10 +30,11 @@ class Model:
     artifact_path: str = ""
     metadata: dict[str, any] = field(default_factory=dict)
     metrics: dict[str, float] = field(default_factory=dict)
-    training_date: datetime = field(default_factory=datetime.utcnow)
+    training_date: datetime = field(default_factory=lambda: datetime.now(UTC))
     status: str = "training"
     created_by: str = "system"
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def __post_init__(self) -> None:
         """Validate model business rules."""

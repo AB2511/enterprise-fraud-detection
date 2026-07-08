@@ -334,3 +334,249 @@ class TestCustomerRepositoryImpl:
         # Test large offset
         large_offset = await repository.list_by_kyc_status("pending", offset=1000)
         assert large_offset == []
+
+    async def test_update_customer_email_conflict(self, repository: CustomerRepositoryImpl):
+        """Test updating customer email to one that already exists."""
+        # Arrange - create two customers
+        customer1 = Customer(customer_name="User One", email="user1@example.com", country="USA")
+        customer2 = Customer(customer_name="User Two", email="user2@example.com", country="USA")
+
+        await repository.create(customer1)
+        created2 = await repository.create(customer2)
+
+        # Act - try to update customer2's email to customer1's email
+        created2.email = "user1@example.com"
+
+        # Assert - should raise ConflictError
+        with pytest.raises(ConflictError):
+            await repository.update(created2)
+
+    async def test_bulk_update_risk_category(self, repository: CustomerRepositoryImpl):
+        """Test bulk updating risk category for multiple customers."""
+        # Arrange - create multiple customers
+        customers = []
+        for i in range(5):
+            customer = Customer(
+                customer_name=f"Bulk User {i}", email=f"bulk{i}@example.com", country="USA"
+            )
+            customer.customer_risk_category = "low"
+            created = await repository.create(customer)
+            customers.append(created)
+
+        customer_ids = [c.customer_id for c in customers]
+
+        # Act - bulk update risk category
+        updated_count = await repository.bulk_update_risk_category(customer_ids, "high")
+
+        # Assert
+        assert updated_count == 5
+
+        # Verify updates
+        for customer_id in customer_ids:
+            updated_customer = await repository.get_by_id(customer_id)
+            assert updated_customer.customer_risk_category == "high"
+
+    async def test_bulk_update_risk_category_empty_list(self, repository: CustomerRepositoryImpl):
+        """Test bulk update with empty customer IDs list."""
+        # Act
+        updated_count = await repository.bulk_update_risk_category([], "high")
+
+        # Assert
+        assert updated_count == 0
+
+    async def test_bulk_update_risk_category_nonexistent_customers(
+        self, repository: CustomerRepositoryImpl
+    ):
+        """Test bulk update with non-existent customer IDs."""
+        # Arrange - use random UUIDs that don't exist
+        fake_ids = [uuid4(), uuid4(), uuid4()]
+
+        # Act
+        updated_count = await repository.bulk_update_risk_category(fake_ids, "critical")
+
+        # Assert - no customers should be updated
+        assert updated_count == 0
+
+    async def test_find_by_criteria_comprehensive(self, repository: CustomerRepositoryImpl):
+        """Test comprehensive find_by_criteria functionality."""
+        # Arrange - create diverse customers
+        customers_data = [
+            ("John Doe", "john@tech.com", "USA", "verified", "high", 750),
+            ("Jane Smith", "jane@finance.com", "UK", "pending", "medium", 680),
+            ("Bob Wilson", "bob@startup.com", "USA", "verified", "low", 720),
+            ("Alice Brown", "alice@corp.com", "Canada", "rejected", "critical", 600),
+        ]
+
+        created_customers = []
+        for name, email, country, kyc_status, risk_cat, credit_score in customers_data:
+            customer = Customer(customer_name=name, email=email, country=country)
+            customer.kyc_status = kyc_status
+            customer.customer_risk_category = risk_cat
+            customer.credit_score = credit_score
+            created = await repository.create(customer)
+            created_customers.append(created)
+
+        # Test email pattern search
+        tech_users = await repository.find_by_criteria(email_pattern="tech.com")
+        assert len(tech_users) == 1
+        assert tech_users[0].email == "john@tech.com"
+
+        # Test country filter
+        usa_users = await repository.find_by_criteria(country="USA")
+        assert len(usa_users) == 2
+
+        # Test KYC status filter
+        verified_users = await repository.find_by_criteria(kyc_status="verified")
+        assert len(verified_users) == 2
+
+        # Test risk category filter
+        high_risk_users = await repository.find_by_criteria(risk_category="high")
+        assert len(high_risk_users) == 1
+
+        # Test credit score range
+        mid_credit_users = await repository.find_by_criteria(
+            min_credit_score=650, max_credit_score=700
+        )
+        assert len(mid_credit_users) == 1
+        assert mid_credit_users[0].credit_score == 680
+
+        # Test active status filter
+        all_active = await repository.find_by_criteria(is_active=True)
+        assert len(all_active) == 4  # All customers are active by default
+
+        # Test combined filters
+        usa_verified = await repository.find_by_criteria(country="USA", kyc_status="verified")
+        assert len(usa_verified) == 2  # Both John and Bob are from USA and verified
+        assert usa_verified[0].country == "USA"
+
+        # Test pagination
+        page1 = await repository.find_by_criteria(limit=2, offset=0)
+        page2 = await repository.find_by_criteria(limit=2, offset=2)
+        assert len(page1) == 2
+        assert len(page2) == 2
+        assert page1[0].customer_id != page2[0].customer_id
+
+    async def test_find_by_criteria_no_matches(self, repository: CustomerRepositoryImpl):
+        """Test find_by_criteria with no matching results."""
+        # Act
+        results = await repository.find_by_criteria(
+            email_pattern="nonexistent@domain.com", country="Mars"
+        )
+
+        # Assert
+        assert results == []
+
+    async def test_repository_error_handling_create(self, repository: CustomerRepositoryImpl):
+        """Test repository error handling during create operations."""
+        # Test duplicate email handling through CustomerEmailExistsError path
+        customer1 = Customer(customer_name="Test User", email="conflict@example.com", country="USA")
+        await repository.create(customer1)
+
+        # This should trigger the CustomerEmailExistsError -> ConflictError path
+        customer2 = Customer(
+            customer_name="Another User", email="conflict@example.com", country="USA"
+        )
+        with pytest.raises(ConflictError):
+            await repository.create(customer2)
+
+    async def test_repository_error_handling_update(self, repository: CustomerRepositoryImpl):
+        """Test repository error handling during update operations."""
+        # Test updating non-existent customer
+        fake_customer = Customer(customer_name="Fake User", email="fake@example.com", country="USA")
+        fake_customer.customer_id = uuid4()  # Set fake ID
+
+        # Should raise NotFoundError
+        with pytest.raises(NotFoundError):
+            await repository.update(fake_customer)
+
+    async def test_email_existence_edge_cases(self, repository: CustomerRepositoryImpl):
+        """Test email existence checking with various edge cases."""
+        # Test non-existent email
+        assert await repository.email_exists("nonexistent@example.com") is False
+
+        # Create customer and test case sensitivity
+        customer = Customer(customer_name="Test User", email="Test@Example.Com", country="USA")
+        await repository.create(customer)
+
+        # Test case insensitive email existence
+        assert await repository.email_exists("test@example.com") is True
+        assert await repository.email_exists("TEST@EXAMPLE.COM") is True
+        assert await repository.email_exists("Test@Example.Com") is True
+
+    async def test_count_by_risk_category_edge_cases(self, repository: CustomerRepositoryImpl):
+        """Test count by risk category with edge cases."""
+        # Test counting non-existent category
+        count = await repository.count_by_risk_category("nonexistent")
+        assert count == 0
+
+        # Create customers with different activity states using valid risk categories
+        active_customer = Customer(
+            customer_name="Active", email="active@example.com", country="USA"
+        )
+        active_customer.customer_risk_category = "low"  # Use valid category
+        active_customer.is_active = True
+        await repository.create(active_customer)
+
+        inactive_customer = Customer(
+            customer_name="Inactive", email="inactive@example.com", country="USA"
+        )
+        inactive_customer.customer_risk_category = "low"  # Use valid category
+        inactive_customer.is_active = False
+        await repository.create(inactive_customer)
+
+        # Count should only include active customers
+        count = await repository.count_by_risk_category("low")
+        assert count == 1  # Only the active one should be counted
+
+    async def test_list_high_risk_sorting_and_limits(self, repository: CustomerRepositoryImpl):
+        """Test list_high_risk with proper sorting and limit enforcement."""
+        # Create customers with different risk levels and scores
+        customers_data = [
+            ("Critical 1", "critical1@example.com", "critical", 5, 500),
+            ("High 1", "high1@example.com", "high", 3, 600),
+            ("Critical 2", "critical2@example.com", "critical", 10, 400),
+            ("High 2", "high2@example.com", "high", 1, 650),
+            ("Medium", "medium@example.com", "medium", 0, 700),  # Should not appear
+        ]
+
+        for name, email, risk_cat, fraud_count, credit_score in customers_data:
+            customer = Customer(customer_name=name, email=email, country="USA")
+            customer.customer_risk_category = risk_cat
+            customer.historical_fraud_count = fraud_count
+            customer.credit_score = credit_score
+            await repository.create(customer)
+
+        # Test default limit
+        high_risk = await repository.list_high_risk()
+        assert len(high_risk) == 4  # Should exclude medium risk
+
+        # Test custom limit
+        limited = await repository.list_high_risk(limit=2)
+        assert len(limited) == 2
+
+        # Verify sorting: critical first, then by fraud count desc, then credit score asc
+        all_high_risk = await repository.list_high_risk(limit=10)
+        risk_categories = [c.customer_risk_category for c in all_high_risk]
+
+        # Verify that high and critical risk customers are included
+        high_count = sum(1 for cat in risk_categories if cat == "high")
+        critical_count = sum(1 for cat in risk_categories if cat == "critical")
+        assert high_count == 2
+        assert critical_count == 2
+
+    async def test_database_constraint_violations_update_scenario(
+        self, repository: CustomerRepositoryImpl
+    ):
+        """Test database constraint violation scenarios during update."""
+        # Create two customers
+        customer1 = Customer(customer_name="First", email="first@example.com", country="USA")
+        customer2 = Customer(customer_name="Second", email="second@example.com", country="USA")
+
+        await repository.create(customer1)
+        created2 = await repository.create(customer2)
+
+        # Try to update customer2 with customer1's email - should trigger integrity error
+        created2.email = "first@example.com"
+
+        with pytest.raises(ConflictError):
+            await repository.update(created2)

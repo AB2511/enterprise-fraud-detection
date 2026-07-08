@@ -1,6 +1,6 @@
 """Merchant Repository Implementation using SQLAlchemy Async."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy import and_, desc, func, select, update
@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.application.interfaces.merchant_repository import MerchantRepository
 from src.domain.entities.merchant import Merchant
-from src.domain.exceptions.base import DomainException, RepositoryError
+from src.domain.exceptions.base import DomainException, NotFoundError, RepositoryError
 from src.infrastructure.database.models import MerchantModel
 
 
@@ -97,6 +97,10 @@ class MerchantRepositoryImpl(MerchantRepository):
             raise DomainException(
                 f"Database constraint violation: {e}", "DB_CONSTRAINT_ERROR"
             ) from e
+
+        except MerchantNameExistsError:
+            # Re-raise MerchantNameExistsError as-is
+            raise
 
         except Exception as e:
             await self._session.rollback()
@@ -192,7 +196,7 @@ class MerchantRepositoryImpl(MerchantRepository):
                     total_transactions=merchant.total_transactions,
                     total_volume=float(merchant.total_volume),
                     is_active=merchant.is_active,
-                    updated_at=datetime.utcnow(),
+                    updated_at=datetime.now(UTC),
                 )
             )
 
@@ -230,7 +234,7 @@ class MerchantRepositoryImpl(MerchantRepository):
             result = await self._session.execute(
                 update(MerchantModel)
                 .where(and_(MerchantModel.id == merchant_id, MerchantModel.deleted_at.is_(None)))
-                .values(deleted_at=datetime.utcnow())
+                .values(deleted_at=datetime.now(UTC))
             )
 
             return result.rowcount > 0
@@ -465,7 +469,7 @@ class MerchantRepositoryImpl(MerchantRepository):
             result = await self._session.execute(
                 update(MerchantModel)
                 .where(and_(MerchantModel.id.in_(merchant_ids), MerchantModel.deleted_at.is_(None)))
-                .values(risk_rating=new_rating, updated_at=datetime.utcnow())
+                .values(risk_rating=new_rating, updated_at=datetime.now(UTC))
             )
 
             return result.rowcount
@@ -553,7 +557,9 @@ class MerchantRepositoryImpl(MerchantRepository):
             return [self._model_to_entity(model) for model in merchant_models]
 
         except Exception as e:
-            raise RepositoryError(f"Failed to list merchants by country: {e}") from e
+            raise DomainException(
+                f"Failed to list merchants by country: {e}", "REPOSITORY_ERROR"
+            ) from e
 
     async def list_by_risk_level(
         self,
@@ -601,7 +607,9 @@ class MerchantRepositoryImpl(MerchantRepository):
             return [self._model_to_entity(model) for model in merchant_models]
 
         except Exception as e:
-            raise RepositoryError(f"Failed to list merchants by risk level: {e}") from e
+            raise DomainException(
+                f"Failed to list merchants by risk level: {e}", "REPOSITORY_ERROR"
+            ) from e
 
     def _model_to_entity(self, model: MerchantModel) -> Merchant:
         """Convert database model to domain entity.

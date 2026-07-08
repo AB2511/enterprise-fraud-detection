@@ -1,6 +1,6 @@
 """Integration tests for MerchantRepositoryImpl."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 from decimal import Decimal
 from uuid import uuid4
 
@@ -34,8 +34,8 @@ def sample_merchant() -> Merchant:
         total_transactions=1000,
         total_volume=Decimal("50000.00"),
         is_active=True,
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow(),
+        created_at=datetime.now(UTC),
+        updated_at=datetime.now(UTC),
     )
 
 
@@ -79,8 +79,8 @@ class TestMerchantRepositoryCreate:
             total_transactions=500,
             total_volume=Decimal("25000.00"),
             is_active=True,
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
         )
 
         with pytest.raises(MerchantNameExistsError):
@@ -103,8 +103,8 @@ class TestMerchantRepositoryCreate:
             total_transactions=750,
             total_volume=Decimal("37500.00"),
             is_active=True,
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
         )
 
         result = await merchant_repository.create(merchant)
@@ -247,8 +247,8 @@ class TestMerchantRepositoryFiltering:
                 total_transactions=500,
                 total_volume=Decimal("100000.00"),
                 is_active=True,
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow(),
+                created_at=datetime.now(UTC),
+                updated_at=datetime.now(UTC),
             ),
             Merchant(
                 merchant_id=uuid4(),
@@ -261,8 +261,8 @@ class TestMerchantRepositoryFiltering:
                 total_transactions=2000,
                 total_volume=Decimal("75000.00"),
                 is_active=True,
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow(),
+                created_at=datetime.now(UTC),
+                updated_at=datetime.now(UTC),
             ),
             Merchant(
                 merchant_id=uuid4(),
@@ -275,8 +275,8 @@ class TestMerchantRepositoryFiltering:
                 total_transactions=1500,
                 total_volume=Decimal("120000.00"),
                 is_active=True,
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow(),
+                created_at=datetime.now(UTC),
+                updated_at=datetime.now(UTC),
             ),
         ]
 
@@ -431,8 +431,8 @@ class TestMerchantRepositoryBulkOperations:
                 total_transactions=1000,
                 total_volume=Decimal("50000.00"),
                 is_active=True,
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow(),
+                created_at=datetime.now(UTC),
+                updated_at=datetime.now(UTC),
             )
             created = await merchant_repository.create(merchant)
             merchants.append(created)
@@ -501,8 +501,8 @@ class TestMerchantRepositoryPagination:
                 total_transactions=1000,
                 total_volume=Decimal("50000.00"),
                 is_active=True,
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow(),
+                created_at=datetime.now(UTC),
+                updated_at=datetime.now(UTC),
             )
             await merchant_repository.create(merchant)
 
@@ -541,8 +541,8 @@ class TestMerchantRepositoryEdgeCases:
             total_transactions=0,
             total_volume=Decimal("0.00"),
             is_active=False,
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
         )
 
         result = await merchant_repository.create(merchant)
@@ -592,7 +592,7 @@ class TestMerchantRepositoryEdgeCases:
                 total_transactions=100,
                 total_volume=Decimal("1000.00"),
                 is_active=True,
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow(),
+                created_at=datetime.now(UTC),
+                updated_at=datetime.now(UTC),
             )
             await merchant_repository.update(invalid_merchant)

@@ -1,6 +1,6 @@
 """Customer Repository Implementation using SQLAlchemy Async."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy import and_, desc, func, select, update
@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.application.interfaces.customer_repository import CustomerRepository
 from src.domain.entities.customer import Customer
-from src.domain.exceptions.base import ConflictError, DomainException
+from src.domain.exceptions.base import ConflictError, DomainException, NotFoundError, RepositoryError
 from src.infrastructure.database.models import CustomerModel
 
 
@@ -56,10 +56,13 @@ class CustomerRepositoryImpl(CustomerRepository):
             RepositoryError: If creation fails
         """
         try:
-            # Check if email already exists
+            # Check if email already exists (case-insensitive)
             existing = await self._session.execute(
                 select(CustomerModel).where(
-                    and_(CustomerModel.email == customer.email, CustomerModel.deleted_at.is_(None))
+                    and_(
+                        func.lower(CustomerModel.email) == func.lower(customer.email),
+                        CustomerModel.deleted_at.is_(None),
+                    )
                 )
             )
             if existing.scalar_one_or_none():
@@ -69,7 +72,7 @@ class CustomerRepositoryImpl(CustomerRepository):
             customer_model = CustomerModel(
                 id=customer.customer_id,
                 customer_name=customer.customer_name,
-                email=customer.email,
+                email=customer.email.lower(),  # Normalize email
                 date_of_birth=customer.date_of_birth,
                 country=customer.country,
                 kyc_status=customer.kyc_status,
@@ -129,7 +132,7 @@ class CustomerRepositoryImpl(CustomerRepository):
             raise DomainException(f"Failed to get customer by ID: {e}", "REPOSITORY_ERROR") from e
 
     async def get_by_email(self, email: str) -> Customer | None:
-        """Retrieve customer by email.
+        """Retrieve customer by email (case-insensitive).
 
         Args:
             email: Customer email address
@@ -140,7 +143,10 @@ class CustomerRepositoryImpl(CustomerRepository):
         try:
             result = await self._session.execute(
                 select(CustomerModel).where(
-                    and_(CustomerModel.email == email, CustomerModel.deleted_at.is_(None))
+                    and_(
+                        func.lower(CustomerModel.email) == func.lower(email),
+                        CustomerModel.deleted_at.is_(None),
+                    )
                 )
             )
             customer_model = result.scalar_one_or_none()
@@ -176,8 +182,23 @@ class CustomerRepositoryImpl(CustomerRepository):
                     )
                 )
             )
-            if not existing.scalar_one_or_none():
-                raise CustomerNotFoundError(customer.customer_id)
+            existing_customer = existing.scalar_one_or_none()
+            if not existing_customer:
+                raise NotFoundError(f"Customer {customer.customer_id} not found")
+
+            # Check if email already exists for another customer
+            if existing_customer.email.lower() != customer.email.lower():
+                email_check = await self._session.execute(
+                    select(CustomerModel).where(
+                        and_(
+                            func.lower(CustomerModel.email) == func.lower(customer.email),
+                            CustomerModel.id != customer.customer_id,
+                            CustomerModel.deleted_at.is_(None),
+                        )
+                    )
+                )
+                if email_check.scalar_one_or_none():
+                    raise ConflictError(f"Customer with email {customer.email} already exists")
 
             # Update fields
             await self._session.execute(
@@ -185,7 +206,7 @@ class CustomerRepositoryImpl(CustomerRepository):
                 .where(CustomerModel.id == customer.customer_id)
                 .values(
                     customer_name=customer.customer_name,
-                    email=customer.email,
+                    email=customer.email.lower(),  # Normalize email
                     date_of_birth=customer.date_of_birth,
                     country=customer.country,
                     kyc_status=customer.kyc_status,
@@ -195,7 +216,7 @@ class CustomerRepositoryImpl(CustomerRepository):
                     lifetime_transaction_volume=float(customer.lifetime_transaction_volume),
                     account_age_days=customer.account_age_days,
                     is_active=customer.is_active,
-                    updated_at=datetime.utcnow(),
+                    updated_at=datetime.now(UTC),
                 )
             )
 
@@ -207,7 +228,7 @@ class CustomerRepositoryImpl(CustomerRepository):
 
             return self._model_to_entity(updated_model)
 
-        except CustomerNotFoundError:
+        except (NotFoundError, ConflictError):
             raise
         except IntegrityError as e:
             await self._session.rollback()
@@ -236,7 +257,7 @@ class CustomerRepositoryImpl(CustomerRepository):
             result = await self._session.execute(
                 update(CustomerModel)
                 .where(and_(CustomerModel.id == customer_id, CustomerModel.deleted_at.is_(None)))
-                .values(deleted_at=datetime.utcnow())
+                .values(deleted_at=datetime.now(UTC))
             )
 
             return result.rowcount > 0
@@ -457,7 +478,7 @@ class CustomerRepositoryImpl(CustomerRepository):
             result = await self._session.execute(
                 update(CustomerModel)
                 .where(and_(CustomerModel.id.in_(customer_ids), CustomerModel.deleted_at.is_(None)))
-                .values(customer_risk_category=new_category, updated_at=datetime.utcnow())
+                .values(customer_risk_category=new_category, updated_at=datetime.now(UTC))
             )
 
             return result.rowcount
@@ -505,6 +526,15 @@ class CustomerRepositoryImpl(CustomerRepository):
         """
         from decimal import Decimal
 
+        # Ensure datetimes are timezone-aware
+        created_at = model.created_at
+        if created_at and created_at.tzinfo is None:
+            created_at = created_at.replace(tzinfo=UTC)
+
+        updated_at = model.updated_at
+        if updated_at and updated_at.tzinfo is None:
+            updated_at = updated_at.replace(tzinfo=UTC)
+
         return Customer(
             customer_id=model.id,
             customer_name=model.customer_name,
@@ -518,6 +548,6 @@ class CustomerRepositoryImpl(CustomerRepository):
             lifetime_transaction_volume=Decimal(str(model.lifetime_transaction_volume)),
             account_age_days=model.account_age_days,
             is_active=model.is_active,
-            created_at=model.created_at,
-            updated_at=model.updated_at,
+            created_at=created_at,
+            updated_at=updated_at,
         )

@@ -1,6 +1,6 @@
 """Integration tests for TransactionRepositoryImpl."""
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from uuid import uuid4
 
@@ -28,7 +28,7 @@ def sample_transaction() -> Transaction:
         merchant_id=uuid4(),
         amount=Decimal("199.99"),
         currency="USD",
-        timestamp=datetime.utcnow(),
+        timestamp=datetime.now(UTC),
         payment_channel="online",
         payment_method="card",
         device_id="device123",
@@ -45,8 +45,8 @@ def sample_transaction() -> Transaction:
         velocity_1h=1,
         velocity_24h=5,
         velocity_7d=20,
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow(),
+        created_at=datetime.now(UTC),
+        updated_at=datetime.now(UTC),
     )
 
 
@@ -150,8 +150,8 @@ class TestTransactionRepositoryRead:
         await transaction_repository.save(sample_transaction)
         await async_session.commit()
 
-        yesterday = datetime.utcnow() - timedelta(days=1)
-        tomorrow = datetime.utcnow() + timedelta(days=1)
+        yesterday = datetime.now(UTC) - timedelta(days=1)
+        tomorrow = datetime.now(UTC) + timedelta(days=1)
 
         result = await transaction_repository.get_by_user(
             str(sample_transaction.customer_id), start_date=yesterday, end_date=tomorrow
@@ -244,7 +244,7 @@ class TestTransactionRepositoryVelocityCalculations:
         customer_id = uuid4()
 
         # Create transactions at different times
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         transactions = []
 
         for i in range(3):
@@ -294,7 +294,7 @@ class TestTransactionRepositoryVelocityCalculations:
     ):
         """Test getting velocity data for a customer."""
         customer_id = uuid4()
-        reference_time = datetime.utcnow()
+        reference_time = datetime.now(UTC)
 
         # Create transactions at different times
         times = [
@@ -363,7 +363,7 @@ class TestTransactionRepositoryFiltering:
                 merchant_id=merchant_id_1,
                 amount=Decimal("999.99"),
                 currency="USD",
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(UTC),
                 payment_channel="online",
                 payment_method="card",
                 device_id="device123",
@@ -378,8 +378,8 @@ class TestTransactionRepositoryFiltering:
                 velocity_1h=1,
                 velocity_24h=5,
                 velocity_7d=20,
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow(),
+                created_at=datetime.now(UTC),
+                updated_at=datetime.now(UTC),
             ),
             # Low-value transaction
             Transaction(
@@ -388,9 +388,9 @@ class TestTransactionRepositoryFiltering:
                 merchant_id=merchant_id_2,
                 amount=Decimal("25.50"),
                 currency="USD",
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(UTC),
                 payment_channel="pos",
-                payment_method="debit_card",
+                payment_method="card",
                 device_id="device456",
                 ip_address="192.168.1.2",
                 latitude=40.7580,
@@ -403,8 +403,8 @@ class TestTransactionRepositoryFiltering:
                 velocity_1h=2,
                 velocity_24h=8,
                 velocity_7d=25,
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow(),
+                created_at=datetime.now(UTC),
+                updated_at=datetime.now(UTC),
             ),
             # Pending transaction
             Transaction(
@@ -413,9 +413,9 @@ class TestTransactionRepositoryFiltering:
                 merchant_id=merchant_id_1,
                 amount=Decimal("150.00"),
                 currency="EUR",
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(UTC),
                 payment_channel="mobile",
-                payment_method="digital_wallet",
+                payment_method="wallet",
                 device_id="device789",
                 ip_address="10.0.0.1",
                 latitude=51.5074,
@@ -428,8 +428,8 @@ class TestTransactionRepositoryFiltering:
                 velocity_1h=1,
                 velocity_24h=3,
                 velocity_7d=12,
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow(),
+                created_at=datetime.now(UTC),
+                updated_at=datetime.now(UTC),
             ),
         ]
 
@@ -512,11 +512,53 @@ class TestTransactionRepositoryFiltering:
             assert txn.currency == "USD"
             assert Decimal("20.0") <= txn.amount <= Decimal("500.0")
             assert txn.is_fraud is False
-            assert txn.status == "completed"
+            assert txn.status == "approved"
 
 
 class TestTransactionRepositoryStatistics:
     """Test transaction statistics operations."""
+
+    @pytest.fixture
+    async def multiple_transactions(
+        self,
+        transaction_repository: TransactionRepositoryImpl,
+        async_session: AsyncSession,
+    ) -> list[Transaction]:
+        """Create multiple transactions for statistics tests."""
+        customer_id = uuid4()
+        merchant_id = uuid4()
+
+        transactions = []
+        for i in range(5):
+            transaction = Transaction(
+                transaction_id=uuid4(),
+                customer_id=customer_id,
+                merchant_id=merchant_id,
+                amount=Decimal(f"{100 + i * 50}.00"),
+                currency="USD",
+                timestamp=datetime.now(UTC) - timedelta(days=i),
+                payment_channel="online",
+                payment_method="card",
+                device_id="device123",
+                ip_address="192.168.1.1",
+                latitude=40.7128,
+                longitude=-74.0060,
+                terminal_id="term456",
+                merchant_category="retail",
+                mcc="5411",
+                status="approved",
+                is_fraud=(i % 2 == 0),  # Alternating fraud status
+                velocity_1h=1,
+                velocity_24h=5,
+                velocity_7d=20,
+                created_at=datetime.now(UTC) - timedelta(days=i),
+                updated_at=datetime.now(UTC) - timedelta(days=i),
+            )
+            transactions.append(transaction)
+            await transaction_repository.save(transaction)
+
+        await async_session.commit()
+        return transactions
 
     async def test_get_fraud_statistics(
         self,
@@ -524,8 +566,8 @@ class TestTransactionRepositoryStatistics:
         multiple_transactions: list[Transaction],
     ):
         """Test getting fraud statistics."""
-        yesterday = datetime.utcnow() - timedelta(days=1)
-        tomorrow = datetime.utcnow() + timedelta(days=1)
+        yesterday = datetime.now(UTC) - timedelta(days=1)
+        tomorrow = datetime.now(UTC) + timedelta(days=1)
 
         stats = await transaction_repository.get_fraud_statistics(
             start_date=yesterday, end_date=tomorrow, group_by="day"
@@ -558,7 +600,7 @@ class TestTransactionRepositoryBulkOperations:
                 merchant_id=uuid4(),
                 amount=Decimal("100.00"),
                 currency="USD",
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(UTC),
                 payment_channel="online",
                 payment_method="card",
                 device_id="device123",
@@ -573,8 +615,8 @@ class TestTransactionRepositoryBulkOperations:
                 velocity_1h=1,
                 velocity_24h=5,
                 velocity_7d=20,
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow(),
+                created_at=datetime.now(UTC),
+                updated_at=datetime.now(UTC),
             )
             created = await transaction_repository.save(transaction)
             transactions.append(created)
@@ -618,7 +660,7 @@ class TestTransactionRepositoryPagination:
                 merchant_id=uuid4(),
                 amount=Decimal(f"{100 + i}.00"),
                 currency="USD",
-                timestamp=datetime.utcnow() - timedelta(minutes=i),
+                timestamp=datetime.now(UTC) - timedelta(minutes=i),
                 payment_channel="online",
                 payment_method="card",
                 device_id="device123",
@@ -633,8 +675,8 @@ class TestTransactionRepositoryPagination:
                 velocity_1h=1,
                 velocity_24h=5,
                 velocity_7d=20,
-                created_at=datetime.utcnow() - timedelta(minutes=i),
-                updated_at=datetime.utcnow() - timedelta(minutes=i),
+                created_at=datetime.now(UTC) - timedelta(minutes=i),
+                updated_at=datetime.now(UTC) - timedelta(minutes=i),
             )
             await transaction_repository.save(transaction)
 
@@ -676,7 +718,7 @@ class TestTransactionRepositoryEdgeCases:
             merchant_id=uuid4(),
             amount=Decimal("50.00"),
             currency="USD",
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             payment_channel="online",
             payment_method="card",
             device_id=None,  # Optional field
@@ -691,8 +733,8 @@ class TestTransactionRepositoryEdgeCases:
             velocity_1h=0,
             velocity_24h=0,
             velocity_7d=0,
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
         )
 
         result = await transaction_repository.save(transaction)
@@ -715,7 +757,7 @@ class TestTransactionRepositoryEdgeCases:
             merchant_id=uuid4(),
             amount=Decimal("0.01"),
             currency="USD",
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             payment_channel="online",
             payment_method="card",
             device_id="device123",
@@ -730,8 +772,8 @@ class TestTransactionRepositoryEdgeCases:
             velocity_1h=1,
             velocity_24h=5,
             velocity_7d=20,
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
         )
 
         # Large amount
@@ -741,7 +783,7 @@ class TestTransactionRepositoryEdgeCases:
             merchant_id=uuid4(),
             amount=Decimal("999999.99"),
             currency="USD",
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             payment_channel="online",
             payment_method="card",
             device_id="device123",
@@ -756,8 +798,8 @@ class TestTransactionRepositoryEdgeCases:
             velocity_1h=1,
             velocity_24h=5,
             velocity_7d=20,
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
         )
 
         small_result = await transaction_repository.save(small_transaction)
@@ -779,7 +821,7 @@ class TestTransactionRepositoryEdgeCases:
                 merchant_id=uuid4(),
                 amount=Decimal("100.00"),
                 currency="USD",
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(UTC),
                 payment_channel="online",
                 payment_method="card",
                 device_id="device123",
@@ -794,7 +836,7 @@ class TestTransactionRepositoryEdgeCases:
                 velocity_1h=1,
                 velocity_24h=5,
                 velocity_7d=20,
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow(),
+                created_at=datetime.now(UTC),
+                updated_at=datetime.now(UTC),
             )
             await transaction_repository.update(invalid_transaction)

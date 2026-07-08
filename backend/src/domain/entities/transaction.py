@@ -1,7 +1,7 @@
 """Transaction Entity - Aggregate Root."""
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from decimal import Decimal
 from uuid import UUID, uuid4
 
@@ -45,7 +45,7 @@ class Transaction:
     merchant_id: UUID = field(default_factory=uuid4)
     amount: Decimal = Decimal("0.00")
     currency: str = "USD"
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
     payment_channel: str = "online"
     payment_method: str = "card"
     device_id: str | None = None
@@ -62,8 +62,8 @@ class Transaction:
     velocity_1h: int = 0
     velocity_24h: int = 0
     velocity_7d: int = 0
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    updated_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def __post_init__(self) -> None:
         """Validate transaction business rules."""
@@ -73,7 +73,13 @@ class Transaction:
         if not self.currency or len(self.currency) != 3:
             raise ValueError("Currency must be a 3-letter code")
 
-        if self.timestamp > datetime.utcnow():
+        # Convert naive timestamp to aware for comparison
+        timestamp_aware = (
+            self.timestamp
+            if self.timestamp.tzinfo is not None
+            else self.timestamp.replace(tzinfo=UTC)
+        )
+        if timestamp_aware > datetime.now(UTC):
             raise ValueError("Transaction timestamp cannot be in the future")
 
         valid_channels = ["online", "pos", "atm", "mobile", "phone"]
@@ -117,7 +123,7 @@ class Transaction:
             raise ValueError("Transaction is already approved")
 
         self.status = "approved"
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
     def decline(self, reason: str = "fraud_suspected") -> None:
         """Decline the transaction.
@@ -129,7 +135,7 @@ class Transaction:
             raise ValueError(f"Cannot decline transaction with status: {self.status}")
 
         self.status = "declined"
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
     def mark_as_fraud(self) -> None:
         """Mark this transaction as confirmed fraud."""
@@ -137,7 +143,7 @@ class Transaction:
             raise ValueError("Fraud label is immutable once set")
 
         self.is_fraud = True
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
     def mark_as_legitimate(self) -> None:
         """Mark this transaction as confirmed legitimate."""
@@ -145,7 +151,7 @@ class Transaction:
             raise ValueError("Fraud label is immutable once set")
 
         self.is_fraud = False
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
     def calculate_velocity(
         self, transactions_1h: int, transactions_24h: int, transactions_7d: int
@@ -160,7 +166,7 @@ class Transaction:
         self.velocity_1h = transactions_1h
         self.velocity_24h = transactions_24h
         self.velocity_7d = transactions_7d
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
     def risk_snapshot(self) -> dict[str, any]:
         """Generate risk snapshot for this transaction.

@@ -1,7 +1,7 @@
 """AuditLog Entity - Immutable audit trail for all system changes."""
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -39,7 +39,7 @@ class AuditLog:
     ip_address: str | None = field(default=None)
     user_agent: str | None = field(default=None)
     description: str | None = field(default=None)
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def __post_init__(self) -> None:
         """Validate audit log business rules."""

@@ -1,7 +1,7 @@
 """User Entity - System user (analyst, admin, etc.)."""
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 from passlib.hash import bcrypt
@@ -29,8 +29,8 @@ class User:
     hashed_password: str = ""
     role: str = "analyst"
     status: str = "active"
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    updated_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     last_login: datetime | None = None
 
     def __post_init__(self) -> None:
@@ -94,22 +94,22 @@ class User:
             raise ValueError("New password must be at least 8 characters")
 
         self.hashed_password = bcrypt.hash(new_password)
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
     def activate(self) -> None:
         """Activate user account."""
         self.status = "active"
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
     def deactivate(self) -> None:
         """Deactivate user account."""
         self.status = "inactive"
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
     def lock(self) -> None:
         """Lock user account (due to security concerns)."""
         self.status = "locked"
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
     def assign_role(self, new_role: str) -> None:
         """Assign new role to user.
@@ -125,11 +125,11 @@ class User:
             raise ValueError(f"Role must be one of: {valid_roles}")
 
         self.role = new_role
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
     def record_login(self) -> None:
         """Record successful login."""
-        self.last_login = datetime.utcnow()
+        self.last_login = datetime.now(UTC)
 
     @property
     def is_active(self) -> bool:

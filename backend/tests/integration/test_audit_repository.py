@@ -1,6 +1,6 @@
 """Integration tests for AuditRepositoryImpl."""
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 import pytest
@@ -357,8 +357,8 @@ class TestAuditRepositoryListing:
         multiple_audit_logs: list[AuditLog],
     ):
         """Test listing audit logs within date range."""
-        start_date = datetime.utcnow() - timedelta(hours=1)
-        end_date = datetime.utcnow() + timedelta(hours=1)
+        start_date = datetime.now(UTC) - timedelta(hours=1)
+        end_date = datetime.now(UTC) + timedelta(hours=1)
 
         result = await audit_repository.list_by_date_range(start_date, end_date)
 
@@ -449,8 +449,8 @@ class TestAuditRepositorySearch:
         user_log = next(log for log in multiple_audit_logs if log.user_id is not None)
         user_id = user_log.user_id
 
-        start_date = datetime.utcnow() - timedelta(hours=1)
-        end_date = datetime.utcnow() + timedelta(hours=1)
+        start_date = datetime.now(UTC) - timedelta(hours=1)
+        end_date = datetime.now(UTC) + timedelta(hours=1)
 
         result = await audit_repository.search(
             user_id=user_id, start_date=start_date, end_date=end_date
@@ -675,8 +675,8 @@ class TestAuditRepositoryAnalytics:
         user_log = next(log for log in multiple_audit_logs if log.user_id is not None)
         user_id = user_log.user_id
 
-        start_date = datetime.utcnow() - timedelta(hours=1)
-        end_date = datetime.utcnow() + timedelta(hours=1)
+        start_date = datetime.now(UTC) - timedelta(hours=1)
+        end_date = datetime.now(UTC) + timedelta(hours=1)
 
         summary = await audit_repository.get_user_activity_summary(
             user_id, start_date=start_date, end_date=end_date
@@ -755,7 +755,7 @@ class TestAuditRepositoryEdgeCases:
             ip_address=None,
             user_agent=None,
             description=None,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
         )
 
         result = await audit_repository.create(audit_log)
@@ -817,7 +817,7 @@ class TestAuditRepositoryEdgeCases:
                 ip_address="192.168.1.1",
                 user_agent="TestAgent/1.0",
                 description=f"Test log {i}",
-                created_at=datetime.utcnow() - timedelta(minutes=i),
+                created_at=datetime.now(UTC) - timedelta(minutes=i),
             )
             created = await audit_repository.create(audit_log)
             audit_logs.append(created)

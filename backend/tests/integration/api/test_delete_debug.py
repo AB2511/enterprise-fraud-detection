@@ -9,7 +9,7 @@ from src.presentation.main import create_application
 
 
 @pytest.fixture
-async def test_app(test_db_engine):
+async def test_app(test_engine):
     """Create test FastAPI application."""
     from sqlalchemy.ext.asyncio import AsyncSession
     from sqlalchemy.orm import sessionmaker
@@ -19,7 +19,7 @@ async def test_app(test_db_engine):
     # Override database dependency to create fresh session per request
     async def override_get_db():
         async_session = sessionmaker(
-            test_db_engine,
+            test_engine,
             class_=AsyncSession,
             expire_on_commit=False,
         )
@@ -49,7 +49,7 @@ class TestDeleteDebug:
     """Debug delete behavior."""
 
     @pytest.mark.asyncio
-    async def test_delete_debug(self, async_client: AsyncClient, test_db_engine):
+    async def test_delete_debug(self, async_client: AsyncClient, test_engine):
         """Debug what happens during delete."""
         from sqlalchemy import select
         from sqlalchemy.ext.asyncio import AsyncSession
@@ -71,7 +71,7 @@ class TestDeleteDebug:
 
         # Create a fresh session for direct DB queries
         async_session = sessionmaker(
-            test_db_engine,
+            test_engine,
             class_=AsyncSession,
             expire_on_commit=False,
         )

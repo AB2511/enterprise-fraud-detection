@@ -1,6 +1,6 @@
 """Alert Repository Implementation using SQLAlchemy Async."""
 
-from datetime import datetime
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from sqlalchemy import and_, desc, select, update
@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.application.interfaces.alert_repository import AlertRepository
 from src.domain.entities.alert import Alert
-from src.domain.exceptions.base import DomainException
+from src.domain.exceptions.base import DomainException, NotFoundError, RepositoryError
 from src.infrastructure.database.models import AlertModel
 
 
@@ -49,13 +49,14 @@ class AlertRepositoryImpl(AlertRepository):
         """
         try:
             # Calculate SLA deadline (24 hours from creation for most alerts)
+
             sla_hours = 24
             if alert.severity == "critical":
                 sla_hours = 2
             elif alert.severity == "high":
                 sla_hours = 8
 
-            sla_deadline = alert.created_at.replace(hour=(alert.created_at.hour + sla_hours) % 24)
+            sla_deadline = alert.created_at + timedelta(hours=sla_hours)
 
             # Convert domain entity to database model
             alert_model = AlertModel(
@@ -150,7 +151,7 @@ class AlertRepositoryImpl(AlertRepository):
                     resolution=alert.resolution,
                     resolved_at=alert.resolved_at,
                     severity=alert.severity,
-                    updated_at=datetime.utcnow(),
+                    updated_at=datetime.now(UTC),
                 )
             )
 
@@ -181,7 +182,7 @@ class AlertRepositoryImpl(AlertRepository):
             result = await self._session.execute(
                 update(AlertModel)
                 .where(and_(AlertModel.id == alert_id, AlertModel.deleted_at.is_(None)))
-                .values(deleted_at=datetime.utcnow())
+                .values(deleted_at=datetime.now(UTC))
             )
 
             return result.rowcount > 0
@@ -341,7 +342,7 @@ class AlertRepositoryImpl(AlertRepository):
             List of SLA-breached alerts
         """
         try:
-            current_time = datetime.utcnow()
+            current_time = datetime.now(UTC)
 
             result = await self._session.execute(
                 select(AlertModel)
@@ -463,14 +464,14 @@ class AlertRepositoryImpl(AlertRepository):
             Number of alerts marked as SLA breached
         """
         try:
-            current_time = datetime.utcnow()
+            current_time = datetime.now(UTC)
 
             result = await self._session.execute(
                 update(AlertModel)
                 .where(
                     and_(
                         AlertModel.sla_deadline < current_time,
-                        not AlertModel.is_sla_breached,
+                        AlertModel.is_sla_breached.is_(False),
                         AlertModel.status.in_(["open", "in_review"]),
                         AlertModel.deleted_at.is_(None),
                     )
@@ -495,6 +496,23 @@ class AlertRepositoryImpl(AlertRepository):
         Returns:
             Domain entity
         """
+        # Ensure datetimes are timezone-aware
+        created_at = model.created_at
+        if created_at and created_at.tzinfo is None:
+            created_at = created_at.replace(tzinfo=UTC)
+        
+        updated_at = model.updated_at
+        if updated_at and updated_at.tzinfo is None:
+            updated_at = updated_at.replace(tzinfo=UTC)
+        
+        assigned_at = model.assigned_at
+        if assigned_at and assigned_at.tzinfo is None:
+            assigned_at = assigned_at.replace(tzinfo=UTC)
+        
+        resolved_at = model.resolved_at
+        if resolved_at and resolved_at.tzinfo is None:
+            resolved_at = resolved_at.replace(tzinfo=UTC)
+
         return Alert(
             alert_id=model.id,
             prediction_id=model.prediction_id,
@@ -505,8 +523,8 @@ class AlertRepositoryImpl(AlertRepository):
             status=model.status,
             resolution=model.resolution,
             resolution_notes=None,  # Not in current model
-            created_at=model.created_at,
-            assigned_at=model.assigned_at,
-            resolved_at=model.resolved_at,
-            updated_at=model.updated_at,
+            created_at=created_at,
+            assigned_at=assigned_at,
+            resolved_at=resolved_at,
+            updated_at=updated_at,
         )

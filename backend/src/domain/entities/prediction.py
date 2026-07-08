@@ -4,6 +4,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from uuid import UUID, uuid4
 
+from src.domain.enums.prediction_class import PredictionClass
+
 
 @dataclass
 class Prediction:
@@ -57,7 +59,10 @@ class Prediction:
         if not (0 <= self.risk_score <= 100):
             raise ValueError("Risk score must be between 0 and 100")
 
-        if self.predicted_class not in ["fraud", "legitimate"]:
+        if self.predicted_class not in [
+            PredictionClass.FRAUD.value,
+            PredictionClass.LEGITIMATE.value,
+        ]:
             raise ValueError("Predicted class must be 'fraud' or 'legitimate'")
 
         valid_decisions = ["approve", "review", "decline"]

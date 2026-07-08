@@ -1,15 +1,15 @@
 """Transaction Repository Implementation using SQLAlchemy Async."""
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
-from sqlalchemy import and_, desc, func, select, update
+from sqlalchemy import Integer, and_, cast, desc, func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.application.interfaces.transaction_repository import TransactionRepository
 from src.domain.entities.transaction import Transaction
-from src.domain.exceptions.base import DomainException
+from src.domain.exceptions.base import DomainException, NotFoundError, RepositoryError
 from src.infrastructure.database.models import TransactionModel
 
 
@@ -173,7 +173,7 @@ class TransactionRepositoryImpl(TransactionRepository):
             Count of transactions in time window
         """
         try:
-            cutoff_time = datetime.utcnow() - timedelta(minutes=minutes)
+            cutoff_time = datetime.now(UTC) - timedelta(minutes=minutes)
 
             result = await self._session.execute(
                 select(func.count(TransactionModel.id)).where(
@@ -209,7 +209,7 @@ class TransactionRepositoryImpl(TransactionRepository):
                         TransactionModel.id == transaction_id, TransactionModel.deleted_at.is_(None)
                     )
                 )
-                .values(deleted_at=datetime.utcnow())
+                .values(deleted_at=datetime.now(UTC))
             )
 
             return result.rowcount > 0
@@ -254,8 +254,8 @@ class TransactionRepositoryImpl(TransactionRepository):
                     velocity_24h=transaction.velocity_24h,
                     velocity_7d=transaction.velocity_7d,
                     is_fraud=transaction.is_fraud,
-                    fraud_confirmed_at=datetime.utcnow() if transaction.is_fraud else None,
-                    updated_at=datetime.utcnow(),
+                    fraud_confirmed_at=datetime.now(UTC) if transaction.is_fraud else None,
+                    updated_at=datetime.now(UTC),
                 )
             )
 
@@ -449,9 +449,9 @@ class TransactionRepositoryImpl(TransactionRepository):
         try:
             # Default to last 30 days if no dates provided
             if not start_date:
-                start_date = datetime.utcnow() - timedelta(days=30)
+                start_date = datetime.now(UTC) - timedelta(days=30)
             if not end_date:
-                end_date = datetime.utcnow()
+                end_date = datetime.now(UTC)
 
             # Select appropriate date truncation function
             if group_by == "day":
@@ -465,9 +465,7 @@ class TransactionRepositoryImpl(TransactionRepository):
                 select(
                     date_trunc.label("period"),
                     func.count(TransactionModel.id).label("total_transactions"),
-                    func.sum(func.cast(TransactionModel.is_fraud, func.Integer)).label(
-                        "fraud_count"
-                    ),
+                    func.sum(cast(TransactionModel.is_fraud, Integer)).label("fraud_count"),
                     func.avg(TransactionModel.amount).label("avg_amount"),
                     func.sum(TransactionModel.amount).label("total_amount"),
                 )
@@ -521,10 +519,10 @@ class TransactionRepositoryImpl(TransactionRepository):
             if not transaction_ids:
                 return 0
 
-            update_values = {"is_fraud": is_fraud, "updated_at": datetime.utcnow()}
+            update_values = {"is_fraud": is_fraud, "updated_at": datetime.now(UTC)}
 
             if is_fraud:
-                update_values["fraud_confirmed_at"] = datetime.utcnow()
+                update_values["fraud_confirmed_at"] = datetime.now(UTC)
 
             result = await self._session.execute(
                 update(TransactionModel)

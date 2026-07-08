@@ -344,19 +344,21 @@ class TestModelRepositoryImpl:
         """Test getting model lineage by type."""
         # Arrange
         model1 = Model(
-            version="1.0.0",
+            version="lineage_1.0.0",
             model_type="xgboost",
             artifact_path="s3://test1.pkl",
             training_date=datetime(2024, 1, 1),
         )
         model2 = Model(
-            version="2.0.0",
+            version="lineage_2.0.0",
             model_type="xgboost",
             artifact_path="s3://test2.pkl",
             training_date=datetime(2024, 2, 1),
         )
         different_type = Model(
-            version="1.0.0", model_type="isolation_forest", artifact_path="s3://test3.pkl"
+            version="lineage_diff_1.0.0",
+            model_type="isolation_forest",
+            artifact_path="s3://test3.pkl",
         )
 
         created1 = await repository.create(model1)

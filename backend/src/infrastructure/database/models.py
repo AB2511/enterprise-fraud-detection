@@ -4,7 +4,7 @@ NOTE: Actual table models (transactions, predictions, etc.) will be added in fut
 This file establishes the base model structure and common patterns.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import uuid4
 
 from sqlalchemy import DateTime, String
@@ -25,14 +25,14 @@ class TimestampMixin:
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=datetime.utcnow,
+        default=lambda: datetime.now(UTC),
         nullable=False,
     )
 
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow,
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
         nullable=False,
     )
 
@@ -63,7 +63,7 @@ class SoftDeleteMixin:
 
     def soft_delete(self) -> None:
         """Mark record as deleted."""
-        self.deleted_at = datetime.utcnow()
+        self.deleted_at = datetime.now(UTC)
 
     def restore(self) -> None:
         """Restore soft deleted record."""
@@ -178,7 +178,7 @@ class PredictionModel(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "predictions"
 
     transaction_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
-    model_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
+    model_id: Mapped[UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True, index=True)
     model_version: Mapped[str] = mapped_column(String(50), nullable=False)
 
     # Prediction results
@@ -235,7 +235,7 @@ class AuditLogModel(Base, UUIDMixin):
     # Immutable - no updated_at, no soft delete
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=datetime.utcnow,
+        default=lambda: datetime.now(UTC),
         nullable=False,
         index=True,
     )
@@ -298,5 +298,5 @@ class AnalystFeedbackModel(Base, UUIDMixin, TimestampMixin):
 
     # Context
     reviewed_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=datetime.utcnow, nullable=False
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )

@@ -146,9 +146,9 @@ class TestUserRepositoryImpl:
     async def test_list_by_role(self, repository: UserRepositoryImpl):
         """Test listing users by role."""
         # Arrange
-        analyst1 = User.create("analyst1@company.com", "pass1", "analyst")
-        analyst2 = User.create("analyst2@company.com", "pass2", "analyst")
-        admin = User.create("admin@company.com", "pass3", "admin")
+        analyst1 = User.create("analyst1@company.com", "password123", "analyst")
+        analyst2 = User.create("analyst2@company.com", "password456", "analyst")
+        admin = User.create("admin@company.com", "password789", "admin")
 
         await repository.create(analyst1)
         await repository.create(analyst2)
@@ -165,8 +165,8 @@ class TestUserRepositoryImpl:
     async def test_list_active(self, repository: UserRepositoryImpl):
         """Test listing active users."""
         # Arrange
-        active_user = User.create("active@company.com", "pass1", "analyst")
-        inactive_user = User.create("inactive@company.com", "pass2", "analyst")
+        active_user = User.create("active@company.com", "password111", "analyst")
+        inactive_user = User.create("inactive@company.com", "password222", "analyst")
         inactive_user.deactivate()
 
         await repository.create(active_user)
@@ -183,7 +183,7 @@ class TestUserRepositoryImpl:
         """Test counting users by role."""
         # Arrange
         for i in range(3):
-            user = User.create(f"analyst{i}@company.com", f"pass{i}", "analyst")
+            user = User.create(f"analyst{i}@company.com", f"password{i}123", "analyst")
             await repository.create(user)
 
         # Act
@@ -204,8 +204,8 @@ class TestUserRepositoryImpl:
     async def test_list_by_status(self, repository: UserRepositoryImpl):
         """Test listing users by status."""
         # Arrange
-        active_user = User.create("active@company.com", "pass1", "analyst")
-        locked_user = User.create("locked@company.com", "pass2", "analyst")
+        active_user = User.create("active@company.com", "password123", "analyst")
+        locked_user = User.create("locked@company.com", "password456", "analyst")
         locked_user.lock()
 
         await repository.create(active_user)
@@ -235,8 +235,8 @@ class TestUserRepositoryImpl:
     async def test_get_recently_active_users(self, repository: UserRepositoryImpl):
         """Test getting recently active users."""
         # Arrange
-        recent_user = User.create("recent@company.com", "pass1", "analyst")
-        old_user = User.create("old@company.com", "pass2", "analyst")
+        recent_user = User.create("recent@company.com", "password111", "analyst")
+        old_user = User.create("old@company.com", "password222", "analyst")
 
         created_recent = await repository.create(recent_user)
         await repository.create(old_user)
@@ -255,9 +255,9 @@ class TestUserRepositoryImpl:
     async def test_get_user_statistics(self, repository: UserRepositoryImpl):
         """Test getting user statistics."""
         # Arrange
-        analyst = User.create("analyst@company.com", "pass1", "analyst")
-        admin = User.create("admin@company.com", "pass2", "admin")
-        locked_user = User.create("locked@company.com", "pass3", "analyst")
+        analyst = User.create("analyst@company.com", "password111", "analyst")
+        admin = User.create("admin@company.com", "password222", "admin")
+        locked_user = User.create("locked@company.com", "password333", "analyst")
         locked_user.lock()
 
         await repository.create(analyst)
@@ -278,7 +278,7 @@ class TestUserRepositoryImpl:
         """Test pagination limits and offsets."""
         # Arrange
         for i in range(5):
-            user = User.create(f"user{i}@company.com", f"pass{i}", "analyst")
+            user = User.create(f"user{i}@company.com", f"password{i}123", "analyst")
             await repository.create(user)
 
         # Act
@@ -307,8 +307,8 @@ class TestUserRepositoryImpl:
     async def test_concurrent_email_creation(self, repository: UserRepositoryImpl):
         """Test handling concurrent email creation attempts."""
         # Arrange
-        user1 = User.create("concurrent@company.com", "pass1", "analyst")
-        user2 = User.create("concurrent@company.com", "pass2", "admin")
+        user1 = User.create("concurrent@company.com", "password123", "analyst")
+        user2 = User.create("concurrent@company.com", "password456", "admin")
 
         # Act
         created1 = await repository.create(user1)
@@ -324,7 +324,7 @@ class TestUserRepositoryImpl:
     async def test_role_validation(self, repository: UserRepositoryImpl):
         """Test role validation in repository operations."""
         # Valid roles should work
-        valid_user = User.create("valid@company.com", "pass", "data_scientist")
+        valid_user = User.create("valid@company.com", "password123", "data_scientist")
         created = await repository.create(valid_user)
         assert created.role == "data_scientist"
 

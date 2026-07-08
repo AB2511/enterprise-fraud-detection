@@ -1,7 +1,7 @@
 """Customer Entity - Bank customer."""
 
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from uuid import UUID, uuid4
 
@@ -41,8 +41,8 @@ class Customer:
     credit_score: int = 650
     lifetime_transaction_volume: Decimal = Decimal("0.00")
     account_age_days: int = 0
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    updated_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     is_active: bool = True
 
     def __post_init__(self) -> None:
@@ -89,7 +89,7 @@ class Customer:
             raise ValueError("Credit score must be between 300 and 850")
 
         self.credit_score = new_score
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
         # Recalculate risk category based on new score
         self._recalculate_risk_category()
@@ -97,7 +97,7 @@ class Customer:
     def increment_fraud_counter(self) -> None:
         """Increment historical fraud count."""
         self.historical_fraud_count += 1
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
         # Recalculate risk category
         self._recalculate_risk_category()
@@ -112,7 +112,7 @@ class Customer:
             raise ValueError("Amount cannot be negative")
 
         self.lifetime_transaction_volume += amount
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
     def calculate_customer_risk(self) -> str:
         """Calculate customer risk category based on multiple factors.
@@ -165,19 +165,19 @@ class Customer:
     def verify_kyc(self) -> None:
         """Mark KYC as verified."""
         self.kyc_status = "verified"
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
         self._recalculate_risk_category()
 
     def reject_kyc(self) -> None:
         """Mark KYC as rejected."""
         self.kyc_status = "rejected"
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
         self._recalculate_risk_category()
 
     def deactivate(self) -> None:
         """Deactivate customer account."""
         self.is_active = False
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
     def reactivate(self) -> None:
         """Reactivate customer account."""
@@ -185,7 +185,7 @@ class Customer:
             raise ValueError("Cannot reactivate account without verified KYC")
 
         self.is_active = True
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
     @property
     def is_verified(self) -> bool:

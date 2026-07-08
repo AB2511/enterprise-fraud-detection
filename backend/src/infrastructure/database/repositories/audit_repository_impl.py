@@ -1,6 +1,6 @@
 """Audit Repository Implementation using SQLAlchemy Async."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy import and_, desc, func, select
@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.application.interfaces.audit_repository import AuditRepository
 from src.domain.entities.audit_log import AuditLog
-from src.domain.exceptions.base import DomainException
+from src.domain.exceptions.base import DomainException, NotFoundError, RepositoryError
 from src.infrastructure.database.models import AuditLogModel
 
 
@@ -515,6 +515,11 @@ class AuditRepositoryImpl(AuditRepository):
         Returns:
             Domain entity
         """
+        # Ensure datetime is timezone-aware
+        created_at = model.created_at
+        if created_at and created_at.tzinfo is None:
+            created_at = created_at.replace(tzinfo=UTC)
+
         return AuditLog(
             audit_id=model.id,
             entity_type=model.entity_type,
@@ -527,5 +532,5 @@ class AuditRepositoryImpl(AuditRepository):
             ip_address=model.ip_address,
             user_agent=model.user_agent,
             description=model.description,
-            created_at=model.created_at,
+            created_at=created_at,
         )

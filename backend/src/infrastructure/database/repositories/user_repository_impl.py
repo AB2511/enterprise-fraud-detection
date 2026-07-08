@@ -1,6 +1,6 @@
 """User Repository Implementation using SQLAlchemy."""
 
-from datetime import datetime
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from sqlalchemy import and_, desc, func, select
@@ -154,7 +154,7 @@ class UserRepositoryImpl(UserRepository):
             db_user.role = user.role
             db_user.status = user.status
             db_user.last_login_at = user.last_login
-            db_user.updated_at = datetime.utcnow()
+            db_user.updated_at = datetime.now(UTC)
 
             await self._session.flush()
             await self._session.refresh(db_user)
@@ -392,7 +392,7 @@ class UserRepositoryImpl(UserRepository):
             if not db_user:
                 raise NotFoundError(f"User {user_id} not found")
 
-            db_user.last_login_at = datetime.utcnow()
+            db_user.last_login_at = datetime.now(UTC)
             await self._session.flush()
 
         except NotFoundError:
@@ -410,9 +410,9 @@ class UserRepositoryImpl(UserRepository):
             List of recently active users
         """
         try:
-            cutoff_date = datetime.utcnow().replace(
+            cutoff_date = datetime.now(UTC).replace(
                 hour=0, minute=0, second=0, microsecond=0
-            ) - datetime.timedelta(days=days)
+            ) - timedelta(days=days)
 
             query = (
                 select(UserModel)
