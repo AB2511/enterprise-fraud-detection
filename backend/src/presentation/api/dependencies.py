@@ -19,6 +19,7 @@ from src.application.use_cases.customer_use_cases import (
     UpdateCustomerUseCase,
 )
 from src.infrastructure.database.connection import get_async_session
+from src.infrastructure.database.repositories.audit_repository_impl import AuditRepositoryImpl
 from src.infrastructure.database.repositories.customer_repository_impl import CustomerRepositoryImpl
 
 
@@ -48,19 +49,6 @@ def get_customer_repository(
     return CustomerRepositoryImpl(session)
 
 
-# Note: Audit repository not yet implemented, placeholder for now
-class MockAuditRepository:
-    """Mock audit repository for development."""
-
-    async def create(self, audit_log):
-        """Mock create method."""
-        pass
-
-    async def list_by_entity(self, entity_type: str, entity_id, limit: int = 100):
-        """Mock list method."""
-        return []
-
-
 def get_audit_repository(
     session: AsyncSession = Depends(get_db),
 ) -> AuditRepository:
@@ -72,8 +60,7 @@ def get_audit_repository(
     Returns:
         Audit repository implementation
     """
-    # TODO: Replace with real implementation when AuditRepositoryImpl is ready
-    return MockAuditRepository()
+    return AuditRepositoryImpl(session)
 
 
 # Service Dependencies
