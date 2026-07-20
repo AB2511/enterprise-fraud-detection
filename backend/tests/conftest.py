@@ -6,9 +6,11 @@ from datetime import UTC, datetime
 from uuid import uuid4
 
 import pytest
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.pool import StaticPool
 from src.domain.entities.prediction import Prediction
+from src.domain.entities.user import User
 from src.infrastructure.database.models import Base
 
 # Test database configuration
@@ -66,7 +68,6 @@ async def clean_database(async_session: AsyncSession, test_engine):
 
 
 # Repository test configuration
-pytest_plugins = ["pytest_asyncio"]
 
 
 @pytest.fixture
@@ -148,3 +149,43 @@ async def multiple_predictions(
     await async_session.commit()
 
     return created_predictions
+
+
+@pytest.fixture
+async def client(async_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
+    """Create test HTTP client."""
+    from src.infrastructure.database.connection import get_async_session
+    from src.presentation.main import create_application
+
+    # Override database session dependency
+    async def override_get_session():
+        yield async_session
+
+    app = create_application()
+
+    # Override the get_async_session dependency
+    app.dependency_overrides[get_async_session] = override_get_session
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as ac:
+        yield ac
+
+
+@pytest.fixture
+async def test_user(async_session: AsyncSession) -> User:
+    """Create a test user for authentication tests."""
+    from src.infrastructure.database.repositories.user_repository_impl import (
+        UserRepositoryImpl,
+    )
+
+    repo = UserRepositoryImpl(async_session)
+
+    user = User.create(
+        email="auth_test@example.com", password="testpassword123", role="analyst"
+    )
+
+    created_user = await repo.create(user)
+    await async_session.commit()
+
+    return created_user

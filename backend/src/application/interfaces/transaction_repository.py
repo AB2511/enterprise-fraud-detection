@@ -2,6 +2,7 @@
 
 from abc import ABC, abstractmethod
 from datetime import datetime
+from decimal import Decimal
 from uuid import UUID
 
 from src.domain.entities.transaction import Transaction
@@ -15,7 +16,7 @@ class TransactionRepository(ABC):
     """
 
     @abstractmethod
-    async def save(self, transaction: Transaction) -> Transaction:
+    async def create(self, transaction: Transaction) -> Transaction:
         """Persist a transaction.
 
         Args:
@@ -24,6 +25,76 @@ class TransactionRepository(ABC):
         Returns:
             Saved transaction with any generated fields populated
         """
+        pass
+
+    @abstractmethod
+    async def update(self, transaction: Transaction) -> Transaction:
+        """Update an existing transaction."""
+        pass
+
+    @abstractmethod
+    async def search(
+        self,
+        *,
+        customer_id: UUID | None = None,
+        merchant_id: UUID | None = None,
+        min_amount: Decimal | None = None,
+        max_amount: Decimal | None = None,
+        currency: str | None = None,
+        transaction_type: str | None = None,
+        payment_channel: str | None = None,
+        payment_method: str | None = None,
+        status: str | None = None,
+        is_fraud: bool | None = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> tuple[list[Transaction], int]:
+        """Search transactions with filters."""
+        pass
+
+    @abstractmethod
+    async def list_recent(self, *, limit: int = 100, offset: int = 0) -> list[Transaction]:
+        """List recent transactions."""
+        pass
+
+    @abstractmethod
+    async def list_by_customer(
+        self,
+        *,
+        customer_id: UUID,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list[Transaction]:
+        """List transactions for a customer."""
+        pass
+
+    @abstractmethod
+    async def list_by_merchant(
+        self,
+        *,
+        merchant_id: UUID,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list[Transaction]:
+        """List transactions for a merchant."""
+        pass
+
+    @abstractmethod
+    async def list_by_date_range(
+        self,
+        *,
+        start_date: datetime,
+        end_date: datetime,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list[Transaction]:
+        """List transactions within a date range."""
         pass
 
     @abstractmethod

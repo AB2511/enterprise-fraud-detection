@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.application.interfaces.audit_repository import AuditRepository
 from src.domain.entities.audit_log import AuditLog
-from src.domain.exceptions.base import DomainException, NotFoundError, RepositoryError
+from src.domain.exceptions.base import DomainException
 from src.infrastructure.database.models import AuditLogModel
 
 
@@ -243,8 +243,10 @@ class AuditRepositoryImpl(AuditRepository):
     async def search(
         self,
         entity_type: str | None = None,
+        entity_id: UUID | None = None,
         action: str | None = None,
         user_id: UUID | None = None,
+        username: str | None = None,
         start_date: datetime | None = None,
         end_date: datetime | None = None,
         limit: int = 100,
@@ -271,10 +273,14 @@ class AuditRepositoryImpl(AuditRepository):
             # Add filters dynamically
             if entity_type:
                 conditions.append(AuditLogModel.entity_type == entity_type)
+            if entity_id:
+                conditions.append(AuditLogModel.entity_id == entity_id)
             if action:
                 conditions.append(AuditLogModel.action == action)
             if user_id:
                 conditions.append(AuditLogModel.user_id == user_id)
+            if username:
+                conditions.append(AuditLogModel.username == username)
             if start_date:
                 conditions.append(AuditLogModel.created_at >= start_date)
             if end_date:

@@ -124,8 +124,10 @@ class AuditRepository(ABC):
     async def search(
         self,
         entity_type: str | None = None,
+        entity_id: UUID | None = None,
         action: str | None = None,
         user_id: UUID | None = None,
+        username: str | None = None,
         start_date: datetime | None = None,
         end_date: datetime | None = None,
         limit: int = 100,

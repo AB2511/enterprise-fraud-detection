@@ -169,7 +169,7 @@ class TransactionResponse(BaseModel):
     velocity_1h: float | None = Field(None, description="Transactions in last hour")
     velocity_24h: float | None = Field(None, description="Transactions in last 24 hours")
     velocity_7d: float | None = Field(None, description="Transactions in last 7 days")
-    is_fraud: bool = Field(..., description="Whether transaction is fraud")
+    is_fraud: bool | None = Field(..., description="Whether transaction is fraud")
     timestamp: datetime = Field(..., description="Transaction timestamp")
     created_at: datetime = Field(..., description="Record creation timestamp")
 

@@ -41,7 +41,7 @@ class Prediction:
     predicted_class: str = "legitimate"
     decision: str = "approve"
     confidence: float = 0.0
-    explanation_data: dict[str, any] = field(default_factory=dict)
+    explanation_data: dict[str, object] = field(default_factory=dict)
     latency_ms: int = 0
     timestamp: datetime = field(default_factory=datetime.utcnow)
     analyst_feedback_id: UUID | None = None

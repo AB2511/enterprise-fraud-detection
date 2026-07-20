@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.application.interfaces.alert_repository import AlertRepository
 from src.domain.entities.alert import Alert
-from src.domain.exceptions.base import DomainException, NotFoundError, RepositoryError
+from src.domain.exceptions.base import DomainException
 from src.infrastructure.database.models import AlertModel
 
 
@@ -500,15 +500,15 @@ class AlertRepositoryImpl(AlertRepository):
         created_at = model.created_at
         if created_at and created_at.tzinfo is None:
             created_at = created_at.replace(tzinfo=UTC)
-        
+
         updated_at = model.updated_at
         if updated_at and updated_at.tzinfo is None:
             updated_at = updated_at.replace(tzinfo=UTC)
-        
+
         assigned_at = model.assigned_at
         if assigned_at and assigned_at.tzinfo is None:
             assigned_at = assigned_at.replace(tzinfo=UTC)
-        
+
         resolved_at = model.resolved_at
         if resolved_at and resolved_at.tzinfo is None:
             resolved_at = resolved_at.replace(tzinfo=UTC)

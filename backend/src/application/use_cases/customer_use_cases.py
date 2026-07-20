@@ -112,7 +112,7 @@ class UpdateCustomerUseCase:
             ValidationException: If validation fails
         """
         # Build updates dictionary
-        updates = {}
+        updates: dict[str, str | int] = {}
         if request.customer_name is not None:
             updates["customer_name"] = request.customer_name
         if request.credit_score is not None:

@@ -61,7 +61,7 @@ class PredictionService:
             an external ML service.
         """
         # Create prediction record
-        prediction_data = {
+        prediction_data: dict[str, object] = {
             "transaction_id": str(transaction_id),
             "model_id": str(model_id),
             "model_version": model_version,
@@ -73,13 +73,17 @@ class PredictionService:
             "created_at": datetime.utcnow().isoformat(),
         }
 
+        transaction_id_value = prediction_data["transaction_id"]
+        if not isinstance(transaction_id_value, str):
+            raise TypeError("Expected transaction ID to be a string")
+
         # Audit
         audit = AuditLog.for_creation(
             entity_type="prediction",
-            entity_id=UUID(prediction_data["transaction_id"]),  # Placeholder
             user_id=user_id,
             username="ml_service",
             new_value=prediction_data,
+            entity_id=UUID(transaction_id_value),  # Placeholder
         )
         await self._audit_repo.create(audit)
 

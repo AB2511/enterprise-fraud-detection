@@ -1,6 +1,6 @@
 """Customer Service - Business workflows for customer management."""
 
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 from uuid import UUID
 
@@ -40,7 +40,7 @@ class CustomerService:
         customer_name: str,
         email: str,
         country: str,
-        date_of_birth: datetime | None = None,
+        date_of_birth: date | None = None,
         user_id: UUID | None = None,
     ) -> Customer:
         """Create a new customer with validation and audit.

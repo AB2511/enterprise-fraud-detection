@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.application.interfaces.prediction_repository import PredictionRepository
 from src.domain.entities.prediction import Prediction
-from src.domain.exceptions.base import DomainException, NotFoundError, RepositoryError
+from src.domain.exceptions.base import DomainException
 from src.infrastructure.database.models import PredictionModel
 
 

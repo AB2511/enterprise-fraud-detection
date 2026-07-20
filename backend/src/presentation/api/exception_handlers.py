@@ -4,6 +4,9 @@ Converts application exceptions to RFC7807 Problem Details format
 with consistent error responses.
 """
 
+from collections.abc import Awaitable, Callable
+from typing import cast
+
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -30,7 +33,7 @@ def create_problem_detail(
     detail: str,
     error_type: str = "about:blank",
     instance: str = "",
-    **kwargs,
+    **kwargs: object,
 ) -> dict:
     """Create RFC7807 Problem Details response.
 
@@ -58,7 +61,7 @@ def create_problem_detail(
 
 async def entity_not_found_handler(
     request: Request,
-    exc: EntityNotFoundException,
+    exc: Exception,
 ) -> JSONResponse:
     """Handle EntityNotFoundException.
 
@@ -69,21 +72,23 @@ async def entity_not_found_handler(
     Returns:
         JSON response with 404 status
     """
+    entity_exc = cast(EntityNotFoundException, exc)
+
     logger.warning(
         "Entity not found",
-        entity_type=exc.entity_type,
-        entity_id=exc.entity_id,
+        entity_type=entity_exc.entity_type,
+        entity_id=entity_exc.entity_id,
         path=request.url.path,
     )
 
     problem = create_problem_detail(
         status_code=status.HTTP_404_NOT_FOUND,
         title="Entity Not Found",
-        detail=exc.message,
+        detail=entity_exc.message,
         error_type="entity-not-found",
         instance=str(request.url),
-        entity_type=exc.entity_type,
-        entity_id=str(exc.entity_id),
+        entity_type=entity_exc.entity_type,
+        entity_id=str(entity_exc.entity_id),
     )
 
     return JSONResponse(
@@ -94,7 +99,7 @@ async def entity_not_found_handler(
 
 async def validation_exception_handler(
     request: Request,
-    exc: ValidationException,
+    exc: Exception,
 ) -> JSONResponse:
     """Handle ValidationException.
 
@@ -105,21 +110,23 @@ async def validation_exception_handler(
     Returns:
         JSON response with 422 status
     """
+    validation_exc = cast(ValidationException, exc)
+
     logger.warning(
         "Validation error",
-        field=exc.field,
-        errors=exc.validation_errors,
+        field=validation_exc.field,
+        errors=validation_exc.validation_errors,
         path=request.url.path,
     )
 
     problem = create_problem_detail(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         title="Validation Error",
-        detail=exc.message,
+        detail=validation_exc.message,
         error_type="validation-error",
         instance=str(request.url),
-        field=exc.field,
-        validation_errors=exc.validation_errors,
+        field=validation_exc.field,
+        validation_errors=validation_exc.validation_errors,
     )
 
     return JSONResponse(
@@ -130,7 +137,7 @@ async def validation_exception_handler(
 
 async def conflict_exception_handler(
     request: Request,
-    exc: ConflictException,
+    exc: Exception,
 ) -> JSONResponse:
     """Handle ConflictException.
 
@@ -141,21 +148,23 @@ async def conflict_exception_handler(
     Returns:
         JSON response with 409 status
     """
+    conflict_exc = cast(ConflictException, exc)
+
     logger.warning(
         "Resource conflict",
-        resource_type=exc.resource_type,
-        field=exc.conflicting_field,
+        resource_type=conflict_exc.resource_type,
+        field=conflict_exc.conflicting_field,
         path=request.url.path,
     )
 
     problem = create_problem_detail(
         status_code=status.HTTP_409_CONFLICT,
         title="Resource Conflict",
-        detail=exc.message,
+        detail=conflict_exc.message,
         error_type="conflict",
         instance=str(request.url),
-        resource_type=exc.resource_type,
-        conflicting_field=exc.conflicting_field,
+        resource_type=conflict_exc.resource_type,
+        conflicting_field=conflict_exc.conflicting_field,
     )
 
     return JSONResponse(
@@ -166,7 +175,7 @@ async def conflict_exception_handler(
 
 async def duplicate_transaction_handler(
     request: Request,
-    exc: DuplicateTransactionException,
+    exc: Exception,
 ) -> JSONResponse:
     """Handle DuplicateTransactionException.
 
@@ -177,20 +186,22 @@ async def duplicate_transaction_handler(
     Returns:
         JSON response with 409 status
     """
+    duplicate_exc = cast(DuplicateTransactionException, exc)
+
     logger.warning(
         "Duplicate transaction",
-        details=exc.transaction_details,
-        window=exc.window_minutes,
+        details=duplicate_exc.transaction_details,
+        window=duplicate_exc.window_minutes,
         path=request.url.path,
     )
 
     problem = create_problem_detail(
         status_code=status.HTTP_409_CONFLICT,
         title="Duplicate Transaction",
-        detail=exc.message,
+        detail=duplicate_exc.message,
         error_type="duplicate-transaction",
         instance=str(request.url),
-        window_minutes=exc.window_minutes,
+        window_minutes=duplicate_exc.window_minutes,
     )
 
     return JSONResponse(
@@ -201,7 +212,7 @@ async def duplicate_transaction_handler(
 
 async def authorization_exception_handler(
     request: Request,
-    exc: AuthorizationException,
+    exc: Exception,
 ) -> JSONResponse:
     """Handle AuthorizationException.
 
@@ -212,20 +223,22 @@ async def authorization_exception_handler(
     Returns:
         JSON response with 403 status
     """
+    authorization_exc = cast(AuthorizationException, exc)
+
     logger.warning(
         "Authorization failed",
-        required_permission=exc.required_permission,
-        user_id=exc.user_id,
+        required_permission=authorization_exc.required_permission,
+        user_id=authorization_exc.user_id,
         path=request.url.path,
     )
 
     problem = create_problem_detail(
         status_code=status.HTTP_403_FORBIDDEN,
         title="Authorization Failed",
-        detail=exc.message,
+        detail=authorization_exc.message,
         error_type="authorization-error",
         instance=str(request.url),
-        required_permission=exc.required_permission,
+        required_permission=authorization_exc.required_permission,
     )
 
     return JSONResponse(
@@ -236,7 +249,7 @@ async def authorization_exception_handler(
 
 async def authentication_exception_handler(
     request: Request,
-    exc: AuthenticationException,
+    exc: Exception,
 ) -> JSONResponse:
     """Handle AuthenticationException.
 
@@ -247,19 +260,21 @@ async def authentication_exception_handler(
     Returns:
         JSON response with 401 status
     """
+    authentication_exc = cast(AuthenticationException, exc)
+
     logger.warning(
         "Authentication failed",
-        reason=exc.reason,
+        reason=authentication_exc.reason,
         path=request.url.path,
     )
 
     problem = create_problem_detail(
         status_code=status.HTTP_401_UNAUTHORIZED,
         title="Authentication Failed",
-        detail=exc.message,
+        detail=authentication_exc.message,
         error_type="authentication-error",
         instance=str(request.url),
-        reason=exc.reason,
+        reason=authentication_exc.reason,
     )
 
     return JSONResponse(
@@ -422,12 +437,24 @@ def add_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(DuplicateTransactionException, duplicate_transaction_handler)
     app.add_exception_handler(AuthorizationException, authorization_exception_handler)
     app.add_exception_handler(AuthenticationException, authentication_exception_handler)
-    app.add_exception_handler(BusinessRuleViolationException, business_rule_violation_handler)
-    app.add_exception_handler(ApplicationException, application_exception_handler)
+    app.add_exception_handler(
+        BusinessRuleViolationException,
+        cast(Callable[[Request, Exception], Awaitable[JSONResponse]], business_rule_violation_handler),
+    )
+    app.add_exception_handler(
+        ApplicationException,
+        cast(Callable[[Request, Exception], Awaitable[JSONResponse]], application_exception_handler),
+    )
 
     # Framework exceptions
-    app.add_exception_handler(RequestValidationError, pydantic_validation_handler)
-    app.add_exception_handler(ValidationError, pydantic_validation_handler)
+    app.add_exception_handler(
+        RequestValidationError,
+        cast(Callable[[Request, Exception], Awaitable[JSONResponse]], pydantic_validation_handler),
+    )
+    app.add_exception_handler(
+        ValidationError,
+        cast(Callable[[Request, Exception], Awaitable[JSONResponse]], pydantic_validation_handler),
+    )
 
     # Catch-all
     app.add_exception_handler(Exception, generic_exception_handler)

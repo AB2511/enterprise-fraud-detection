@@ -3,6 +3,7 @@
 Provides CRUD endpoints for customer management.
 """
 
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, status
@@ -19,6 +20,8 @@ from src.application.use_cases.customer_use_cases import (
     UpdateCustomerUseCase,
 )
 from src.config.logging_config import get_logger
+from src.domain.entities.user import User
+from src.infrastructure.security.authorization import require_authenticated
 from src.presentation.api.dependencies import (
     get_create_customer_use_case,
     get_delete_customer_use_case,
@@ -81,6 +84,7 @@ router = APIRouter(
 )
 async def create_customer(
     request: CreateCustomerRequest,
+    current_user: Annotated[User, Depends(require_authenticated)],
     use_case: CreateCustomerUseCase = Depends(get_create_customer_use_case),
 ) -> APIResponse[CustomerResponse]:
     """Create a new customer.
@@ -125,6 +129,7 @@ async def create_customer(
 )
 async def get_customer(
     customer_id: UUID,
+    current_user: Annotated[User, Depends(require_authenticated)],
     use_case: GetCustomerUseCase = Depends(get_get_customer_use_case),
 ) -> APIResponse[CustomerResponse]:
     """Get customer by ID.
@@ -161,6 +166,7 @@ async def get_customer(
 async def update_customer(
     customer_id: UUID,
     request: UpdateCustomerRequest,
+    current_user: Annotated[User, Depends(require_authenticated)],
     use_case: UpdateCustomerUseCase = Depends(get_update_customer_use_case),
 ) -> APIResponse[CustomerResponse]:
     """Update customer information.
@@ -201,6 +207,7 @@ async def update_customer(
 )
 async def delete_customer(
     customer_id: UUID,
+    current_user: Annotated[User, Depends(require_authenticated)],
     reason: str
     | None = Query(
         default="User requested deletion",
@@ -221,6 +228,9 @@ async def delete_customer(
         reason=reason,
     )
 
-    await use_case.execute(customer_id, reason=reason)
+    await use_case.execute(
+        customer_id,
+        reason=reason if reason is not None else "User requested deletion",
+    )
 
     logger.info("Customer deleted", customer_id=str(customer_id))

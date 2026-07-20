@@ -1,5 +1,6 @@
 """User Use Cases (CQRS Pattern)."""
 
+from typing import Any
 from uuid import UUID
 
 from src.application.dtos.user_dtos import (
@@ -177,7 +178,7 @@ class GetUserUseCase:
         """
         user = await self._service.get_user_by_id(user_id)
         if not user:
-            raise EntityNotFoundException(f"User {user_id} not found")
+            raise EntityNotFoundException("User", user_id)
 
         return CreateUserUseCase._to_response(user)
 
@@ -274,6 +275,8 @@ class AuthenticateUserUseCase:
             password=request.password,
             ip_address=ip_address,
         )
+        if result is None:
+            raise ValueError("Invalid credentials")
 
         return AuthenticationResponse(
             access_token=result["access_token"],
@@ -298,22 +301,27 @@ class ChangePasswordUseCase:
         self,
         user_id: UUID,
         request: ChangePasswordRequest,
-    ) -> None:
+    ) -> UserResponse:
         """Execute change password use case.
 
         Args:
             user_id: User UUID
             request: Change password request DTO
 
+        Returns:
+            User response DTO
+
         Raises:
             EntityNotFoundException: If user not found
             ValidationException: If current password is incorrect
         """
-        await self._service.change_password(
+        user = await self._service.change_user_password(
             user_id=user_id,
-            current_password=request.current_password,
+            old_password=request.current_password,
             new_password=request.new_password,
         )
+
+        return CreateUserUseCase._to_response(user)
 
 
 class GetUserStatisticsUseCase:
@@ -327,7 +335,7 @@ class GetUserStatisticsUseCase:
         """
         self._service = user_service
 
-    async def execute(self) -> dict[str, any]:
+    async def execute(self) -> dict[str, Any]:
         """Execute get user statistics use case.
 
         Returns:

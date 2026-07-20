@@ -75,7 +75,8 @@ class User:
         """
         if not self.hashed_password:
             return False
-        return bcrypt.verify(password, self.hashed_password)
+        result = bcrypt.verify(password, self.hashed_password)
+        return bool(result)
 
     def change_password(self, old_password: str, new_password: str) -> None:
         """Change user password.
@@ -155,3 +156,30 @@ class User:
     def can_manage_models(self) -> bool:
         """Check if user can manage ML models."""
         return self.is_active and self.role in ["admin", "data_scientist"]
+
+    @property
+    def can_manage_users(self) -> bool:
+        """Check if user can manage other users."""
+        return self.is_active and self.role == "admin"
+
+    def get_permissions(self) -> list[str]:
+        """Return the effective permission strings for the user role."""
+        permissions_map = {
+            "admin": {
+                "read",
+                "write",
+                "delete",
+                "manage_users",
+                "review_alerts",
+                "train_models",
+                "audit",
+            },
+            "analyst": {"read", "review_alerts", "write_feedback"},
+            "data_scientist": {"read", "train_models", "write_models"},
+            "auditor": {"read", "audit"},
+        }
+        return sorted(permissions_map.get(self.role, {"read"}))
+
+    def has_permission(self, permission: str) -> bool:
+        """Check whether the user has a specific permission."""
+        return permission in set(self.get_permissions())

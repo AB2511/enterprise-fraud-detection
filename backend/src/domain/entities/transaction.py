@@ -41,6 +41,7 @@ class Transaction:
     """
 
     transaction_id: UUID = field(default_factory=uuid4)
+    transaction_type: str = "purchase"
     customer_id: UUID = field(default_factory=uuid4)
     merchant_id: UUID = field(default_factory=uuid4)
     amount: Decimal = Decimal("0.00")
@@ -168,7 +169,7 @@ class Transaction:
         self.velocity_7d = transactions_7d
         self.updated_at = datetime.now(UTC)
 
-    def risk_snapshot(self) -> dict[str, any]:
+    def risk_snapshot(self) -> dict[str, object]:
         """Generate risk snapshot for this transaction.
 
         Returns:

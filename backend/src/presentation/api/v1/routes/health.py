@@ -3,10 +3,9 @@
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, status
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config.settings import Settings, get_settings
-from src.infrastructure.database import get_async_session
+from src.presentation.api.dependencies import get_database_health_status
 from src.presentation.api.v1.schemas.health_schema import HealthResponse
 
 router = APIRouter()
@@ -41,25 +40,18 @@ async def health_check(settings: Settings = Depends(get_settings)) -> HealthResp
     description="Check if the API is ready to accept requests (includes DB check)",
 )
 async def readiness_check(
-    session: AsyncSession = Depends(get_async_session),
+    database_healthy: bool = Depends(get_database_health_status),
     settings: Settings = Depends(get_settings),
 ) -> HealthResponse:
     """Readiness check with database connectivity validation.
 
     Args:
-        session: Database session
+        database_healthy: Whether the database is reachable
         settings: Application settings
 
     Returns:
         Health status with readiness confirmation
     """
-    # Test database connection
-    try:
-        await session.execute("SELECT 1")
-        database_healthy = True
-    except Exception:
-        database_healthy = False
-
     return HealthResponse(
         status="ready" if database_healthy else "not_ready",
         version=settings.app_version,

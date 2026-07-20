@@ -2,6 +2,7 @@
 
 from datetime import datetime
 from decimal import Decimal
+from typing import Any
 from uuid import UUID
 
 from src.application.interfaces.audit_repository import AuditRepository
@@ -89,7 +90,7 @@ class MerchantService:
     async def calculate_merchant_risk(
         self,
         merchant_id: UUID,
-    ) -> dict:
+    ) -> dict[str, Any]:
         """Calculate comprehensive merchant risk profile.
 
         Args:
@@ -127,7 +128,7 @@ class MerchantService:
     async def update_merchant_profile(
         self,
         merchant_id: UUID,
-        updates: dict,
+        updates: dict[str, Any],
         user_id: UUID | None = None,
     ) -> Merchant:
         """Update merchant profile information.
@@ -313,6 +314,7 @@ class MerchantService:
     async def reactivate_merchant(
         self,
         merchant_id: UUID,
+        reason: str | None = None,
         user_id: UUID | None = None,
     ) -> Merchant:
         """Reactivate suspended merchant.
@@ -345,7 +347,7 @@ class MerchantService:
             user_id=user_id,
             username="system",
             old_value={"is_active": False},
-            new_value={"is_active": True},
+            new_value={"is_active": True, "reason": reason},
         )
         await self._audit_repo.create(audit)
 
@@ -354,7 +356,7 @@ class MerchantService:
     async def get_high_risk_merchants(
         self,
         limit: int = 100,
-    ) -> list[dict]:
+    ) -> list[dict[str, Any]]:
         """Get list of high-risk merchants.
 
         Args:
@@ -366,3 +368,198 @@ class MerchantService:
         merchants = await self._merchant_repo.list_high_risk(limit=limit)
 
         return [await self.calculate_merchant_risk(m.merchant_id) for m in merchants]
+
+    async def get_merchant_by_id(
+        self,
+        merchant_id: UUID,
+    ) -> Merchant | None:
+        """Get merchant by ID.
+
+        Args:
+            merchant_id: Merchant UUID
+
+        Returns:
+            Merchant if found, None otherwise
+        """
+        return await self._merchant_repo.get_by_id(merchant_id)
+
+    async def search_merchants(
+        self,
+        criteria: dict[str, Any],
+        limit: int = 100,
+        offset: int = 0,
+    ) -> tuple[list[Merchant], int]:
+        """Search merchants with multiple criteria.
+
+        Args:
+            criteria: Search criteria (mcc, country, min_risk_rating, max_risk_rating, etc.)
+            limit: Maximum results
+            offset: Pagination offset
+
+        Returns:
+            Tuple of (list of merchants, total count)
+        """
+        merchants = []
+
+        # Filter by MCC
+        if "mcc" in criteria:
+            merchants = await self._merchant_repo.list_by_mcc(
+                mcc=criteria["mcc"],
+                limit=limit,
+                offset=offset,
+            )
+        # Filter by country
+        elif "country" in criteria:
+            merchants = await self._merchant_repo.get_by_country(
+                country=criteria["country"],
+                limit=limit,
+                offset=offset,
+            )
+        # Filter by risk range
+        elif "min_risk_rating" in criteria or "max_risk_rating" in criteria:
+            min_risk = criteria.get("min_risk_rating", 0)
+            max_risk = criteria.get("max_risk_rating", 100)
+            merchants = await self._merchant_repo.list_by_risk_level(
+                min_risk=min_risk,
+                max_risk=max_risk,
+                limit=limit,
+            )
+        else:
+            # No specific criteria - return high risk merchants as default
+            merchants = await self._merchant_repo.list_high_risk(limit=limit)
+
+        # TODO: Implement actual count - for now return len(merchants)
+        total = len(merchants)
+
+        return merchants, total
+
+    async def search_merchants_by_name(
+        self,
+        search_term: str,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> tuple[list[Merchant], int]:
+        """Search merchants by name.
+
+        Args:
+            search_term: Name search term
+            limit: Maximum results
+            offset: Pagination offset
+
+        Returns:
+            Tuple of (list of merchants, total count)
+
+        Note:
+            This is a simplified implementation. Full text search would require
+            repository support for pattern matching.
+        """
+        # Use exact match for now (repository supports get_by_name)
+        merchant = await self._merchant_repo.get_by_name(search_term)
+
+        if merchant:
+            return [merchant], 1
+        else:
+            return [], 0
+
+    async def get_merchant_statistics(self) -> dict[str, Any]:
+        """Get merchant statistics.
+
+        Returns:
+            Dictionary with merchant statistics
+        """
+        # Get all merchants (high risk as proxy for active merchants)
+        # Note: This is a simplified implementation
+        # Full implementation would require repository count methods
+
+        high_risk_merchants = await self._merchant_repo.list_high_risk(limit=1000)
+
+        total_merchants = len(high_risk_merchants)
+        active_merchants = sum(1 for m in high_risk_merchants if m.is_active)
+        suspended_merchants = total_merchants - active_merchants
+
+        # Calculate statistics
+        by_category: dict[str, int] = {}
+        by_risk_level = {"low": 0, "medium": 0, "high": 0, "critical": 0}
+        total_risk = 0
+        total_fraud_rate = 0.0
+
+        for merchant in high_risk_merchants:
+            # Count by category
+            category = merchant.merchant_category
+            by_category[category] = by_category.get(category, 0) + 1
+
+            # Count by risk level
+            risk_level = merchant.get_risk_level()
+            by_risk_level[risk_level] += 1
+
+            # Sum for averages
+            total_risk += merchant.risk_rating
+            total_fraud_rate += float(merchant.historical_fraud_rate)
+
+        avg_risk_rating = total_risk / total_merchants if total_merchants > 0 else 0.0
+        avg_fraud_rate = total_fraud_rate / total_merchants if total_merchants > 0 else 0.0
+
+        high_risk_count = sum(1 for m in high_risk_merchants if m.is_high_risk)
+
+        # New merchants this month (approximation - checking if created recently)
+        from datetime import datetime, timedelta
+
+        one_month_ago = datetime.utcnow() - timedelta(days=30)
+        new_merchants_count = sum(1 for m in high_risk_merchants if m.created_at >= one_month_ago)
+
+        return {
+            "total_merchants": total_merchants,
+            "active_merchants": active_merchants,
+            "suspended_merchants": suspended_merchants,
+            "merchants_by_category": by_category,
+            "merchants_by_risk_level": by_risk_level,
+            "avg_risk_rating": avg_risk_rating,
+            "avg_fraud_rate": avg_fraud_rate,
+            "high_risk_merchants": high_risk_count,
+            "new_merchants_this_month": new_merchants_count,
+        }
+
+    async def deactivate_merchant(
+        self,
+        merchant_id: UUID,
+        reason: str,
+        user_id: UUID | None = None,
+    ) -> None:
+        """Deactivate merchant (soft delete).
+
+        Args:
+            merchant_id: Merchant UUID
+            reason: Reason for deactivation
+            user_id: User performing deactivation
+
+        Raises:
+            ValueError: If merchant not found
+        """
+        # Verify merchant exists
+        merchant = await self._merchant_repo.get_by_id(merchant_id)
+        if not merchant:
+            raise ValueError(f"Merchant {merchant_id} not found")
+
+        # Capture old state for audit
+        old_state = {
+            "merchant_id": str(merchant.merchant_id),
+            "merchant_name": merchant.merchant_name,
+            "is_active": merchant.is_active,
+        }
+
+        # Soft delete via repository
+        deleted = await self._merchant_repo.delete(merchant_id)
+
+        if not deleted:
+            raise ValueError(f"Merchant {merchant_id} not found")
+
+        # Audit the deletion
+        audit = AuditLog.for_deletion(
+            entity_type="merchant",
+            entity_id=merchant_id,
+            old_value=old_state,
+            user_id=user_id,
+            username="system",
+            description=reason,
+        )
+        await self._audit_repo.create(audit)

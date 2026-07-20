@@ -1,6 +1,7 @@
 """Transaction Repository Implementation using SQLAlchemy Async."""
 
 from datetime import UTC, datetime, timedelta
+from decimal import Decimal
 from uuid import UUID
 
 from sqlalchemy import Integer, and_, cast, desc, func, select, update
@@ -9,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.application.interfaces.transaction_repository import TransactionRepository
 from src.domain.entities.transaction import Transaction
-from src.domain.exceptions.base import DomainException, NotFoundError, RepositoryError
+from src.domain.exceptions.base import DomainException
 from src.infrastructure.database.models import TransactionModel
 
 
@@ -35,7 +36,7 @@ class TransactionRepositoryImpl(TransactionRepository):
         """
         self._session = session
 
-    async def save(self, transaction: Transaction) -> Transaction:
+    async def create(self, transaction: Transaction) -> Transaction:
         """Persist a transaction.
 
         Args:
@@ -52,7 +53,7 @@ class TransactionRepositoryImpl(TransactionRepository):
                 merchant_id=transaction.merchant_id,
                 amount=float(transaction.amount),
                 currency=transaction.currency,
-                transaction_type=transaction.payment_channel,
+                transaction_type=transaction.transaction_type,
                 status=transaction.status,
                 payment_channel=transaction.payment_channel,
                 payment_method=transaction.payment_method,
@@ -85,6 +86,10 @@ class TransactionRepositoryImpl(TransactionRepository):
         except Exception as e:
             await self._session.rollback()
             raise DomainException(f"Failed to save transaction: {e}", "REPOSITORY_ERROR") from e
+
+    async def save(self, transaction: Transaction) -> Transaction:
+        """Backward-compatible alias for create."""
+        return await self.create(transaction)
 
     async def get_by_id(self, transaction_id: UUID) -> Transaction | None:
         """Retrieve transaction by ID.
@@ -273,25 +278,204 @@ class TransactionRepositoryImpl(TransactionRepository):
             await self._session.rollback()
             raise DomainException(f"Failed to update transaction: {e}", "REPOSITORY_ERROR") from e
 
-    async def find_by_criteria(
+    async def search(
         self,
+        *,
         customer_id: UUID | None = None,
         merchant_id: UUID | None = None,
-        min_amount: float | None = None,
-        max_amount: float | None = None,
+        min_amount: Decimal | None = None,
+        max_amount: Decimal | None = None,
         currency: str | None = None,
+        transaction_type: str | None = None,
         payment_channel: str | None = None,
         payment_method: str | None = None,
         status: str | None = None,
         is_fraud: bool | None = None,
         start_date: datetime | None = None,
         end_date: datetime | None = None,
-        country: str | None = None,
         limit: int = 100,
         offset: int = 0,
-        sort_by: str = "created_at",
-        sort_desc: bool = True,
+    ) -> tuple[list[Transaction], int]:
+        """Search transactions by multiple criteria."""
+        return await self._search_with_criteria(
+            customer_id=customer_id,
+            merchant_id=merchant_id,
+            min_amount=min_amount,
+            max_amount=max_amount,
+            currency=currency,
+            transaction_type=transaction_type,
+            payment_channel=payment_channel,
+            payment_method=payment_method,
+            status=status,
+            is_fraud=is_fraud,
+            start_date=start_date,
+            end_date=end_date,
+            limit=limit,
+            offset=offset,
+        )
+
+    async def list_recent(self, *, limit: int = 100, offset: int = 0) -> list[Transaction]:
+        """List most recent transactions."""
+        try:
+            result = await self._session.execute(
+                select(TransactionModel)
+                .where(TransactionModel.deleted_at.is_(None))
+                .order_by(desc(TransactionModel.created_at))
+                .limit(limit)
+                .offset(offset)
+            )
+            return [self._model_to_entity(txn) for txn in result.scalars().all()]
+        except Exception as e:
+            raise DomainException(f"Failed to list recent transactions: {e}", "REPOSITORY_ERROR") from e
+
+    async def list_by_customer(
+        self,
+        *,
+        customer_id: UUID,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+        limit: int = 100,
+        offset: int = 0,
     ) -> list[Transaction]:
+        """List transactions for a customer."""
+        try:
+            query = (
+                select(TransactionModel)
+                .where(
+                    and_(
+                        TransactionModel.customer_id == customer_id,
+                        TransactionModel.deleted_at.is_(None),
+                    )
+                )
+                .order_by(desc(TransactionModel.created_at))
+                .limit(limit)
+                .offset(offset)
+            )
+            if start_date is not None:
+                query = query.where(TransactionModel.created_at >= start_date)
+            if end_date is not None:
+                query = query.where(TransactionModel.created_at <= end_date)
+            result = await self._session.execute(query)
+            return [self._model_to_entity(txn) for txn in result.scalars().all()]
+        except Exception as e:
+            raise DomainException(f"Failed to list customer transactions: {e}", "REPOSITORY_ERROR") from e
+
+    async def list_by_merchant(
+        self,
+        *,
+        merchant_id: UUID,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list[Transaction]:
+        """List transactions for a merchant."""
+        try:
+            query = (
+                select(TransactionModel)
+                .where(
+                    and_(
+                        TransactionModel.merchant_id == merchant_id,
+                        TransactionModel.deleted_at.is_(None),
+                    )
+                )
+                .order_by(desc(TransactionModel.created_at))
+                .limit(limit)
+                .offset(offset)
+            )
+            if start_date is not None:
+                query = query.where(TransactionModel.created_at >= start_date)
+            if end_date is not None:
+                query = query.where(TransactionModel.created_at <= end_date)
+            result = await self._session.execute(query)
+            return [self._model_to_entity(txn) for txn in result.scalars().all()]
+        except Exception as e:
+            raise DomainException(f"Failed to list merchant transactions: {e}", "REPOSITORY_ERROR") from e
+
+    async def list_by_date_range(
+        self,
+        *,
+        start_date: datetime,
+        end_date: datetime,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list[Transaction]:
+        """List transactions within a date range."""
+        try:
+            result = await self._session.execute(
+                select(TransactionModel)
+                .where(
+                    and_(
+                        TransactionModel.created_at >= start_date,
+                        TransactionModel.created_at <= end_date,
+                        TransactionModel.deleted_at.is_(None),
+                    )
+                )
+                .order_by(desc(TransactionModel.created_at))
+                .limit(limit)
+                .offset(offset)
+            )
+            return [self._model_to_entity(txn) for txn in result.scalars().all()]
+        except Exception as e:
+            raise DomainException(f"Failed to list transactions by date range: {e}", "REPOSITORY_ERROR") from e
+
+    async def _search_with_criteria(
+        self,
+        *,
+        customer_id: UUID | None = None,
+        merchant_id: UUID | None = None,
+        min_amount: Decimal | None = None,
+        max_amount: Decimal | None = None,
+        currency: str | None = None,
+        transaction_type: str | None = None,
+        payment_channel: str | None = None,
+        payment_method: str | None = None,
+        status: str | None = None,
+        is_fraud: bool | None = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> tuple[list[Transaction], int]:
+        """Find transactions by multiple criteria."""
+        try:
+            query = select(TransactionModel).where(TransactionModel.deleted_at.is_(None))
+
+            if customer_id is not None:
+                query = query.where(TransactionModel.customer_id == customer_id)
+            if merchant_id is not None:
+                query = query.where(TransactionModel.merchant_id == merchant_id)
+            if min_amount is not None:
+                query = query.where(TransactionModel.amount >= float(min_amount))
+            if max_amount is not None:
+                query = query.where(TransactionModel.amount <= float(max_amount))
+            if currency:
+                query = query.where(TransactionModel.currency == currency)
+            if transaction_type:
+                query = query.where(TransactionModel.transaction_type == transaction_type)
+            if payment_channel:
+                query = query.where(TransactionModel.payment_channel == payment_channel)
+            if payment_method:
+                query = query.where(TransactionModel.payment_method == payment_method)
+            if status:
+                query = query.where(TransactionModel.status == status)
+            if is_fraud is not None:
+                query = query.where(TransactionModel.is_fraud == is_fraud)
+            if start_date is not None:
+                query = query.where(TransactionModel.created_at >= start_date)
+            if end_date is not None:
+                query = query.where(TransactionModel.created_at <= end_date)
+
+            query = query.order_by(desc(TransactionModel.created_at)).limit(limit).offset(offset)
+
+            result = await self._session.execute(query)
+            transactions = result.scalars().all()
+            return [self._model_to_entity(txn) for txn in transactions], len(transactions)
+
+        except Exception as e:
+            raise DomainException(
+                f"Failed to find transactions by criteria: {e}", "REPOSITORY_ERROR"
+            ) from e
         """Find transactions by multiple criteria.
 
         Args:
