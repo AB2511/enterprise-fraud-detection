@@ -91,6 +91,7 @@ class IPAddress:
             Network address in CIDR notation
         """
         ip = ipaddress.ip_address(self.address)
+        network: ipaddress.IPv4Network | ipaddress.IPv6Network
         if isinstance(ip, ipaddress.IPv4Address):
             network = ipaddress.IPv4Network(f"{self.address}/{prefix_length}", strict=False)
         else:

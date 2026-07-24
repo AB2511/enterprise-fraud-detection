@@ -1,6 +1,7 @@
 """Audit Service - Business workflows for audit log management."""
 
 from datetime import datetime, timedelta
+from typing import Mapping
 from uuid import UUID
 
 from src.application.interfaces.audit_repository import AuditRepository
@@ -58,7 +59,7 @@ class AuditService:
 
     async def search_audit_logs(
         self,
-        criteria: dict[str, object] | None = None,
+        criteria: Mapping[str, object] | None = None,
         entity_type: str | None = None,
         entity_id: UUID | None = None,
         action: str | None = None,
@@ -70,7 +71,7 @@ class AuditService:
         offset: int = 0,
     ) -> tuple[list[AuditLog], int]:
         """Search audit logs with multiple filters."""
-        criteria_map = criteria or {}
+        criteria_map: Mapping[str, object] = criteria if criteria is not None else {}
 
         if entity_type is None and "entity_type" in criteria_map:
             entity_type = criteria_map["entity_type"] if isinstance(criteria_map["entity_type"], str) else None
@@ -126,7 +127,7 @@ class AuditService:
 
         return [
             {
-                "log_id": str(log.log_id),
+                "log_id": str(log.audit_id),
                 "action": log.action,
                 "timestamp": log.created_at.isoformat(),
                 "user_id": str(log.user_id) if log.user_id else None,
@@ -204,31 +205,32 @@ class AuditService:
             logs = [log for log in logs if log.entity_type in entity_types]
 
         # Calculate statistics
-        stats = {
+        by_entity_type: dict[str, int] = {}
+        by_action: dict[str, int] = {}
+        by_user: dict[str, int] = {}
+
+        for log in logs:
+            by_entity_type[log.entity_type] = by_entity_type.get(log.entity_type, 0) + 1
+            by_action[log.action] = by_action.get(log.action, 0) + 1
+            if log.user_id:
+                user_key = str(log.user_id)
+                by_user[user_key] = by_user.get(user_key, 0) + 1
+
+        stats: dict[str, object] = {
             "total_events": len(logs),
             "date_range": {
                 "start": start_date.isoformat(),
                 "end": end_date.isoformat(),
             },
-            "by_entity_type": {},
-            "by_action": {},
-            "by_user": {},
+            "by_entity_type": by_entity_type,
+            "by_action": by_action,
+            "by_user": by_user,
         }
-
-        # Count by entity type
-        for log in logs:
-            stats["by_entity_type"][log.entity_type] = (
-                stats["by_entity_type"].get(log.entity_type, 0) + 1
-            )
-            stats["by_action"][log.action] = stats["by_action"].get(log.action, 0) + 1
-            if log.user_id:
-                user_key = str(log.user_id)
-                stats["by_user"][user_key] = stats["by_user"].get(user_key, 0) + 1
 
         # Format logs
         formatted_logs = [
             {
-                "log_id": str(log.log_id),
+                "log_id": str(log.audit_id),
                 "timestamp": log.created_at.isoformat(),
                 "entity_type": log.entity_type,
                 "entity_id": str(log.entity_id),
@@ -421,7 +423,7 @@ class AuditService:
 
     async def export_audit_logs(
         self,
-        criteria: dict,
+        criteria: Mapping[str, object],
         export_format: str = "json",
         exported_by: UUID | None = None,
     ) -> dict:
@@ -442,13 +444,8 @@ class AuditService:
             raise ValueError(f"Unsupported export format: {export_format}")
 
         # Search logs
-        logs = await self.search_audit_logs(
-            entity_type=criteria.get("entity_type"),
-            entity_id=criteria.get("entity_id"),
-            action=criteria.get("action"),
-            user_id=criteria.get("user_id"),
-            start_date=criteria.get("start_date"),
-            end_date=criteria.get("end_date"),
+        logs, _ = await self.search_audit_logs(
+            criteria=criteria,
             limit=10000,  # Large limit for export
             offset=0,
         )
@@ -456,7 +453,7 @@ class AuditService:
         # Format logs
         formatted_logs = [
             {
-                "log_id": str(log.log_id),
+                "log_id": str(log.audit_id),
                 "timestamp": log.created_at.isoformat(),
                 "entity_type": log.entity_type,
                 "entity_id": str(log.entity_id),
@@ -485,7 +482,7 @@ class AuditService:
         entity_types: list[str] | None = None,
         start_date: datetime | None = None,
         end_date: datetime | None = None,
-        user_filter: UUID | None = None,
+        user_filter: str | None = None,
         include_system_actions: bool = True,
         generated_by: UUID | None = None,
     ) -> dict:
@@ -523,7 +520,7 @@ class AuditService:
         # Filter by user if specified
         if user_filter:
             report["audit_logs"] = [
-                log for log in report["audit_logs"] if log["user_id"] == str(user_filter)
+                log for log in report["audit_logs"] if log["username"] == user_filter
             ]
 
         # Filter out system actions if requested

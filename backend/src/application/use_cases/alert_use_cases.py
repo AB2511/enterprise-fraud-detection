@@ -1,5 +1,6 @@
 """Alert Use Cases (CQRS Pattern)."""
 
+from datetime import datetime, timedelta
 from uuid import UUID
 
 from src.application.dtos.alert_dtos import (
@@ -51,7 +52,6 @@ class CreateAlertUseCase:
             prediction_id=request.prediction_id,
             alert_type=request.alert_type,
             severity=request.severity,
-            sla_hours=request.sla_hours,
             user_id=user_id,
         )
 
@@ -71,10 +71,10 @@ class CreateAlertUseCase:
             assigned_at=alert.assigned_at,
             resolution=alert.resolution,
             resolved_at=alert.resolved_at,
-            resolved_by_id=alert.resolved_by_id,
-            sla_deadline=alert.sla_deadline,
-            is_sla_breached=alert.is_sla_breached,
-            time_to_resolution_hours=alert.time_to_resolution_hours,
+            resolved_by_id=alert.assigned_analyst_id,
+            sla_deadline=alert.created_at + timedelta(hours=24),
+            is_sla_breached=alert.is_overdue,
+            time_to_resolution_hours=alert.resolution_time_hours,
             created_at=alert.created_at,
             updated_at=alert.updated_at,
         )
@@ -112,7 +112,7 @@ class UpdateAlertUseCase:
             ValidationException: If validation fails
         """
         # Build updates dictionary
-        updates = {}
+        updates: dict[str, object] = {}
         if request.status is not None:
             updates["status"] = request.status
         if request.assigned_analyst_id is not None:
@@ -153,6 +153,8 @@ class GetAlertUseCase:
             EntityNotFoundException: If alert not found
         """
         alert = await self._service.get_alert_by_id(alert_id)
+        if alert is None:
+            raise ValueError(f"Alert {alert_id} not found")
         return CreateAlertUseCase._to_response(alert)
 
 
@@ -182,7 +184,7 @@ class ListAlertsUseCase:
             Paginated alert responses
         """
         # Build search criteria
-        criteria = {}
+        criteria: dict[str, object] = {}
         if request.status:
             criteria["status"] = request.status
         if request.severity:
@@ -247,9 +249,7 @@ class AssignAlertUseCase:
         alert = await self._service.assign_alert(
             alert_id=alert_id,
             analyst_id=request.analyst_id,
-            priority=request.priority,
-            notes=request.notes,
-            assigned_by=user_id,
+            user_id=user_id,
         )
 
         return CreateAlertUseCase._to_response(alert)
@@ -290,7 +290,7 @@ class ResolveAlertUseCase:
             alert_id=alert_id,
             resolution=request.resolution,
             is_fraud=request.is_fraud,
-            confidence=request.confidence,
+            confidence={"low": 0.33, "medium": 0.66, "high": 1.0}[request.confidence],
             notes=request.notes,
             resolved_by=user_id,
         )
@@ -372,8 +372,8 @@ class CloseAlertUseCase:
         """
         alert = await self._service.close_alert(
             alert_id=alert_id,
-            closure_reason=closure_reason,
-            closed_by=closed_by,
+            resolution=closure_reason,
+            resolved_by_id=closed_by,
         )
 
         return CreateAlertUseCase._to_response(alert)
@@ -392,8 +392,8 @@ class GetAlertStatisticsUseCase:
 
     async def execute(
         self,
-        start_date: None = None,
-        end_date: None = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
     ) -> AlertStatisticsResponse:
         """Execute get alert statistics use case.
 

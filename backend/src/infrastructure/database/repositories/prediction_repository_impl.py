@@ -3,7 +3,7 @@
 from datetime import UTC, datetime
 from uuid import UUID
 
-from sqlalchemy import Integer, and_, desc, func, select, update
+from sqlalchemy import and_, case, desc, func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -52,7 +52,7 @@ class PredictionRepositoryImpl(PredictionRepository):
             prediction_model = PredictionModel(
                 id=prediction.prediction_id,
                 transaction_id=prediction.transaction_id,
-                model_id=None,
+                model_id=prediction.model_id,
                 model_version=prediction.model_version,
                 prediction_class=prediction.predicted_class,
                 fraud_probability=prediction.fraud_probability,
@@ -365,7 +365,7 @@ class PredictionRepositoryImpl(PredictionRepository):
         model_version: str,
         start_date: datetime | None = None,
         end_date: datetime | None = None,
-    ) -> dict[str, any]:
+    ) -> dict[str, object]:
         """Get performance statistics for a model version.
 
         Args:
@@ -383,16 +383,16 @@ class PredictionRepositoryImpl(PredictionRepository):
                 func.avg(PredictionModel.risk_score).label("avg_risk_score"),
                 func.avg(PredictionModel.confidence).label("avg_confidence"),
                 func.avg(PredictionModel.latency_ms).label("avg_latency"),
-                func.sum(func.cast(PredictionModel.prediction_class == "fraud", Integer)).label(
+                func.sum(case((PredictionModel.prediction_class == "fraud", 1), else_=0)).label(
                     "fraud_predictions"
                 ),
-                func.sum(func.cast(PredictionModel.decision == "approve", Integer)).label(
+                func.sum(case((PredictionModel.decision == "approve", 1), else_=0)).label(
                     "approved_count"
                 ),
-                func.sum(func.cast(PredictionModel.decision == "review", Integer)).label(
+                func.sum(case((PredictionModel.decision == "review", 1), else_=0)).label(
                     "review_count"
                 ),
-                func.sum(func.cast(PredictionModel.decision == "decline", Integer)).label(
+                func.sum(case((PredictionModel.decision == "decline", 1), else_=0)).label(
                     "declined_count"
                 ),
             ).where(PredictionModel.model_version == model_version)
@@ -569,8 +569,9 @@ class PredictionRepositoryImpl(PredictionRepository):
             Domain entity
         """
         return Prediction(
-            prediction_id=model.id,
-            transaction_id=model.transaction_id,
+            prediction_id=UUID(str(model.id)), 
+            transaction_id=UUID(str(model.transaction_id)), 
+            model_id=UUID(str(model.model_id)), 
             model_version=model.model_version,
             fraud_probability=model.fraud_probability,
             anomaly_score=model.anomaly_score or 0.0,

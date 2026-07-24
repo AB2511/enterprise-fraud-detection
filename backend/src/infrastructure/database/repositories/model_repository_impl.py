@@ -423,7 +423,7 @@ class ModelRepositoryImpl(ModelRepository):
 
     # Additional methods for model management and analytics
 
-    async def get_model_statistics(self) -> dict[str, any]:
+    async def get_model_statistics(self) -> dict[str, object]:
         """Get comprehensive model statistics.
 
         Returns:
@@ -435,14 +435,14 @@ class ModelRepositoryImpl(ModelRepository):
                 ModelModel.status
             )
             status_result = await self._session.execute(status_query)
-            status_counts = dict(status_result.all())
+            status_counts: dict[str, int] = {str(status): int(count) for status, count in status_result.all()}
 
             # Count by type
             type_query = select(ModelModel.model_type, func.count(ModelModel.id)).group_by(
                 ModelModel.model_type
             )
             type_result = await self._session.execute(type_query)
-            type_counts = dict(type_result.all())
+            type_counts: dict[str, int] = {str(model_type): int(count) for model_type, count in type_result.all()}
 
             # Total count
             total_query = select(func.count(ModelModel.id))
@@ -565,7 +565,7 @@ class ModelRepositoryImpl(ModelRepository):
             Model domain entity
         """
         return Model(
-            model_id=db_model.id,
+            model_id=UUID(str(db_model.id)),
             version=db_model.version,
             model_type=db_model.model_type,
             artifact_path=db_model.artifact_path,

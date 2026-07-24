@@ -1,8 +1,9 @@
 """Database Connection Management."""
 
 from collections.abc import AsyncGenerator, Generator
+from typing import Protocol
 
-from sqlalchemy import create_engine, event
+from sqlalchemy import Engine, create_engine, event
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import Pool
@@ -10,6 +11,14 @@ from sqlalchemy.pool import Pool
 from src.config.logging_config import get_logger
 from src.config.settings import get_settings
 
+
+class DBAPICursor(Protocol):
+    def execute(self, operation: str) -> object: ...
+    def close(self) -> None: ...
+
+
+class DBAPIConnection(Protocol):
+    def cursor(self) -> DBAPICursor: ...
 logger = get_logger(__name__)
 settings = get_settings()
 
@@ -49,7 +58,7 @@ AsyncSessionLocal = async_sessionmaker(
 
 
 @event.listens_for(Pool, "connect")
-def set_sqlite_pragma(dbapi_connection: any, connection_record: any) -> None:
+def set_sqlite_pragma(dbapi_connection: DBAPIConnection, connection_record: object) -> None:
     """Set SQLite pragma for foreign key support (if using SQLite).
 
     Args:
@@ -62,7 +71,7 @@ def set_sqlite_pragma(dbapi_connection: any, connection_record: any) -> None:
         cursor.close()
 
 
-def get_engine() -> any:
+def get_engine() -> Engine:
     """Get synchronous database engine.
 
     Returns:

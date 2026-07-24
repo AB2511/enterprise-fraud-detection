@@ -34,6 +34,22 @@ class AlertService:
         self._audit_repo = audit_repository
         self._user_repo = user_repository
 
+    @staticmethod
+    def _resolve_with_outcome(
+        alert: Alert,
+        resolution: str,
+        resolved_by_id: UUID,
+        notes: str | None = None,
+    ) -> None:
+        """Resolve an alert through its canonical outcome-specific methods."""
+        if resolution in {"fraud", "confirmed_fraud"}:
+            alert.resolve_as_fraud(resolved_by_id, notes)
+            return
+        if resolution == "false_positive":
+            alert.resolve_as_false_positive(resolved_by_id, notes)
+            return
+        raise ValueError(f"Unsupported alert resolution: {resolution}")
+
     async def create_alert(
         self,
         transaction_id: UUID,
@@ -115,7 +131,7 @@ class AlertService:
         if not analyst:
             raise ValueError(f"Analyst {analyst_id} not found")
 
-        if not analyst.can_review_alerts():
+        if not analyst.can_review_alerts:
             raise ValueError(f"User {analyst_id} does not have analyst role")
 
         # Assign
@@ -163,7 +179,8 @@ class AlertService:
             raise ValueError(f"Alert {alert_id} not found")
 
         # Resolve
-        alert.resolve(resolution=resolution, resolved_by_id=resolved_by_id)
+        old_status = alert.status
+        self._resolve_with_outcome(alert, resolution, resolved_by_id)
 
         # Persist
         updated_alert = await self._alert_repo.update(alert)
@@ -174,7 +191,7 @@ class AlertService:
             entity_id=alert_id,
             user_id=user_id,
             username="system",
-            old_value={"status": alert.status},
+            old_value={"status": old_status},
             new_value={
                 "status": resolution,
                 "resolved_by": str(resolved_by_id),
@@ -188,43 +205,43 @@ class AlertService:
     async def escalate_alert(
         self,
         alert_id: UUID,
+        escalation_reason: str | None = None,
+        escalated_by: UUID | None = None,
+        escalated_to: UUID | None = None,
         user_id: UUID | None = None,
     ) -> Alert:
-        """Escalate alert to higher severity.
-
-        Args:
-            alert_id: Alert UUID
-            user_id: User performing escalation
-
-        Returns:
-            Updated alert
-
-        Raises:
-            NotFoundError: If alert not found
-        """
+        """Escalate an alert to the next severity level."""
         alert = await self._alert_repo.get_by_id(alert_id)
-        if not alert:
+        if alert is None:
             raise ValueError(f"Alert {alert_id} not found")
 
+        severity_levels = ("low", "medium", "high", "critical")
+        try:
+            next_severity = severity_levels[severity_levels.index(alert.severity) + 1]
+        except IndexError as error:
+            raise ValueError("Critical alerts cannot be escalated further") from error
+        except ValueError as error:
+            raise ValueError(f"Unsupported alert severity: {alert.severity}") from error
+
         old_severity = alert.severity
+        alert.escalate(next_severity)
+        if escalated_to is not None:
+            alert.assign_to_analyst(escalated_to)
 
-        # Escalate
-        alert.escalate()
-
-        # Persist
         updated_alert = await self._alert_repo.update(alert)
-
-        # Audit
         audit = AuditLog.for_update(
             entity_type="alert",
             entity_id=alert_id,
-            user_id=user_id,
+            user_id=escalated_by if escalated_by is not None else user_id,
             username="system",
             old_value={"severity": old_severity},
-            new_value={"severity": alert.severity, "status": "escalated"},
+            new_value={
+                "severity": alert.severity,
+                "status": "escalated",
+                "reason": escalation_reason,
+            },
         )
         await self._audit_repo.create(audit)
-
         return updated_alert
 
     async def track_sla(
@@ -246,19 +263,14 @@ class AlertService:
         if not alert:
             raise ValueError(f"Alert {alert_id} not found")
 
-        # Calculate SLA info
-        time_to_breach = alert.time_to_sla_breach()
-        is_breached = alert.check_sla_breach()
-
+        # The canonical entity exposes only its overdue state, not a deadline or countdown.
         return {
             "alert_id": str(alert.alert_id),
             "severity": alert.severity,
-            "sla_hours": alert.calculate_sla_hours(),
-            "sla_deadline": alert.sla_deadline.isoformat(),
-            "time_to_breach_minutes": time_to_breach,
-            "is_breached": is_breached,
+            "time_to_breach_minutes": None,
+            "is_breached": alert.is_overdue,
             "status": alert.status,
-            "requires_action": alert.requires_action(),
+            "requires_action": not alert.is_resolved,
         }
 
     async def get_priority_queue(
@@ -332,13 +344,13 @@ class AlertService:
         # Count by status
         open_count = sum(1 for a in assigned_alerts if a.status == "open")
         review_count = sum(1 for a in assigned_alerts if a.status == "in_review")
-        resolved_count = sum(1 for a in assigned_alerts if a.is_resolved())
+        resolved_count = sum(1 for a in assigned_alerts if a.is_resolved)
 
         # Count by severity
         critical_count = sum(
-            1 for a in assigned_alerts if a.severity == "critical" and not a.is_resolved()
+            1 for a in assigned_alerts if a.severity == "critical" and not a.is_resolved
         )
-        high_count = sum(1 for a in assigned_alerts if a.severity == "high" and not a.is_resolved())
+        high_count = sum(1 for a in assigned_alerts if a.severity == "high" and not a.is_resolved)
 
         return {
             "analyst_id": str(analyst_id),
@@ -527,10 +539,11 @@ class AlertService:
         if not alert:
             raise ValueError(f"Alert {alert_id} not found")
 
-        # Resolve using domain method
-        alert.resolve(
-            resolution=resolution, resolved_by_id=resolved_by or alert.assigned_analyst_id
-        )
+        # Resolve using the canonical domain methods.
+        resolver_id = resolved_by if resolved_by is not None else alert.assigned_analyst_id
+        if resolver_id is None:
+            raise ValueError("An assigned analyst is required to resolve an alert")
+        self._resolve_with_outcome(alert, resolution, resolver_id, notes)
 
         # Persist
         updated_alert = await self._alert_repo.update(alert)
@@ -586,9 +599,9 @@ class AlertService:
 
         # Calculate statistics
         total_alerts = len(alerts)
-        by_status = {}
-        by_severity = {}
-        by_type = {}
+        by_status: dict[str, int] = {}
+        by_severity: dict[str, int] = {}
+        by_type: dict[str, int] = {}
         sla_breached_count = 0
         total_resolution_time = 0.0
         resolved_count = 0
@@ -604,12 +617,12 @@ class AlertService:
             by_type[alert.alert_type] = by_type.get(alert.alert_type, 0) + 1
 
             # Count SLA breaches
-            if alert.check_sla_breach():
+            if alert.is_overdue:
                 sla_breached_count += 1
 
             # Calculate resolution time
-            if alert.is_resolved() and alert.time_to_resolution_hours:
-                total_resolution_time += alert.time_to_resolution_hours
+            if alert.is_resolved and alert.resolution_time_hours:
+                total_resolution_time += alert.resolution_time_hours
                 resolved_count += 1
 
         avg_resolution_time = total_resolution_time / resolved_count if resolved_count > 0 else 0.0
@@ -712,7 +725,7 @@ class AlertService:
             workflow_stage = "assigned"
         if alert.status == "in_review":
             workflow_stage = "under_review"
-        if alert.is_resolved():
+        if alert.is_resolved:
             workflow_stage = "resolved"
         if alert.status == "escalated":
             workflow_stage = "escalated"
@@ -765,7 +778,7 @@ class AlertService:
         if not analyst:
             raise ValueError(f"Analyst {analyst_id} not found")
 
-        if not analyst.can_review_alerts():
+        if not analyst.can_review_alerts:
             raise ValueError(f"User {analyst_id} does not have analyst role")
 
         # Assign each alert

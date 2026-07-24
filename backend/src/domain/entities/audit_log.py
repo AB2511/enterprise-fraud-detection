@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from typing import Any
+from typing import Mapping
 from uuid import UUID, uuid4
 
 
@@ -34,8 +34,8 @@ class AuditLog:
     action: str = field(default="")
     user_id: UUID | None = field(default=None)
     username: str | None = field(default=None)
-    old_value: dict[str, Any] | None = field(default=None)
-    new_value: dict[str, Any] | None = field(default=None)
+    old_value: dict[str, object] | None = field(default=None)
+    new_value: dict[str, object] | None = field(default=None)
     ip_address: str | None = field(default=None)
     user_agent: str | None = field(default=None)
     description: str | None = field(default=None)
@@ -71,7 +71,7 @@ class AuditLog:
         entity_id: UUID,
         user_id: UUID | None = None,
         username: str | None = None,
-        new_value: dict[str, Any] | None = None,
+        new_value: Mapping[str, object] | None = None,
         ip_address: str | None = None,
         user_agent: str | None = None,
         description: str | None = None,
@@ -98,7 +98,7 @@ class AuditLog:
             user_id=user_id,
             username=username or "system",
             old_value=None,
-            new_value=new_value or {},
+            new_value=dict(new_value) if new_value is not None else {},
             ip_address=ip_address,
             user_agent=user_agent,
             description=description or f"Created {entity_type} {entity_id}",
@@ -109,8 +109,8 @@ class AuditLog:
         cls,
         entity_type: str,
         entity_id: UUID,
-        old_value: dict[str, Any],
-        new_value: dict[str, Any],
+        old_value: Mapping[str, object],
+        new_value: Mapping[str, object],
         user_id: UUID | None = None,
         username: str | None = None,
         ip_address: str | None = None,
@@ -139,8 +139,8 @@ class AuditLog:
             action="UPDATE",
             user_id=user_id,
             username=username or "system",
-            old_value=old_value,
-            new_value=new_value,
+            old_value=dict(old_value),
+            new_value=dict(new_value),
             ip_address=ip_address,
             user_agent=user_agent,
             description=description or f"Updated {entity_type} {entity_id}",
@@ -151,7 +151,7 @@ class AuditLog:
         cls,
         entity_type: str,
         entity_id: UUID,
-        old_value: dict[str, Any],
+        old_value: Mapping[str, object],
         user_id: UUID | None = None,
         username: str | None = None,
         ip_address: str | None = None,
@@ -179,7 +179,7 @@ class AuditLog:
             action="DELETE",
             user_id=user_id,
             username=username or "system",
-            old_value=old_value,
+            old_value=dict(old_value),
             new_value=None,
             ip_address=ip_address,
             user_agent=user_agent,

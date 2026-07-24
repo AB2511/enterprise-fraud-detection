@@ -3,6 +3,7 @@
 from datetime import datetime
 from uuid import UUID
 
+from src.application.exceptions.application_exceptions import EntityNotFoundException
 from src.application.dtos.audit_dtos import (
     AuditLogListRequest,
     AuditLogResponse,
@@ -103,6 +104,8 @@ class GetAuditLogUseCase:
             EntityNotFoundException: If audit log not found
         """
         audit_log = await self._service.get_audit_log_by_id(audit_id)
+        if audit_log is None:
+            raise EntityNotFoundException("AuditLog", str(audit_id))
         return CreateAuditLogUseCase._to_response(audit_log)
 
 
@@ -132,7 +135,7 @@ class ListAuditLogsUseCase:
             Paginated audit log responses
         """
         # Build search criteria
-        criteria = {}
+        criteria: dict[str, object] = {}
         if request.entity_type:
             criteria["entity_type"] = request.entity_type
         if request.entity_id:
@@ -323,7 +326,7 @@ class ExportAuditLogsUseCase:
         request: AuditLogListRequest,
         export_format: str = "csv",
         exported_by: UUID | None = None,
-    ) -> dict[str, any]:
+    ) -> dict[str, object]:
         """Execute export audit logs use case.
 
         Args:
@@ -338,7 +341,7 @@ class ExportAuditLogsUseCase:
             ValidationException: If export format not supported
         """
         # Build search criteria
-        criteria = {}
+        criteria: dict[str, object] = {}
         if request.entity_type:
             criteria["entity_type"] = request.entity_type
         if request.entity_id:
@@ -378,7 +381,7 @@ class GenerateComplianceReportUseCase:
         self,
         request: ComplianceReportRequest,
         generated_by: UUID | None = None,
-    ) -> dict[str, any]:
+    ) -> dict[str, object]:
         """Execute generate compliance report use case.
 
         Args:
@@ -513,7 +516,7 @@ class ValidateAuditIntegrityUseCase:
         entity_id: UUID | None = None,
         start_date: datetime | None = None,
         end_date: datetime | None = None,
-    ) -> dict[str, any]:
+    ) -> dict[str, object]:
         """Execute validate audit integrity use case.
 
         Args:

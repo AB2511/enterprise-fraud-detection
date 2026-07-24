@@ -328,7 +328,7 @@ class AuditRepositoryImpl(AuditRepository):
                 f"Failed to count audit logs by entity: {e}", "REPOSITORY_ERROR"
             ) from e
 
-    async def get_audit_trail_summary(self, entity_type: str, entity_id: UUID) -> dict[str, any]:
+    async def get_audit_trail_summary(self, entity_type: str, entity_id: UUID) -> dict[str, object]:
         """Get audit trail summary for an entity.
 
         Args:
@@ -431,7 +431,7 @@ class AuditRepositoryImpl(AuditRepository):
 
     async def get_user_activity_summary(
         self, user_id: UUID, start_date: datetime | None = None, end_date: datetime | None = None
-    ) -> dict[str, any]:
+    ) -> dict[str, object]:
         """Get user activity summary.
 
         Args:
@@ -527,11 +527,11 @@ class AuditRepositoryImpl(AuditRepository):
             created_at = created_at.replace(tzinfo=UTC)
 
         return AuditLog(
-            audit_id=model.id,
+            audit_id=UUID(str(model.id)), 
             entity_type=model.entity_type,
-            entity_id=model.entity_id,
+            entity_id=UUID(str(model.entity_id)), 
             action=model.action,
-            user_id=model.user_id,
+            user_id=UUID(str(model.user_id)) if model.user_id is not None else None, 
             username=model.username,
             old_value=model.old_value,
             new_value=model.new_value,

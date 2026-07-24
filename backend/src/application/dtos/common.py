@@ -1,7 +1,7 @@
 """Common DTOs for pagination, sorting, and filtering."""
 
 from enum import StrEnum
-from typing import Any, TypeVar
+from typing import Any, Generic, TypeVar
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -69,7 +69,7 @@ class PageRequest(BaseModel):
     model_config = {"use_enum_values": True}
 
 
-class PageResponse[T](BaseModel):
+class PageResponse(BaseModel, Generic[T]):
     """Paginated response DTO."""
 
     items: list[T] = Field(..., description="List of items in current page")

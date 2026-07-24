@@ -1,239 +1,180 @@
-"""Prediction Service - Manage prediction lifecycle (NO ML inference)."""
+"""Prediction Service - prediction persistence and lifecycle workflows."""
 
 from datetime import datetime
+from typing import Mapping, TypedDict
 from uuid import UUID
 
 from src.application.interfaces.audit_repository import AuditRepository
+from src.application.interfaces.prediction_repository import PredictionRepository
 from src.domain.entities.audit_log import AuditLog
+from src.domain.entities.prediction import Prediction
+
+
+class ModelPerformanceStats(TypedDict):
+    model_id: UUID
+    model_version: str
+    total_predictions: int
+    accuracy: float | None
+    precision: float | None
+    recall: float | None
+    f1_score: float | None
+    avg_latency_ms: float | None
+    fraud_detection_rate: float | None
+    false_positive_rate: float | None
+    analysis_period_start: datetime
+    analysis_period_end: datetime
+
+
+class PredictionExplanation(TypedDict):
+    feature_importance: dict[str, float]
+    top_contributing_features: list[str]
+    rule_explanations: list[str]
+    confidence_intervals: dict[str, float] | None
+    similar_cases: list[UUID] | None
+    recommendation: str
 
 
 class PredictionService:
-    """Service for prediction lifecycle management.
+    """Application service for persisted prediction aggregates."""
 
-    This service stores and manages prediction records WITHOUT performing
-    any ML inference. It stores model outputs, explanations, and metadata.
-
-    NOTE: This service does NOT call ML models. It only manages prediction data.
-    """
-
-    def __init__(
-        self,
-        audit_repository: AuditRepository,
-    ) -> None:
-        """Initialize prediction service.
-
-        Args:
-            audit_repository: Repository for audit logging
-        """
+    def __init__(self, prediction_repository: PredictionRepository, audit_repository: AuditRepository) -> None:
+        self._prediction_repo = prediction_repository
         self._audit_repo = audit_repository
-        # Note: Prediction repository would be added here when implementing persistence
 
-    async def store_prediction(
-        self,
-        transaction_id: UUID,
-        model_id: UUID,
-        model_version: str,
-        prediction_class: str,
-        fraud_probability: float,
-        confidence: float,
-        explanation_data: dict | None = None,
-        latency_ms: float | None = None,
+    async def create_prediction(
+        self, *, transaction_id: UUID, model_id: UUID, model_version: str,
+        prediction_class: str, fraud_probability: float, anomaly_score: float | None,
+        risk_score: float | None, confidence: float | None, decision: str,
+        latency_ms: float | None, explanation_data: Mapping[str, object] | None,
         user_id: UUID | None = None,
-    ) -> dict:
-        """Store a prediction result (from external ML service).
-
-        Args:
-            transaction_id: Transaction UUID
-            model_id: Model UUID that generated prediction
-            model_version: Model version string
-            prediction_class: Predicted class (fraud/legitimate)
-            fraud_probability: Fraud probability (0.0-1.0)
-            confidence: Confidence score (0.0-1.0)
-            explanation_data: SHAP values or feature importance
-            latency_ms: Inference latency in milliseconds
-            user_id: User storing prediction
-
-        Returns:
-            Stored prediction data
-
-        Note:
-            This method does NOT perform inference. It stores results from
-            an external ML service.
-        """
-        # Create prediction record
-        prediction_data: dict[str, object] = {
-            "transaction_id": str(transaction_id),
-            "model_id": str(model_id),
-            "model_version": model_version,
-            "prediction_class": prediction_class,
-            "fraud_probability": fraud_probability,
-            "confidence": confidence,
-            "explanation_data": explanation_data,
-            "latency_ms": latency_ms,
-            "created_at": datetime.utcnow().isoformat(),
-        }
-
-        transaction_id_value = prediction_data["transaction_id"]
-        if not isinstance(transaction_id_value, str):
-            raise TypeError("Expected transaction ID to be a string")
-
-        # Audit
-        audit = AuditLog.for_creation(
-            entity_type="prediction",
-            user_id=user_id,
-            username="ml_service",
-            new_value=prediction_data,
-            entity_id=UUID(transaction_id_value),  # Placeholder
+    ) -> Prediction:
+        prediction = Prediction(
+            transaction_id=transaction_id, model_id=model_id, model_version=model_version,
+            predicted_class=prediction_class, fraud_probability=fraud_probability,
+            anomaly_score=anomaly_score if anomaly_score is not None else 0.0,
+            risk_score=int(risk_score) if risk_score is not None else 0,
+            confidence=confidence if confidence is not None else 0.0, decision=decision,
+            latency_ms=int(latency_ms) if latency_ms is not None else 0,
+            explanation_data=dict(explanation_data) if explanation_data is not None else {},
         )
-        await self._audit_repo.create(audit)
+        created = await self._prediction_repo.create(prediction)
+        await self._audit_repo.create(AuditLog.for_creation(
+            entity_type="prediction", entity_id=created.prediction_id, user_id=user_id,
+            username="system", new_value={"decision": created.decision, "risk_score": created.risk_score},
+        ))
+        return created
 
-        return prediction_data
+    async def update_prediction(
+        self, prediction_id: UUID, updates: Mapping[str, object], user_id: UUID | None = None,
+    ) -> Prediction:
+        prediction = await self._require_prediction(prediction_id)
+        old_decision = prediction.decision
+        decision = updates.get("decision")
+        if isinstance(decision, str):
+            if decision == "approve": prediction.approve()
+            elif decision == "review": prediction.review()
+            elif decision == "decline": prediction.reject()
+            else: raise ValueError(f"Unsupported prediction decision: {decision}")
+        explanation_data = updates.get("explanation_data")
+        if isinstance(explanation_data, Mapping):
+            prediction.explanation_data = dict(explanation_data)
+            prediction.updated_at = datetime.utcnow()
+        updated = await self._prediction_repo.update(prediction)
+        await self._audit_repo.create(AuditLog.for_update(
+            entity_type="prediction", entity_id=prediction_id, user_id=user_id, username="system",
+            old_value={"decision": old_decision}, new_value={"decision": updated.decision},
+        ))
+        return updated
 
-    async def update_prediction_status(
-        self,
-        prediction_id: UUID,
-        new_status: str,
-        user_id: UUID | None = None,
-    ) -> dict:
-        """Update prediction review status.
+    async def get_prediction_by_id(self, prediction_id: UUID) -> Prediction:
+        return await self._require_prediction(prediction_id)
 
-        Args:
-            prediction_id: Prediction UUID
-            new_status: New status (under_review, confirmed, rejected)
-            user_id: User updating status
+    async def get_prediction_by_transaction_id(self, transaction_id: UUID) -> Prediction:
+        prediction = await self._prediction_repo.get_by_transaction_id(transaction_id)
+        if prediction is None: raise ValueError(f"Prediction for transaction {transaction_id} not found")
+        return prediction
 
-        Returns:
-            Updated prediction data
-        """
-        # Store status update
-        update_data = {
-            "prediction_id": str(prediction_id),
-            "status": new_status,
-            "updated_at": datetime.utcnow().isoformat(),
-        }
+    async def search_predictions(self, criteria: Mapping[str, object], limit: int, offset: int) -> tuple[list[Prediction], int]:
+        model_version = criteria.get("model_version")
+        decision = criteria.get("decision")
+        if isinstance(model_version, str):
+            predictions = await self._prediction_repo.list_by_model_version(model_version, limit, offset)
+        elif isinstance(decision, str):
+            predictions = await self._prediction_repo.list_by_decision(decision, limit, offset)
+        else:
+            predictions = await self._prediction_repo.list_by_date_range(
+                self._as_datetime(criteria.get("start_date"), datetime.min),
+                self._as_datetime(criteria.get("end_date"), datetime.max), limit, offset,
+            )
+        return predictions, len(predictions)
 
-        # Audit
-        audit = AuditLog.for_update(
-            entity_type="prediction",
-            entity_id=prediction_id,
-            user_id=user_id,
-            username="analyst",
-            old_value={"status": "pending"},
-            new_value={"status": new_status},
-        )
-        await self._audit_repo.create(audit)
+    async def get_high_risk_predictions(self, min_risk_score: int, limit: int, offset: int) -> tuple[list[Prediction], int]:
+        predictions = await self._prediction_repo.list_high_risk(min_risk_score, limit, offset)
+        return predictions, len(predictions)
 
-        return update_data
+    async def get_predictions_needing_feedback(self, limit: int, offset: int) -> tuple[list[Prediction], int]:
+        predictions = await self._prediction_repo.find_predictions_needing_feedback(limit, offset)
+        return predictions, len(predictions)
 
-    async def store_model_metadata(
-        self,
-        model_id: UUID,
-        model_version: str,
-        model_type: str,
-        training_date: datetime,
-        metrics: dict,
-        user_id: UUID | None = None,
-    ) -> dict:
-        """Store model metadata (NOT training logic).
+    async def provide_feedback(self, prediction_id: UUID, is_correct: bool, actual_outcome: str,
+                               feedback_notes: str | None, analyst_id: UUID | None) -> Prediction:
+        prediction = await self._require_prediction(prediction_id)
+        if analyst_id is not None: prediction.add_feedback(analyst_id)
+        if actual_outcome == "fraud": prediction.reject()
+        elif actual_outcome == "legitimate": prediction.approve()
+        else: raise ValueError(f"Unsupported actual outcome: {actual_outcome}")
+        updated = await self._prediction_repo.update(prediction)
+        await self._audit_repo.create(AuditLog.for_update(
+            entity_type="prediction", entity_id=prediction_id, user_id=analyst_id, username="analyst",
+            old_value={"is_correct": is_correct},
+            new_value={"actual_outcome": actual_outcome, "notes": feedback_notes},
+        ))
+        return updated
 
-        Args:
-            model_id: Model UUID
-            model_version: Version string
-            model_type: Type (xgboost, isolation_forest, etc.)
-            training_date: When model was trained
-            metrics: Performance metrics (accuracy, precision, recall, etc.)
-            user_id: User storing metadata
+    async def get_prediction_explanation(self, prediction_id: UUID) -> PredictionExplanation:
+        data = (await self._require_prediction(prediction_id)).explanation_data
+        importance_value = data.get("feature_importance", {})
+        importance = {key: value for key, value in importance_value.items() if isinstance(key, str) and isinstance(value, float)} if isinstance(importance_value, Mapping) else {}
+        feature_names = [name for name in importance if name]
+        return {"feature_importance": importance, "top_contributing_features": feature_names,
+                "rule_explanations": [], "confidence_intervals": None, "similar_cases": None,
+                "recommendation": "Review prediction details"}
 
-        Returns:
-            Stored model metadata
+    async def get_model_performance_stats(self, model_id: UUID, model_version: str | None,
+                                          start_date: datetime | None, end_date: datetime | None) -> ModelPerformanceStats:
+        if model_version is None: raise ValueError("A model version is required")
+        return await self._performance(model_id, model_version, start_date, end_date)
 
-        Note:
-            This does NOT train models. It stores metadata about pre-trained models.
-        """
-        model_data = {
-            "model_id": str(model_id),
-            "model_version": model_version,
-            "model_type": model_type,
-            "training_date": training_date.isoformat(),
-            "metrics": metrics,
-            "created_at": datetime.utcnow().isoformat(),
-        }
+    async def get_model_performance_by_version(self, model_version: str, start_date: datetime | None,
+                                               end_date: datetime | None) -> ModelPerformanceStats:
+        raw = await self._prediction_repo.get_model_performance_stats(model_version, start_date, end_date)
+        return self._stats(UUID(int=0), model_version, raw, start_date, end_date)
 
-        # Audit
-        audit = AuditLog.for_creation(
-            entity_type="model",
-            entity_id=model_id,
-            user_id=user_id,
-            username="ml_engineer",
-            new_value=model_data,
-        )
-        await self._audit_repo.create(audit)
+    async def _performance(self, model_id: UUID, model_version: str, start_date: datetime | None,
+                           end_date: datetime | None) -> ModelPerformanceStats:
+        raw = await self._prediction_repo.get_model_performance_stats(model_version, start_date, end_date)
+        return self._stats(model_id, model_version, raw, start_date, end_date)
 
-        return model_data
+    @staticmethod
+    def _stats(model_id: UUID, model_version: str, raw: Mapping[str, object], start: datetime | None,
+               end: datetime | None) -> ModelPerformanceStats:
+        def number(key: str) -> float | None:
+            value = raw.get(key)
+            return float(value) if isinstance(value, int | float) else None
+        total = raw.get("total_predictions")
+        return {"model_id": model_id, "model_version": model_version,
+                "total_predictions": total if isinstance(total, int) else 0,
+                "accuracy": number("accuracy"), "precision": number("precision"), "recall": number("recall"),
+                "f1_score": number("f1_score"), "avg_latency_ms": number("avg_latency_ms"),
+                "fraud_detection_rate": number("fraud_rate"), "false_positive_rate": number("false_positive_rate"),
+                "analysis_period_start": start if start is not None else datetime.min,
+                "analysis_period_end": end if end is not None else datetime.max}
 
-    async def store_explanation(
-        self,
-        prediction_id: UUID,
-        explanation_type: str,
-        explanation_data: dict,
-        user_id: UUID | None = None,
-    ) -> dict:
-        """Store model explanation data (SHAP, LIME, etc.).
+    async def _require_prediction(self, prediction_id: UUID) -> Prediction:
+        prediction = await self._prediction_repo.get_by_id(prediction_id)
+        if prediction is None: raise ValueError(f"Prediction {prediction_id} not found")
+        return prediction
 
-        Args:
-            prediction_id: Prediction UUID
-            explanation_type: Type (shap, lime, feature_importance)
-            explanation_data: Explanation details
-            user_id: User storing explanation
-
-        Returns:
-            Stored explanation
-
-        Note:
-            This stores pre-computed explanations. It does NOT compute SHAP values.
-        """
-        explanation = {
-            "prediction_id": str(prediction_id),
-            "explanation_type": explanation_type,
-            "explanation_data": explanation_data,
-            "created_at": datetime.utcnow().isoformat(),
-        }
-
-        # Audit
-        audit = AuditLog.for_creation(
-            entity_type="explanation",
-            entity_id=prediction_id,
-            user_id=user_id,
-            username="ml_service",
-            new_value=explanation,
-        )
-        await self._audit_repo.create(audit)
-
-        return explanation
-
-    def validate_prediction_data(
-        self,
-        fraud_probability: float,
-        confidence: float,
-    ) -> dict:
-        """Validate prediction data ranges.
-
-        Args:
-            fraud_probability: Fraud probability
-            confidence: Confidence score
-
-        Returns:
-            Validation result
-        """
-        errors = []
-
-        if not (0.0 <= fraud_probability <= 1.0):
-            errors.append("Fraud probability must be between 0.0 and 1.0")
-
-        if not (0.0 <= confidence <= 1.0):
-            errors.append("Confidence must be between 0.0 and 1.0")
-
-        return {
-            "valid": len(errors) == 0,
-            "errors": errors,
-        }
+    @staticmethod
+    def _as_datetime(value: object, default: datetime) -> datetime:
+        return value if isinstance(value, datetime) else default

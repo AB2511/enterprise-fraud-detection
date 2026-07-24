@@ -70,7 +70,7 @@ class CreatePredictionUseCase:
             transaction_id=prediction.transaction_id,
             model_id=prediction.model_id,
             model_version=prediction.model_version,
-            prediction_class=prediction.prediction_class,
+            prediction_class=prediction.predicted_class,
             fraud_probability=prediction.fraud_probability,
             anomaly_score=prediction.anomaly_score,
             risk_score=prediction.risk_score,
@@ -115,7 +115,7 @@ class UpdatePredictionUseCase:
             ValidationException: If validation fails
         """
         # Build updates dictionary
-        updates = {}
+        updates: dict[str, object] = {}
         if request.decision is not None:
             updates["decision"] = request.decision
         if request.explanation_data is not None:
@@ -210,7 +210,7 @@ class ListPredictionsUseCase:
             Paginated prediction responses
         """
         # Build search criteria
-        criteria = {}
+        criteria: dict[str, object] = {}
         if request.transaction_id:
             criteria["transaction_id"] = request.transaction_id
         if request.model_id:

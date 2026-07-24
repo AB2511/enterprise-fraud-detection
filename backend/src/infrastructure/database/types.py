@@ -5,6 +5,8 @@ Provides database types that work across different dialects
 """
 
 from sqlalchemy import JSON, Text, TypeDecorator
+from sqlalchemy.engine import Dialect
+from sqlalchemy.sql.type_api import TypeEngine
 from sqlalchemy.dialects.postgresql import JSONB
 
 
@@ -18,7 +20,7 @@ class PortableJSON(TypeDecorator):
     impl = JSON
     cache_ok = True
 
-    def load_dialect_impl(self, dialect):
+    def load_dialect_impl(self, dialect: Dialect) -> TypeEngine[object]:
         """Load the appropriate type based on the database dialect."""
         if dialect.name == "postgresql":
             return dialect.type_descriptor(JSONB(astext_type=Text()))

@@ -5,6 +5,7 @@ from uuid import UUID
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from sqlalchemy.ext.asyncio import AsyncSession
 from jose import JWTError
 
 from src.application.interfaces.user_repository import UserRepository
@@ -20,7 +21,7 @@ security = HTTPBearer()
 
 
 async def get_user_repository(
-    session: Annotated[object, Depends(get_async_session)],
+    session: Annotated[AsyncSession, Depends(get_async_session)],
 ) -> UserRepository:
     """Get user repository instance.
 

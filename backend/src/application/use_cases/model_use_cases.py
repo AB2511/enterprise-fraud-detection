@@ -17,7 +17,7 @@ from src.domain.entities.model import Model
 class CreateModelUseCase:
     """Use case for creating a new model."""
 
-    def __init__(self, model_service=None) -> None:
+    def __init__(self, model_service: object | None = None) -> None:
         """Initialize use case.
 
         Args:

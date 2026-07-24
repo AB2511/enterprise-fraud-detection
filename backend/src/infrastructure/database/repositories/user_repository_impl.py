@@ -434,7 +434,7 @@ class UserRepositoryImpl(UserRepository):
         except Exception as e:
             raise RepositoryError(f"Failed to get recently active users: {e}") from e
 
-    async def get_user_statistics(self) -> dict[str, int]:
+    async def get_user_statistics(self) -> dict[str, object]:
         """Get user statistics by role and status.
 
         Returns:
@@ -448,7 +448,7 @@ class UserRepositoryImpl(UserRepository):
                 .group_by(UserModel.role)
             )
             role_result = await self._session.execute(role_query)
-            role_counts = dict(role_result.all())
+            role_counts: dict[str, int] = {str(role): int(count) for role, count in role_result.all()}
 
             # Count by status
             status_query = (
@@ -457,7 +457,7 @@ class UserRepositoryImpl(UserRepository):
                 .group_by(UserModel.status)
             )
             status_result = await self._session.execute(status_query)
-            status_counts = dict(status_result.all())
+            status_counts: dict[str, int] = {str(status): int(count) for status, count in status_result.all()}
 
             # Total count
             total_query = select(func.count(UserModel.id)).where(UserModel.deleted_at.is_(None))
@@ -483,7 +483,7 @@ class UserRepositoryImpl(UserRepository):
             User domain entity
         """
         return User(
-            user_id=db_user.id,
+            user_id=UUID(str(db_user.id)),
             email=db_user.email,
             hashed_password=db_user.hashed_password,
             role=db_user.role,

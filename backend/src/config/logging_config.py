@@ -3,7 +3,7 @@
 import logging
 import logging.config
 import sys
-from typing import Any
+from structlog.typing import Processor
 
 import structlog
 from pythonjsonlogger import jsonlogger
@@ -23,7 +23,7 @@ def setup_logging() -> None:
     settings = get_settings()
 
     # Configure standard library logging
-    logging_config: dict[str, Any] = {
+    logging_config: dict[str, object] = {
         "version": 1,
         "disable_existing_loggers": False,
         "formatters": {
@@ -68,7 +68,7 @@ def setup_logging() -> None:
     logging.config.dictConfig(logging_config)
 
     # Configure structlog
-    processors = [
+    processors: list[Processor] = [
         structlog.contextvars.merge_contextvars,
         structlog.stdlib.add_log_level,
         structlog.stdlib.add_logger_name,
@@ -102,4 +102,4 @@ def get_logger(name: str) -> structlog.stdlib.BoundLogger:
     Returns:
         Configured structlog logger
     """
-    return structlog.get_logger(name)
+    return structlog.stdlib.get_logger(name)

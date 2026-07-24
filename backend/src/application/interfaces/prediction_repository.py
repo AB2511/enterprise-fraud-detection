@@ -176,7 +176,7 @@ class PredictionRepository(ABC):
         model_version: str,
         start_date: datetime | None = None,
         end_date: datetime | None = None,
-    ) -> dict[str, any]:
+    ) -> dict[str, object]:
         """Get performance statistics for a model version.
 
         Args:

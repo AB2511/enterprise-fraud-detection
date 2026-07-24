@@ -34,6 +34,7 @@ class Prediction:
 
     prediction_id: UUID = field(default_factory=uuid4)
     transaction_id: UUID = field(default_factory=uuid4)
+    model_id: UUID = field(default_factory=uuid4)
     model_version: str = "0.0.0"
     fraud_probability: float = 0.0
     anomaly_score: float = 0.0

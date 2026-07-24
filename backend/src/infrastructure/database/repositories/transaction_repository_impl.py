@@ -4,7 +4,7 @@ from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from uuid import UUID
 
-from sqlalchemy import Integer, and_, cast, desc, func, select, update
+from sqlalchemy import and_, case, desc, func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -476,75 +476,6 @@ class TransactionRepositoryImpl(TransactionRepository):
             raise DomainException(
                 f"Failed to find transactions by criteria: {e}", "REPOSITORY_ERROR"
             ) from e
-        """Find transactions by multiple criteria.
-
-        Args:
-            customer_id: Customer ID filter
-            merchant_id: Merchant ID filter
-            min_amount: Minimum amount filter
-            max_amount: Maximum amount filter
-            currency: Currency filter
-            payment_channel: Payment channel filter
-            payment_method: Payment method filter
-            status: Transaction status filter
-            is_fraud: Fraud status filter
-            start_date: Start date filter
-            end_date: End date filter
-            country: Country filter (based on IP geolocation)
-            limit: Maximum results
-            offset: Results offset
-            sort_by: Field to sort by
-            sort_desc: Sort descending if True
-
-        Returns:
-            List of matching transactions
-        """
-        try:
-            query = select(TransactionModel).where(TransactionModel.deleted_at.is_(None))
-
-            # Add filters dynamically
-            if customer_id:
-                query = query.where(TransactionModel.customer_id == customer_id)
-            if merchant_id:
-                query = query.where(TransactionModel.merchant_id == merchant_id)
-            if min_amount is not None:
-                query = query.where(TransactionModel.amount >= min_amount)
-            if max_amount is not None:
-                query = query.where(TransactionModel.amount <= max_amount)
-            if currency:
-                query = query.where(TransactionModel.currency == currency)
-            if payment_channel:
-                query = query.where(TransactionModel.payment_channel == payment_channel)
-            if payment_method:
-                query = query.where(TransactionModel.payment_method == payment_method)
-            if status:
-                query = query.where(TransactionModel.status == status)
-            if is_fraud is not None:
-                query = query.where(TransactionModel.is_fraud == is_fraud)
-            if start_date:
-                query = query.where(TransactionModel.created_at >= start_date)
-            if end_date:
-                query = query.where(TransactionModel.created_at <= end_date)
-
-            # Add sorting
-            sort_column = getattr(TransactionModel, sort_by, TransactionModel.created_at)
-            if sort_desc:
-                query = query.order_by(desc(sort_column))
-            else:
-                query = query.order_by(sort_column)
-
-            query = query.limit(limit).offset(offset)
-
-            result = await self._session.execute(query)
-            transactions = result.scalars().all()
-
-            return [self._model_to_entity(txn) for txn in transactions]
-
-        except Exception as e:
-            raise DomainException(
-                f"Failed to find transactions by criteria: {e}", "REPOSITORY_ERROR"
-            ) from e
-
     async def get_velocity_data(
         self,
         customer_id: UUID,
@@ -619,7 +550,7 @@ class TransactionRepositoryImpl(TransactionRepository):
         start_date: datetime | None = None,
         end_date: datetime | None = None,
         group_by: str = "day",
-    ) -> list[dict[str, any]]:
+    ) -> list[dict[str, object]]:
         """Get fraud statistics over time.
 
         Args:
@@ -649,7 +580,7 @@ class TransactionRepositoryImpl(TransactionRepository):
                 select(
                     date_trunc.label("period"),
                     func.count(TransactionModel.id).label("total_transactions"),
-                    func.sum(cast(TransactionModel.is_fraud, Integer)).label("fraud_count"),
+                    func.sum(case((TransactionModel.is_fraud, 1), else_=0)).label("fraud_count"),
                     func.avg(TransactionModel.amount).label("avg_amount"),
                     func.sum(TransactionModel.amount).label("total_amount"),
                 )
@@ -739,9 +670,9 @@ class TransactionRepositoryImpl(TransactionRepository):
         from decimal import Decimal
 
         return Transaction(
-            transaction_id=model.id,
-            customer_id=model.customer_id,
-            merchant_id=model.merchant_id,
+            transaction_id=UUID(str(model.id)), 
+            customer_id=UUID(str(model.customer_id)), 
+            merchant_id=UUID(str(model.merchant_id)), 
             amount=Decimal(str(model.amount)),
             currency=model.currency,
             timestamp=model.created_at,

@@ -514,12 +514,12 @@ class AlertRepositoryImpl(AlertRepository):
             resolved_at = resolved_at.replace(tzinfo=UTC)
 
         return Alert(
-            alert_id=model.id,
-            prediction_id=model.prediction_id,
-            transaction_id=model.transaction_id,
+            alert_id=UUID(str(model.id)), 
+            prediction_id=UUID(str(model.prediction_id)), 
+            transaction_id=UUID(str(model.transaction_id)), 
             severity=model.severity,
             alert_type=model.alert_type,
-            assigned_analyst_id=model.assigned_analyst_id,
+            assigned_analyst_id=UUID(str(model.assigned_analyst_id)) if model.assigned_analyst_id is not None else None, 
             status=model.status,
             resolution=model.resolution,
             resolution_notes=None,  # Not in current model

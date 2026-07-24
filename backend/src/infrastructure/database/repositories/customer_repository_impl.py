@@ -540,7 +540,7 @@ class CustomerRepositoryImpl(CustomerRepository):
             updated_at = updated_at.replace(tzinfo=UTC)
 
         return Customer(
-            customer_id=model.id,
+            customer_id=UUID(str(model.id)),
             customer_name=model.customer_name,
             email=model.email,
             date_of_birth=model.date_of_birth,

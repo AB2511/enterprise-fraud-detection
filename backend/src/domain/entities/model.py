@@ -28,7 +28,7 @@ class Model:
     version: str = "0.0.0"
     model_type: str = ""
     artifact_path: str = ""
-    metadata: dict[str, any] = field(default_factory=dict)
+    metadata: dict[str, object] = field(default_factory=dict)
     metrics: dict[str, float] = field(default_factory=dict)
     training_date: datetime = field(default_factory=lambda: datetime.now(UTC))
     status: str = "training"
