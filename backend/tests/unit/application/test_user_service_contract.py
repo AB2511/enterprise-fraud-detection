@@ -1,10 +1,8 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import UTC, datetime
+from datetime import datetime
 from uuid import UUID, uuid4
-
-import pytest
 
 from src.application.interfaces.audit_repository import AuditRepository
 from src.application.interfaces.user_repository import UserRepository

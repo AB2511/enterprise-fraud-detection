@@ -1,6 +1,6 @@
 """Tests for JWT token generation and validation."""
 
-from datetime import UTC, datetime, timedelta
+from datetime import timedelta
 
 import pytest
 from jose import JWTError
@@ -145,7 +145,6 @@ class TestJWTTokens:
     def test_different_tokens_for_same_user(self):
         """Test that creating tokens at different times produces different tokens."""
         import time
-        
         user_id = "123e4567-e89b-12d3-a456-426614174000"
         email = "test@example.com"
         role = "analyst"

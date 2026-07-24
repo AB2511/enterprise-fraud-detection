@@ -3,7 +3,6 @@
 Provides CRUD endpoints for customer management.
 """
 
-from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, status
@@ -20,8 +19,6 @@ from src.application.use_cases.customer_use_cases import (
     UpdateCustomerUseCase,
 )
 from src.config.logging_config import get_logger
-from src.domain.entities.user import User
-from src.infrastructure.security.authorization import require_authenticated
 from src.presentation.api.dependencies import (
     get_create_customer_use_case,
     get_delete_customer_use_case,

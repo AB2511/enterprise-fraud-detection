@@ -4,7 +4,6 @@ import pytest
 from httpx import AsyncClient
 
 from src.domain.entities.user import User
-from src.infrastructure.database.connection import AsyncSessionLocal
 
 
 @pytest.mark.asyncio

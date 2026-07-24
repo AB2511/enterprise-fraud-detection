@@ -80,6 +80,7 @@ jobs:
           # Install core dependencies without problematic psycopg2-binary
           pip install fastapi==0.109.0 uvicorn==0.27.0 pydantic==2.5.0 || pip install fastapi uvicorn pydantic
           pip install pydantic-settings==2.1.0 sqlalchemy==2.0.25 alembic==1.13.0 || pip install pydantic-settings sqlalchemy alembic
+          pip install passlib==1.7.4 || pip install passlib
           pip install asyncpg==0.29.0 || pip install asyncpg
           pip install python-json-logger==2.0.7 structlog==24.1.0 || pip install python-json-logger structlog
           # Install test dependencies

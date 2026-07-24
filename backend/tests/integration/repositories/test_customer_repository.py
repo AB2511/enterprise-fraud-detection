@@ -163,7 +163,6 @@ class TestCustomerRepositoryUpdate:
     ):
         """Test updating non-existent customer raises error."""
         from src.domain.exceptions.base import NotFoundError
-        
         # Arrange
         sample_customer.customer_id = uuid4()  # Non-existent ID
 
