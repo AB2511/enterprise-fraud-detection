@@ -424,11 +424,7 @@ class TransactionService:
 
         # Check for duplicate
         for txn in recent_txns:
-            if (
-                txn.merchant_id == merchant_id
-                and txn.amount == amount
-                and txn.status != "failed"
-            ):
+            if txn.merchant_id == merchant_id and txn.amount == amount and txn.status != "failed":
                 return True
 
         return False

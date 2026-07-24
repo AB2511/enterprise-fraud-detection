@@ -569,9 +569,9 @@ class PredictionRepositoryImpl(PredictionRepository):
             Domain entity
         """
         return Prediction(
-            prediction_id=UUID(str(model.id)), 
-            transaction_id=UUID(str(model.transaction_id)), 
-            model_id=UUID(str(model.model_id)), 
+            prediction_id=UUID(str(model.id)),
+            transaction_id=UUID(str(model.transaction_id)),
+            model_id=UUID(str(model.model_id)),
             model_version=model.model_version,
             fraud_probability=model.fraud_probability,
             anomaly_score=model.anomaly_score or 0.0,

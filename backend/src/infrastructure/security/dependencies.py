@@ -5,8 +5,8 @@ from uuid import UUID
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from sqlalchemy.ext.asyncio import AsyncSession
 from jose import JWTError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.application.interfaces.user_repository import UserRepository
 from src.domain.entities.user import User

@@ -3,10 +3,10 @@
 import logging
 import logging.config
 import sys
-from structlog.typing import Processor
 
 import structlog
 from pythonjsonlogger import jsonlogger
+from structlog.typing import Processor
 
 from .settings import get_settings
 

@@ -3,7 +3,6 @@
 from datetime import datetime
 from uuid import UUID
 
-from src.application.exceptions.application_exceptions import EntityNotFoundException
 from src.application.dtos.audit_dtos import (
     AuditLogListRequest,
     AuditLogResponse,
@@ -13,6 +12,7 @@ from src.application.dtos.audit_dtos import (
     CreateAuditLogRequest,
 )
 from src.application.dtos.common import PageRequest, PageResponse
+from src.application.exceptions.application_exceptions import EntityNotFoundException
 from src.application.services.audit_service import AuditService
 from src.domain.entities.audit_log import AuditLog
 

@@ -314,7 +314,7 @@ class MerchantRepositoryImpl(MerchantRepository):
                 f"Failed to list merchants by MCC: {e}", "REPOSITORY_ERROR"
             ) from e
 
-    async def list_high_risk(self, limit: int = 100) -> list[Merchant]:
+    async def list_high_risk(self, min_risk_rating: int = 70, limit: int = 100) -> list[Merchant]:
         """List high-risk merchants.
 
         Args:
@@ -329,7 +329,7 @@ class MerchantRepositoryImpl(MerchantRepository):
                 select(MerchantModel)
                 .where(
                     and_(
-                        MerchantModel.risk_rating >= 70,
+                        MerchantModel.risk_rating >= min_risk_rating,
                         MerchantModel.deleted_at.is_(None),
                     )
                 )
@@ -360,7 +360,7 @@ class MerchantRepositoryImpl(MerchantRepository):
             result = await self._session.execute(
                 select(func.count(MerchantModel.id)).where(
                     and_(
-                        MerchantModel.risk_rating >= 70,
+                        MerchantModel.risk_rating >= min_risk_rating,
                         MerchantModel.deleted_at.is_(None),
                         MerchantModel.is_active,
                     )

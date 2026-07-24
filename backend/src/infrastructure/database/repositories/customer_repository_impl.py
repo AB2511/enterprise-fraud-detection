@@ -13,6 +13,7 @@ from src.domain.exceptions.base import (
     ConflictError,
     DomainException,
     NotFoundError,
+    RepositoryError,
 )
 from src.infrastructure.database.models import CustomerModel
 

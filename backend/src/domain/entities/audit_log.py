@@ -1,8 +1,8 @@
 """AuditLog Entity - Immutable audit trail for all system changes."""
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from typing import Mapping
 from uuid import UUID, uuid4
 
 

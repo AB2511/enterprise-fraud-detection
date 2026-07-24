@@ -448,7 +448,9 @@ class UserRepositoryImpl(UserRepository):
                 .group_by(UserModel.role)
             )
             role_result = await self._session.execute(role_query)
-            role_counts: dict[str, int] = {str(role): int(count) for role, count in role_result.all()}
+            role_counts: dict[str, int] = {
+                str(role): int(count) for role, count in role_result.all()
+            }
 
             # Count by status
             status_query = (
@@ -457,7 +459,9 @@ class UserRepositoryImpl(UserRepository):
                 .group_by(UserModel.status)
             )
             status_result = await self._session.execute(status_query)
-            status_counts: dict[str, int] = {str(status): int(count) for status, count in status_result.all()}
+            status_counts: dict[str, int] = {
+                str(status): int(count) for status, count in status_result.all()
+            }
 
             # Total count
             total_query = select(func.count(UserModel.id)).where(UserModel.deleted_at.is_(None))

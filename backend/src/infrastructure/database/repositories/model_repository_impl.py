@@ -435,14 +435,18 @@ class ModelRepositoryImpl(ModelRepository):
                 ModelModel.status
             )
             status_result = await self._session.execute(status_query)
-            status_counts: dict[str, int] = {str(status): int(count) for status, count in status_result.all()}
+            status_counts: dict[str, int] = {
+                str(status): int(count) for status, count in status_result.all()
+            }
 
             # Count by type
             type_query = select(ModelModel.model_type, func.count(ModelModel.id)).group_by(
                 ModelModel.model_type
             )
             type_result = await self._session.execute(type_query)
-            type_counts: dict[str, int] = {str(model_type): int(count) for model_type, count in type_result.all()}
+            type_counts: dict[str, int] = {
+                str(model_type): int(count) for model_type, count in type_result.all()
+            }
 
             # Total count
             total_query = select(func.count(ModelModel.id))

@@ -5,9 +5,9 @@ Provides database types that work across different dialects
 """
 
 from sqlalchemy import JSON, Text, TypeDecorator
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.engine import Dialect
 from sqlalchemy.sql.type_api import TypeEngine
-from sqlalchemy.dialects.postgresql import JSONB
 
 
 class PortableJSON(TypeDecorator):

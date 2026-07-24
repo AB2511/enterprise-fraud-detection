@@ -527,11 +527,11 @@ class AuditRepositoryImpl(AuditRepository):
             created_at = created_at.replace(tzinfo=UTC)
 
         return AuditLog(
-            audit_id=UUID(str(model.id)), 
+            audit_id=UUID(str(model.id)),
             entity_type=model.entity_type,
-            entity_id=UUID(str(model.entity_id)), 
+            entity_id=UUID(str(model.entity_id)),
             action=model.action,
-            user_id=UUID(str(model.user_id)) if model.user_id is not None else None, 
+            user_id=UUID(str(model.user_id)) if model.user_id is not None else None,
             username=model.username,
             old_value=model.old_value,
             new_value=model.new_value,

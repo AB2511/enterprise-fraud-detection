@@ -326,7 +326,9 @@ class TransactionRepositoryImpl(TransactionRepository):
             )
             return [self._model_to_entity(txn) for txn in result.scalars().all()]
         except Exception as e:
-            raise DomainException(f"Failed to list recent transactions: {e}", "REPOSITORY_ERROR") from e
+            raise DomainException(
+                f"Failed to list recent transactions: {e}", "REPOSITORY_ERROR"
+            ) from e
 
     async def list_by_customer(
         self,
@@ -358,7 +360,9 @@ class TransactionRepositoryImpl(TransactionRepository):
             result = await self._session.execute(query)
             return [self._model_to_entity(txn) for txn in result.scalars().all()]
         except Exception as e:
-            raise DomainException(f"Failed to list customer transactions: {e}", "REPOSITORY_ERROR") from e
+            raise DomainException(
+                f"Failed to list customer transactions: {e}", "REPOSITORY_ERROR"
+            ) from e
 
     async def list_by_merchant(
         self,
@@ -390,7 +394,9 @@ class TransactionRepositoryImpl(TransactionRepository):
             result = await self._session.execute(query)
             return [self._model_to_entity(txn) for txn in result.scalars().all()]
         except Exception as e:
-            raise DomainException(f"Failed to list merchant transactions: {e}", "REPOSITORY_ERROR") from e
+            raise DomainException(
+                f"Failed to list merchant transactions: {e}", "REPOSITORY_ERROR"
+            ) from e
 
     async def list_by_date_range(
         self,
@@ -417,8 +423,48 @@ class TransactionRepositoryImpl(TransactionRepository):
             )
             return [self._model_to_entity(txn) for txn in result.scalars().all()]
         except Exception as e:
-            raise DomainException(f"Failed to list transactions by date range: {e}", "REPOSITORY_ERROR") from e
+            raise DomainException(
+                f"Failed to list transactions by date range: {e}", "REPOSITORY_ERROR"
+            ) from e
 
+    async def find_by_criteria(
+        self,
+        *,
+        customer_id: UUID | None = None,
+        merchant_id: UUID | None = None,
+        min_amount: Decimal | float | None = None,
+        max_amount: Decimal | float | None = None,
+        currency: str | None = None,
+        transaction_type: str | None = None,
+        payment_channel: str | None = None,
+        payment_method: str | None = None,
+        status: str | None = None,
+        is_fraud: bool | None = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list[Transaction]:
+        """Find transactions using the legacy public criteria-search API."""
+        minimum = Decimal(str(min_amount)) if min_amount is not None else None
+        maximum = Decimal(str(max_amount)) if max_amount is not None else None
+        transactions, _ = await self._search_with_criteria(
+            customer_id=customer_id,
+            merchant_id=merchant_id,
+            min_amount=minimum,
+            max_amount=maximum,
+            currency=currency,
+            transaction_type=transaction_type,
+            payment_channel=payment_channel,
+            payment_method=payment_method,
+            status=status,
+            is_fraud=is_fraud,
+            start_date=start_date,
+            end_date=end_date,
+            limit=limit,
+            offset=offset,
+        )
+        return transactions
     async def _search_with_criteria(
         self,
         *,
@@ -476,6 +522,7 @@ class TransactionRepositoryImpl(TransactionRepository):
             raise DomainException(
                 f"Failed to find transactions by criteria: {e}", "REPOSITORY_ERROR"
             ) from e
+
     async def get_velocity_data(
         self,
         customer_id: UUID,
@@ -670,9 +717,9 @@ class TransactionRepositoryImpl(TransactionRepository):
         from decimal import Decimal
 
         return Transaction(
-            transaction_id=UUID(str(model.id)), 
-            customer_id=UUID(str(model.customer_id)), 
-            merchant_id=UUID(str(model.merchant_id)), 
+            transaction_id=UUID(str(model.id)),
+            customer_id=UUID(str(model.customer_id)),
+            merchant_id=UUID(str(model.merchant_id)),
             amount=Decimal(str(model.amount)),
             currency=model.currency,
             timestamp=model.created_at,

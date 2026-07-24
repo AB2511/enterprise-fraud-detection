@@ -118,7 +118,7 @@ class MerchantRepository(ABC):
         pass
 
     @abstractmethod
-    async def list_high_risk(self, limit: int = 100) -> list[Merchant]:
+    async def list_high_risk(self, min_risk_rating: int = 70, limit: int = 100) -> list[Merchant]:
         """List high-risk merchants (rating >= 70).
 
         Args:

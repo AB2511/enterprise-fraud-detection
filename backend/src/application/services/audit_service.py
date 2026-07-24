@@ -1,7 +1,7 @@
 """Audit Service - Business workflows for audit log management."""
 
+from collections.abc import Mapping
 from datetime import datetime, timedelta
-from typing import Mapping
 from uuid import UUID
 
 from src.application.interfaces.audit_repository import AuditRepository
@@ -74,21 +74,37 @@ class AuditService:
         criteria_map: Mapping[str, object] = criteria if criteria is not None else {}
 
         if entity_type is None and "entity_type" in criteria_map:
-            entity_type = criteria_map["entity_type"] if isinstance(criteria_map["entity_type"], str) else None
+            entity_type = (
+                criteria_map["entity_type"]
+                if isinstance(criteria_map["entity_type"], str)
+                else None
+            )
         if entity_id is None and "entity_id" in criteria_map:
-            entity_id = criteria_map["entity_id"] if isinstance(criteria_map["entity_id"], UUID) else None
+            entity_id = (
+                criteria_map["entity_id"] if isinstance(criteria_map["entity_id"], UUID) else None
+            )
         if action is None and "action" in criteria_map:
             action = criteria_map["action"] if isinstance(criteria_map["action"], str) else None
         if user_id is None and "user_id" in criteria_map:
             user_id = criteria_map["user_id"] if isinstance(criteria_map["user_id"], UUID) else None
         if username is None and "username" in criteria_map:
-            username = criteria_map["username"] if isinstance(criteria_map["username"], str) else None
+            username = (
+                criteria_map["username"] if isinstance(criteria_map["username"], str) else None
+            )
         if start_date is None and "start_date" in criteria_map:
-            start_date = criteria_map["start_date"] if isinstance(criteria_map["start_date"], datetime) else None
+            start_date = (
+                criteria_map["start_date"]
+                if isinstance(criteria_map["start_date"], datetime)
+                else None
+            )
         if end_date is None and "end_date" in criteria_map:
-            end_date = criteria_map["end_date"] if isinstance(criteria_map["end_date"], datetime) else None
+            end_date = (
+                criteria_map["end_date"] if isinstance(criteria_map["end_date"], datetime) else None
+            )
 
-        normalized_action = action.strip().upper() if isinstance(action, str) and action.strip() else None
+        normalized_action = (
+            action.strip().upper() if isinstance(action, str) and action.strip() else None
+        )
 
         logs = await self._audit_repo.search(
             entity_type=entity_type,
@@ -305,7 +321,9 @@ class AuditService:
 
         most_active_users = [
             {"username": username, "count": count}
-            for username, count in sorted(by_user.items(), key=lambda item: item[1], reverse=True)[:10]
+            for username, count in sorted(by_user.items(), key=lambda item: item[1], reverse=True)[
+                :10
+            ]
         ]
         most_modified_entity_list = [
             {

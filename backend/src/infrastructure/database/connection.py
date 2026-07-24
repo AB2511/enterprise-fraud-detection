@@ -13,12 +13,18 @@ from src.config.settings import get_settings
 
 
 class DBAPICursor(Protocol):
-    def execute(self, operation: str) -> object: ...
-    def close(self) -> None: ...
+    def execute(self, operation: str) -> object:
+        ...
+
+    def close(self) -> None:
+        ...
 
 
 class DBAPIConnection(Protocol):
-    def cursor(self) -> DBAPICursor: ...
+    def cursor(self) -> DBAPICursor:
+        ...
+
+
 logger = get_logger(__name__)
 settings = get_settings()
 

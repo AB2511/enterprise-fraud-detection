@@ -84,7 +84,6 @@ router = APIRouter(
 )
 async def create_customer(
     request: CreateCustomerRequest,
-    current_user: Annotated[User, Depends(require_authenticated)],
     use_case: CreateCustomerUseCase = Depends(get_create_customer_use_case),
 ) -> APIResponse[CustomerResponse]:
     """Create a new customer.
@@ -129,7 +128,6 @@ async def create_customer(
 )
 async def get_customer(
     customer_id: UUID,
-    current_user: Annotated[User, Depends(require_authenticated)],
     use_case: GetCustomerUseCase = Depends(get_get_customer_use_case),
 ) -> APIResponse[CustomerResponse]:
     """Get customer by ID.
@@ -166,7 +164,6 @@ async def get_customer(
 async def update_customer(
     customer_id: UUID,
     request: UpdateCustomerRequest,
-    current_user: Annotated[User, Depends(require_authenticated)],
     use_case: UpdateCustomerUseCase = Depends(get_update_customer_use_case),
 ) -> APIResponse[CustomerResponse]:
     """Update customer information.
@@ -207,7 +204,6 @@ async def update_customer(
 )
 async def delete_customer(
     customer_id: UUID,
-    current_user: Annotated[User, Depends(require_authenticated)],
     reason: str
     | None = Query(
         default="User requested deletion",

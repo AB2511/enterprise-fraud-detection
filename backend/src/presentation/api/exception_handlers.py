@@ -439,11 +439,15 @@ def add_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(AuthenticationException, authentication_exception_handler)
     app.add_exception_handler(
         BusinessRuleViolationException,
-        cast(Callable[[Request, Exception], Awaitable[JSONResponse]], business_rule_violation_handler),
+        cast(
+            Callable[[Request, Exception], Awaitable[JSONResponse]], business_rule_violation_handler
+        ),
     )
     app.add_exception_handler(
         ApplicationException,
-        cast(Callable[[Request, Exception], Awaitable[JSONResponse]], application_exception_handler),
+        cast(
+            Callable[[Request, Exception], Awaitable[JSONResponse]], application_exception_handler
+        ),
     )
 
     # Framework exceptions
