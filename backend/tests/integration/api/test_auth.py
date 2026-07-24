@@ -2,6 +2,7 @@
 
 import pytest
 from httpx import AsyncClient
+
 from src.domain.entities.user import User
 
 
