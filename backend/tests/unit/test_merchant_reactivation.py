@@ -2,7 +2,6 @@ from decimal import Decimal
 from uuid import UUID
 
 import pytest
-
 from src.application.services.merchant_service import MerchantService
 from src.domain.entities.merchant import Merchant
 

@@ -5,7 +5,6 @@ from fastapi import status
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import sessionmaker
-
 from src.presentation.api.dependencies import get_db
 from src.presentation.main import create_application
 

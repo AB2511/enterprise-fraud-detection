@@ -4,7 +4,6 @@ from datetime import timedelta
 
 import pytest
 from jose import JWTError
-
 from src.infrastructure.security.jwt import (
     TokenData,
     TokenPair,
