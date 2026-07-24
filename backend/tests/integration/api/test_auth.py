@@ -1,7 +1,7 @@
 """Integration tests for authentication API endpoints."""
 
-import pytest
 from httpx import AsyncClient
+import pytest
 
 from src.domain.entities.user import User
 
