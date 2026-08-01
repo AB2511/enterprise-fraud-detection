@@ -32,13 +32,25 @@ def event_loop_policy():
 
 @pytest_asyncio.fixture(scope="session")
 async def test_engine(event_loop_policy):
-    """Create test database engine."""
+    """Create test database engine with aiosqlite compatibility fix."""
+    # Create engine - aiosqlite has compatibility issues with create_function
     engine = create_async_engine(
         TEST_DATABASE_URL,
         echo=False,
         poolclass=StaticPool,
         connect_args={"check_same_thread": False},
     )
+
+    # Remove all existing 'connect' listeners that SQLAlchemy's SQLite dialect adds
+    # These try to call create_function() which aiosqlite doesn't support
+    from sqlalchemy import event
+    from sqlalchemy.pool import Pool
+    
+    # Clear the problematic listeners before they fire
+    if hasattr(engine.sync_engine.dialect, 'on_connect'):
+        # Override the on_connect to return None, preventing regexp registration
+        original_on_connect = engine.sync_engine.dialect.on_connect
+        engine.sync_engine.dialect.on_connect = lambda: None
 
     # Create tables
     async with engine.begin() as conn:
