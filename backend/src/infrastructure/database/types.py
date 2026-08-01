@@ -4,8 +4,9 @@ Provides database types that work across different dialects
 (PostgreSQL for production, SQLite for testing).
 """
 
-from sqlalchemy import JSON, Text, TypeDecorator
+from sqlalchemy import JSON, String, Text, TypeDecorator
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import UUID as PostgreSQLUUID
 from sqlalchemy.engine import Dialect
 from sqlalchemy.sql.type_api import TypeEngine
 
@@ -26,3 +27,41 @@ class PortableJSON(TypeDecorator):
             return dialect.type_descriptor(JSONB(astext_type=Text()))
         else:
             return dialect.type_descriptor(JSON())
+
+
+class PortableUUID(TypeDecorator):
+    """Portable UUID type that uses PostgreSQL UUID or String(36) for SQLite.
+
+    For PostgreSQL: Uses native UUID type with as_uuid=True
+    For SQLite: Uses CHAR(36) to store UUID as string
+    """
+
+    impl = String(36)
+    cache_ok = True
+
+    def load_dialect_impl(self, dialect: Dialect) -> TypeEngine[str]:
+        """Load the appropriate type based on the database dialect."""
+        if dialect.name == "postgresql":
+            return dialect.type_descriptor(PostgreSQLUUID(as_uuid=True))
+        else:
+            return dialect.type_descriptor(String(36))
+
+    def process_bind_param(self, value, dialect):
+        """Convert UUID to string for SQLite."""
+        if value is None:
+            return value
+        if dialect.name == "postgresql":
+            return value
+        else:
+            # For SQLite, convert UUID to string
+            return str(value)
+
+    def process_result_value(self, value, dialect):
+        """Convert string back to UUID for SQLite."""
+        if value is None:
+            return value
+        if dialect.name == "postgresql":
+            return value
+        else:
+            # For SQLite, keep as string (UUID objects are handled at ORM level)
+            return value

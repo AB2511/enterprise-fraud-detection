@@ -5,13 +5,12 @@ This file establishes the base model structure and common patterns.
 """
 
 from datetime import UTC, datetime
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from sqlalchemy import DateTime, String
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
-from src.infrastructure.database.types import PortableJSON
+from src.infrastructure.database.types import PortableJSON, PortableUUID
 
 
 class Base(DeclarativeBase):
@@ -41,7 +40,7 @@ class UUIDMixin:
     """Mixin for UUID primary key."""
 
     id: Mapped[UUID] = mapped_column(
-        UUID(as_uuid=True),
+        PortableUUID(),
         primary_key=True,
         default=uuid4,
         nullable=False,
@@ -142,8 +141,8 @@ class TransactionModel(Base, UUIDMixin, TimestampMixin, SoftDeleteMixin):
 
     __tablename__ = "transactions"
 
-    customer_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
-    merchant_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
+    customer_id: Mapped[UUID] = mapped_column(PortableUUID(), nullable=False, index=True)
+    merchant_id: Mapped[UUID] = mapped_column(PortableUUID(), nullable=False, index=True)
     amount: Mapped[float] = mapped_column(nullable=False)
     currency: Mapped[str] = mapped_column(String(3), nullable=False)
     transaction_type: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
@@ -177,8 +176,8 @@ class PredictionModel(Base, UUIDMixin, TimestampMixin):
 
     __tablename__ = "predictions"
 
-    transaction_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
-    model_id: Mapped[UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True, index=True)
+    transaction_id: Mapped[UUID] = mapped_column(PortableUUID(), nullable=False, index=True)
+    model_id: Mapped[UUID | None] = mapped_column(PortableUUID(), nullable=True, index=True)
     model_version: Mapped[str] = mapped_column(String(50), nullable=False)
 
     # Prediction results
@@ -203,8 +202,8 @@ class AlertModel(Base, UUIDMixin, TimestampMixin, SoftDeleteMixin):
 
     __tablename__ = "alerts"
 
-    transaction_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
-    prediction_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
+    transaction_id: Mapped[UUID] = mapped_column(PortableUUID(), nullable=False, index=True)
+    prediction_id: Mapped[UUID] = mapped_column(PortableUUID(), nullable=False, index=True)
 
     # Alert details
     alert_type: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
@@ -213,14 +212,14 @@ class AlertModel(Base, UUIDMixin, TimestampMixin, SoftDeleteMixin):
 
     # Assignment
     assigned_analyst_id: Mapped[UUID | None] = mapped_column(
-        UUID(as_uuid=True), nullable=True, index=True
+        PortableUUID(), nullable=True, index=True
     )
     assigned_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # Resolution
     resolution: Mapped[str | None] = mapped_column(String(255), nullable=True)
     resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    resolved_by_id: Mapped[UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    resolved_by_id: Mapped[UUID | None] = mapped_column(PortableUUID(), nullable=True)
 
     # SLA tracking
     sla_deadline: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
@@ -242,11 +241,11 @@ class AuditLogModel(Base, UUIDMixin):
 
     # Entity information
     entity_type: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
-    entity_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
+    entity_id: Mapped[UUID] = mapped_column(PortableUUID(), nullable=False, index=True)
 
     # Action details
     action: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
-    user_id: Mapped[UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True, index=True)
+    user_id: Mapped[UUID | None] = mapped_column(PortableUUID(), nullable=True, index=True)
     username: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     # Changes
@@ -288,8 +287,8 @@ class AnalystFeedbackModel(Base, UUIDMixin, TimestampMixin):
 
     __tablename__ = "analyst_feedback"
 
-    prediction_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
-    analyst_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
+    prediction_id: Mapped[UUID] = mapped_column(PortableUUID(), nullable=False, index=True)
+    analyst_id: Mapped[UUID] = mapped_column(PortableUUID(), nullable=False, index=True)
 
     # Feedback
     is_fraud: Mapped[bool] = mapped_column(nullable=False)
