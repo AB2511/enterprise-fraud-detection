@@ -30,10 +30,33 @@ def event_loop_policy():
     return asyncio.get_event_loop_policy()
 
 
+@pytest.fixture(scope="session")
+def event_loop(event_loop_policy):
+    """Create event loop for the entire test session."""
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    yield loop
+    # Clean shutdown
+    try:
+        # Cancel any remaining tasks
+        pending = asyncio.all_tasks(loop)
+        for task in pending:
+            task.cancel()
+        # Run loop to let tasks cancel
+        if pending:
+            loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
+        # Close the loop
+        loop.close()
+    except Exception:
+        pass
+
+
 @pytest_asyncio.fixture(scope="session")
-async def test_engine(event_loop_policy):
+async def test_engine(event_loop):
     """Create test database engine with aiosqlite compatibility fix."""
-    # Create engine - aiosqlite has compatibility issues with create_function
+    from sqlalchemy import event
+
+    # Create engine with aiosqlite
     engine = create_async_engine(
         TEST_DATABASE_URL,
         echo=False,
@@ -41,16 +64,15 @@ async def test_engine(event_loop_policy):
         connect_args={"check_same_thread": False},
     )
 
-    # Remove all existing 'connect' listeners that SQLAlchemy's SQLite dialect adds
-    # These try to call create_function() which aiosqlite doesn't support
-    from sqlalchemy import event
-    from sqlalchemy.pool import Pool
-    
-    # Clear the problematic listeners before they fire
-    if hasattr(engine.sync_engine.dialect, 'on_connect'):
-        # Override the on_connect to return None, preventing regexp registration
-        original_on_connect = engine.sync_engine.dialect.on_connect
-        engine.sync_engine.dialect.on_connect = lambda: None
+    # Fix aiosqlite incompatibility with SQLAlchemy's regexp registration
+    # aiosqlite's AdaptedConnection doesn't expose create_function() method
+    # We need to prevent SQLAlchemy from calling it by intercepting at pool level
+    @event.listens_for(engine.sync_engine, "connect")
+    def receive_connect(dbapi_conn, connection_record):
+        # Add a dummy create_function method to prevent AttributeError
+        # SQLite regexp functionality is not needed for tests
+        if not hasattr(dbapi_conn, 'create_function'):
+            dbapi_conn.create_function = lambda *args, **kwargs: None
 
     # Create tables
     async with engine.begin() as conn:
