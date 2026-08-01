@@ -467,6 +467,7 @@ class TransactionRepositoryImpl(TransactionRepository):
             offset=offset,
         )
         return transactions
+
     async def _search_with_criteria(
         self,
         *,

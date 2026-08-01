@@ -157,9 +157,7 @@ class TestAuthenticationAPI:
         assert "refresh_token" in data
         assert data["token_type"] == "bearer"
 
-    async def test_refresh_with_access_token_fails(
-        self, client: AsyncClient, test_user: User
-    ):
+    async def test_refresh_with_access_token_fails(self, client: AsyncClient, test_user: User):
         """Test that using access token for refresh fails."""
         # Login to get access token
         login_response = await client.post(

@@ -171,9 +171,7 @@ async def client(async_session: AsyncSession) -> AsyncGenerator[AsyncClient, Non
     # Override the get_async_session dependency
     app.dependency_overrides[get_async_session] = override_get_session
 
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
-    ) as ac:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         yield ac
 
 
@@ -186,9 +184,7 @@ async def test_user(async_session: AsyncSession) -> User:
 
     repo = UserRepositoryImpl(async_session)
 
-    user = User.create(
-        email="auth_test@example.com", password="testpassword123", role="analyst"
-    )
+    user = User.create(email="auth_test@example.com", password="testpassword123", role="analyst")
 
     created_user = await repo.create(user)
     await async_session.commit()

@@ -45,7 +45,9 @@ class FakeMerchantRepository:
     async def list_high_risk(self, limit: int = 100) -> list[Merchant]:
         return [self._merchant]
 
-    async def get_by_country(self, country: str, limit: int = 100, offset: int = 0) -> list[Merchant]:
+    async def get_by_country(
+        self, country: str, limit: int = 100, offset: int = 0
+    ) -> list[Merchant]:
         return [self._merchant]
 
 

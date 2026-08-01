@@ -91,9 +91,7 @@ class TestJWTTokens:
         role = "analyst"
 
         # Create token that expires immediately
-        token = create_access_token(
-            user_id, email, role, expires_delta=timedelta(seconds=-1)
-        )
+        token = create_access_token(user_id, email, role, expires_delta=timedelta(seconds=-1))
 
         with pytest.raises(JWTError):
             decode_token(token)
@@ -144,6 +142,7 @@ class TestJWTTokens:
     def test_different_tokens_for_same_user(self):
         """Test that creating tokens at different times produces different tokens."""
         import time
+
         user_id = "123e4567-e89b-12d3-a456-426614174000"
         email = "test@example.com"
         role = "analyst"
