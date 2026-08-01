@@ -70,6 +70,20 @@ data/raw/
 data/processed/
 data/interim/
 
+# Temporary run scripts (generated for one-time execution)
+run_*.py
+validate_*.py
+demo_*.py
+
+# EDA plots (generated artifacts)
+reports/milestone1/plots/
+
+# Old/superseded milestone documents
+MILESTONE_1C1_COMPLETE.md
+
+# Hypothesis testing artifacts
+.hypothesis/
+
 # AWS
 .aws/
 

@@ -1,0 +1,23 @@
+{
+  "num_rows": 590540,
+  "num_columns": 434,
+  "memory_usage_mb": 2513.9744911193848,
+  "target_distribution": {
+    "total_samples": 590540,
+    "fraud_cases": 20663,
+    "legitimate_cases": 569877,
+    "fraud_rate": 0.03499000914417313
+  },
+  "missing_value_stats": {
+    "columns_with_missing": 414,
+    "total_missing_values": 115523073,
+    "overall_missing_rate": 0.45074371905803934,
+    "max_missing_rate": 0.9919615944728554
+  },
+  "column_types": {
+    "float64": 399,
+    "object": 31,
+    "int64": 4
+  },
+  "dataset_name": "IEEE-CIS Fraud Detection"
+}

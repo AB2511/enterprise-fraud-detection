@@ -1,0 +1,256 @@
+# Preprocessing Configuration
+# IEEE-CIS Fraud Detection Dataset
+# Version: 2.0
+# Last Updated: 2026-08-01
+
+# Reproducibility
+random_seed: 42  # Fixed seed for all random operations
+
+# Data Types
+dtype:
+  convert_float64_to_float32: true  # Memory optimization
+  use_category_dtype: true           # For categorical features
+
+# Feature Dropping Thresholds
+dropping:
+  # Two-stage threshold approach
+  review_threshold: 95.0     # Flag features with >95% missing for manual review
+  auto_drop_threshold: 99.5  # Automatically drop features with >99.5% missing
+  
+  drop_constant_features: true     # Drop features with only 1 unique value
+  drop_duplicates: true             # Drop duplicate features (100% correlation)
+  duplicate_correlation_threshold: 0.999  # Pearson r for duplicate detection
+  
+  # Specific columns to drop
+  identifier_columns:
+    - TransactionID  # Not predictive
+
+# Feature Engineering
+engineering:
+  transaction_amount:
+    keep_original: true              # Keep TransactionAmt
+    create_log_transform: true       # Create TransactionAmt_log = log1p(TransactionAmt)
+    
+  temporal_features:
+    # Create elapsed time features from TransactionDT
+    create_elapsed_time: true
+    # DO NOT create hour/day/month features
+    create_time_components: false
+    
+  identity_features:
+    # Extract browser/OS info from DeviceInfo before dropping
+    extract_device_info: true
+    
+    # Explicit browser categories to extract
+    browser_categories:
+      - chrome
+      - safari
+      - firefox
+      - edge
+      - ie
+      - opera
+      - samsung
+      - other
+      - unknown
+    
+    # Explicit operating system categories to extract
+    os_categories:
+      - windows
+      - macos
+      - ios
+      - android
+      - linux
+      - other
+      - unknown
+    
+    # Extract structured info from id_31 before dropping  
+    extract_id31_info: true
+    
+    # Create binary indicator for identity availability
+    create_has_identity: true
+  
+  # Missing value indicator features (optional)
+  missing_indicators:
+    enabled: true  # Create binary indicators for features with >50% missing
+    threshold: 50.0  # Only create indicators if missing% > this value
+    suffix: "_is_missing"  # Suffix for indicator column names
+
+# Missing Value Imputation
+imputation:
+  # XGBoost Strategy: Retain NaN values when possible
+  xgboost_native_handling: true  # Let XGBoost handle missing values internally
+  
+  # Only impute when necessary (categorical encoding, neural nets, etc.)
+  impute_for_encoding: true      # Impute before encoding categorical features
+  impute_for_neural_nets: false  # Set to true if training neural networks
+  
+  # Strategy by feature type (applied only when imputation is required)
+  numerical:
+    strategy: "retain_nan"  # retain_nan (XGBoost), median, mean, zero
+    
+  categorical:
+    strategy: "mode"    # mode, constant (required for encoding)
+    constant_value: "Unknown"
+    
+  # Feature group specific overrides
+  count_features:  # C1-C14
+    strategy: "zero"  # Missing counts → zero
+    
+  time_delta_features:  # D1-D15
+    strategy: "retain_nan"  # Let XGBoost handle
+    
+  vesta_features:  # V1-V339
+    strategy: "retain_nan"  # Let XGBoost handle
+    
+  binary_features:  # M1-M9
+    strategy: "mode"  # Required for encoding
+
+# Categorical Encoding
+encoding:
+  # Encoding rules based on cardinality
+  rules:
+    # Rule 1: Low cardinality (2-10 unique values)
+    low_cardinality:
+      max_unique: 10
+      method: "onehot"
+      description: "One-hot encoding for <=10 categories"
+      
+    # Rule 2: Medium cardinality (11-100 unique values)
+    medium_cardinality:
+      min_unique: 11
+      max_unique: 100
+      method: "ordinal"
+      description: "Ordinal encoding for 11-100 categories"
+      
+    # Rule 3: High cardinality (>100 unique values)
+    high_cardinality:
+      min_unique: 101
+      method: "frequency"
+      description: "Frequency encoding for >100 categories"
+  
+  # Default encoding method (fallback)
+  default_method: "ordinal"
+  
+  # Specific column overrides (takes precedence over rules)
+  column_overrides:
+    ProductCD: "onehot"
+    card4: "onehot"
+    card6: "onehot"
+    DeviceType: "ordinal"
+    
+  # Ordinal encoder settings
+  ordinal_encoder:
+    handle_unknown: "use_encoded_value"
+    unknown_value: -1
+    
+  # One-hot encoder settings  
+  onehot_encoder:
+    drop: "first"  # Drop first category to avoid multicollinearity
+    sparse: false
+    handle_unknown: "ignore"
+
+# Feature Scaling
+scaling:
+  # XGBoost/LightGBM: NO scaling required (tree-based models)
+  enable_for_tree_models: false
+  
+  # Neural Networks: Enable scaling
+  enable_for_neural_nets: true
+  
+  # Scaling methods
+  standard_scaler:
+    enabled: false  # Disabled for XGBoost
+    features: []
+    
+  minmax_scaler:
+    enabled: false  # Disabled for XGBoost
+    features: []
+
+# Train/Val/Test Split
+split:
+  strategy: "time_based"  # time_based or stratified_random
+  
+  # Time-based split (sort by TransactionDT)
+  train_ratio: 0.6
+  val_ratio: 0.2
+  test_ratio: 0.2
+  
+  # Validation split configuration
+  validation_split:
+    enabled: true
+    method: "holdout"  # holdout or cross_validation
+    cv_folds: 5  # If cross_validation
+    shuffle: false  # Keep temporal order for time-based split
+  
+  # Ensure fraud rate is preserved
+  verify_fraud_rate: true
+  max_fraud_rate_deviation: 0.005  # Allow ±0.5% deviation
+
+# Class Imbalance Handling
+class_imbalance:
+  # Primary strategy
+  use_class_weights: true
+  class_weight_method: "balanced"  # balanced or custom
+  
+  # XGBoost specific
+  scale_pos_weight: "auto"  # auto = (num_negative / num_positive)
+  
+  # SMOTE: DISABLED by default
+  use_smote: false
+  smote_sampling_strategy: 0.3  # If enabled, oversample to 30%
+  
+  # Threshold optimization
+  optimize_threshold: true
+  threshold_metric: "f1"  # f1, precision, recall
+
+# Data Quality Checks
+quality_checks:
+  verify_no_nulls_after_imputation: true
+  verify_no_duplicates: true
+  verify_all_numerical: true
+  verify_no_infinite_values: true
+  verify_fraud_rate_preserved: true
+  
+  # Acceptable ranges
+  acceptable_fraud_rate_range: [0.030, 0.040]  # 3.0% - 4.0%
+
+# Output Paths
+output:
+  processed_data_dir: "backend/data/processed"
+  artifacts_dir: "backend/data/processed/preprocessing_artifacts"
+  
+  # Save intermediate data for debugging
+  save_intermediate: true
+  intermediate_dir: "backend/data/interim"
+  intermediate_stages:
+    - after_engineering
+    - after_dropping
+    - after_split
+    - after_imputation
+    - after_encoding
+  
+  # Save preprocessing artifacts
+  save_imputers: true
+  save_encoders: true
+  save_scalers: true
+  save_feature_names: true
+  
+  # Report generation
+  generate_before_after_report: true
+  report_dir: "reports/milestone1"
+
+# Reproducibility
+reproducibility:
+  random_seed: 42  # Also defined at top level for clarity
+  set_seed_for_imputation: true
+  set_seed_for_encoding: true
+  set_seed_for_split: true
+  set_numpy_seed: true
+  set_python_seed: true
+
+# Performance
+performance:
+  memory_optimization: true
+  convert_float64_to_float32: true
+  use_category_dtype: true  # For categorical features
+  chunk_size: null  # null = load entire dataset
