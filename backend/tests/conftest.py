@@ -9,8 +9,9 @@ from uuid import uuid4
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import event
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.pool import StaticPool
+from sqlalchemy.pool import NullPool
 from src.domain.entities.prediction import Prediction
 from src.domain.entities.user import User
 from src.infrastructure.database.models import Base
@@ -54,25 +55,31 @@ def event_loop(event_loop_policy):
 @pytest_asyncio.fixture(scope="session")
 async def test_engine(event_loop):
     """Create test database engine with aiosqlite compatibility fix."""
-    from sqlalchemy import event
+    # Monkey-patch the SQLAlchemy SQLite dialect to disable REGEXP function
+    # This prevents the AttributeError with aiosqlite's AdaptedConnection
+    from sqlalchemy.dialects.sqlite import pysqlite
+
+    original_on_connect = pysqlite.SQLiteDialect_pysqlite.on_connect
+
+    def patched_on_connect(self):
+        """Override on_connect to skip REGEXP registration."""
+
+        def connect(conn):
+            # Skip the parent's on_connect which tries to register REGEXP
+            # Just set the isolation level
+            conn.isolation_level = None
+
+        return connect
+
+    pysqlite.SQLiteDialect_pysqlite.on_connect = patched_on_connect
 
     # Create engine with aiosqlite
     engine = create_async_engine(
         TEST_DATABASE_URL,
         echo=False,
-        poolclass=StaticPool,
+        poolclass=NullPool,
         connect_args={"check_same_thread": False},
     )
-
-    # Fix aiosqlite incompatibility with SQLAlchemy's regexp registration
-    # aiosqlite's AdaptedConnection doesn't expose create_function() method
-    # We need to prevent SQLAlchemy from calling it by intercepting at pool level
-    @event.listens_for(engine.sync_engine, "connect")
-    def receive_connect(dbapi_conn, connection_record):
-        # Add a dummy create_function method to prevent AttributeError
-        # SQLite regexp functionality is not needed for tests
-        if not hasattr(dbapi_conn, 'create_function'):
-            dbapi_conn.create_function = lambda *args, **kwargs: None
 
     # Create tables
     async with engine.begin() as conn:
@@ -82,6 +89,9 @@ async def test_engine(event_loop):
 
     # Cleanup
     await engine.dispose()
+
+    # Restore original on_connect
+    pysqlite.SQLiteDialect_pysqlite.on_connect = original_on_connect
 
 
 @pytest_asyncio.fixture
