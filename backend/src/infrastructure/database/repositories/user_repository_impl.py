@@ -11,6 +11,8 @@ from src.domain.entities.user import User
 from src.domain.exceptions.base import ConflictError, NotFoundError, RepositoryError
 from src.infrastructure.database.models import UserModel
 
+__all__ = ["UserRepositoryImpl", "NotFoundError", "RepositoryError"]
+
 
 class UserRepositoryImpl(UserRepository):
     """SQLAlchemy implementation of UserRepository.

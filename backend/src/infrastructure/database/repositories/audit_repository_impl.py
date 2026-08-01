@@ -9,8 +9,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.application.interfaces.audit_repository import AuditRepository
 from src.domain.entities.audit_log import AuditLog
-from src.domain.exceptions.base import DomainException
+from src.domain.exceptions.base import DomainException, NotFoundError, RepositoryError
 from src.infrastructure.database.models import AuditLogModel
+
+__all__ = ["AuditRepositoryImpl", "NotFoundError", "RepositoryError"]
 
 
 class AuditRepositoryImpl(AuditRepository):

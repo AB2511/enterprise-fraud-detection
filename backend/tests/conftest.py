@@ -1,11 +1,13 @@
 """Test configuration and fixtures."""
 
 import asyncio
-from collections.abc import AsyncGenerator, Generator
+import sys
+from collections.abc import AsyncGenerator
 from datetime import UTC, datetime
 from uuid import uuid4
 
 import pytest
+import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.pool import StaticPool
@@ -18,15 +20,18 @@ TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
 
 @pytest.fixture(scope="session")
-def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
-    """Create an instance of the default event loop for the test session."""
-    loop = asyncio.new_event_loop()
-    yield loop
-    loop.close()
+def event_loop_policy():
+    """Set event loop policy for Windows compatibility with Python 3.13+."""
+    if sys.platform == "win32":
+        # Use WindowsProactorEventLoopPolicy for Windows
+        policy = asyncio.WindowsProactorEventLoopPolicy()
+        asyncio.set_event_loop_policy(policy)
+        return policy
+    return asyncio.get_event_loop_policy()
 
 
-@pytest.fixture(scope="session")
-async def test_engine():
+@pytest_asyncio.fixture(scope="session")
+async def test_engine(event_loop_policy):
     """Create test database engine."""
     engine = create_async_engine(
         TEST_DATABASE_URL,
@@ -45,7 +50,7 @@ async def test_engine():
     await engine.dispose()
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def async_session(test_engine) -> AsyncGenerator[AsyncSession, None]:
     """Create async database session for tests."""
     async with AsyncSession(test_engine, expire_on_commit=False) as session:
@@ -53,7 +58,7 @@ async def async_session(test_engine) -> AsyncGenerator[AsyncSession, None]:
         await session.rollback()
 
 
-@pytest.fixture(autouse=True)
+@pytest_asyncio.fixture(autouse=True)
 async def clean_database(async_session: AsyncSession, test_engine):
     """Clean database before each test."""
     # Clean all tables before test
@@ -70,7 +75,7 @@ async def clean_database(async_session: AsyncSession, test_engine):
 # Repository test configuration
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def multiple_predictions(
     async_session: AsyncSession,
 ) -> list[Prediction]:
@@ -151,7 +156,7 @@ async def multiple_predictions(
     return created_predictions
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def client(async_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
     """Create test HTTP client."""
     from src.infrastructure.database.connection import get_async_session
@@ -172,7 +177,7 @@ async def client(async_session: AsyncSession) -> AsyncGenerator[AsyncClient, Non
         yield ac
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def test_user(async_session: AsyncSession) -> User:
     """Create a test user for authentication tests."""
     from src.infrastructure.database.repositories.user_repository_impl import (

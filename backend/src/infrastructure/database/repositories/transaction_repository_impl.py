@@ -10,8 +10,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.application.interfaces.transaction_repository import TransactionRepository
 from src.domain.entities.transaction import Transaction
-from src.domain.exceptions.base import DomainException
+from src.domain.exceptions.base import DomainException, NotFoundError, RepositoryError
 from src.infrastructure.database.models import TransactionModel
+
+__all__ = ["TransactionRepositoryImpl", "NotFoundError", "RepositoryError"]
 
 
 class TransactionNotFoundError(DomainException):

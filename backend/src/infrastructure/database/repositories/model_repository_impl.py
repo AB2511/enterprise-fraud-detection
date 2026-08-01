@@ -11,6 +11,8 @@ from src.domain.entities.model import Model
 from src.domain.exceptions.base import DomainException, NotFoundError, RepositoryError
 from src.infrastructure.database.models import ModelModel
 
+__all__ = ["ModelRepositoryImpl", "NotFoundError", "RepositoryError"]
+
 
 class ModelRepositoryImpl(ModelRepository):
     """SQLAlchemy implementation of ModelRepository.
