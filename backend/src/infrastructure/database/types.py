@@ -54,7 +54,9 @@ class PortableUUID(TypeDecorator):
             return value
         else:
             # For SQLite, convert UUID to string
-            return str(value)
+            if hasattr(value, 'hex'):  # It's a UUID object
+                return str(value)
+            return str(value)  # Already a string
 
     def process_result_value(self, value, dialect):
         """Convert string back to UUID for SQLite."""
@@ -63,5 +65,5 @@ class PortableUUID(TypeDecorator):
         if dialect.name == "postgresql":
             return value
         else:
-            # For SQLite, keep as string (UUID objects are handled at ORM level)
+            # For SQLite, return as string (SQLAlchemy ORM will handle UUID conversion)
             return value
