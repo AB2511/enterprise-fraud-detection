@@ -61,7 +61,9 @@ class User:
         if len(password) < 8:
             raise ValueError("Password must be at least 8 characters")
 
-        hashed = bcrypt.hash(password)
+        # Bcrypt has a 72-byte limit, truncate if necessary
+        password_bytes = password.encode('utf-8')[:72]
+        hashed = bcrypt.hash(password_bytes)
         return cls(email=email, hashed_password=hashed, role=role)
 
     def verify_password(self, password: str) -> bool:
@@ -75,7 +77,9 @@ class User:
         """
         if not self.hashed_password:
             return False
-        result = bcrypt.verify(password, self.hashed_password)
+        # Bcrypt has a 72-byte limit, truncate if necessary
+        password_bytes = password.encode('utf-8')[:72]
+        result = bcrypt.verify(password_bytes, self.hashed_password)
         return bool(result)
 
     def change_password(self, old_password: str, new_password: str) -> None:
@@ -94,7 +98,9 @@ class User:
         if len(new_password) < 8:
             raise ValueError("New password must be at least 8 characters")
 
-        self.hashed_password = bcrypt.hash(new_password)
+        # Bcrypt has a 72-byte limit, truncate if necessary
+        password_bytes = new_password.encode('utf-8')[:72]
+        self.hashed_password = bcrypt.hash(password_bytes)
         self.updated_at = datetime.now(UTC)
 
     def activate(self) -> None:
