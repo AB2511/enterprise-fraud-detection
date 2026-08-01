@@ -54,7 +54,7 @@ class PortableUUID(TypeDecorator):
             return value
         else:
             # For SQLite, convert UUID to string
-            if hasattr(value, 'hex'):  # It's a UUID object
+            if hasattr(value, "hex"):  # It's a UUID object
                 return str(value)
             return str(value)  # Already a string
 

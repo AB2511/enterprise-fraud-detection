@@ -147,13 +147,16 @@ def test_change_password_uses_expected_entity_contract() -> None:
             role="analyst",
         )
 
+        # Capture the original hash before changing password
+        original_hash = created_user.hashed_password
+
         updated_user = await service.change_user_password(
             user_id=created_user.user_id,
             old_password="SecurePass123!",
             new_password="NewSecurePass456!",
         )
 
-        assert updated_user.hashed_password != created_user.hashed_password
+        assert updated_user.hashed_password != original_hash
         assert updated_user.verify_password("NewSecurePass456!") is True
 
     asyncio.run(run_test())
