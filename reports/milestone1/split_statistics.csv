@@ -1,0 +1,4 @@
+Split,Rows,Fraud Count,Fraud %,Start TransactionDT,End TransactionDT,Memory MB
+Train,354324,11988,3.3833,"86,400","8,745,772",1588.78
+Validation,118108,4611,3.9041,"8,745,798","12,192,842",530.96
+Test,118108,4064,3.4409,"12,192,900","15,811,131",531.49
