@@ -55,8 +55,34 @@
 
 **Phase 3B Remaining**: Transaction/Alert/User use cases, Repository implementations (SQLAlchemy), API Controllers (FastAPI), Domain Events, Event Bus
 
-### ⏳ Phase 4: Machine Learning Implementation - NEXT
-**Planned**: XGBoost, SHAP, Feature engineering, Model serving  
+### 🔬 Phase 4: Machine Learning Pipeline - IN PROGRESS (85%)
+**Status**: ML training pipeline complete, hyperparameter optimization running  
+**Deliverables**: Data validation, preprocessing, baseline model, optimization framework  
+**Documentation**: [ML_TRAINING_PIPELINE_PLAN.md](ML_TRAINING_PIPELINE_PLAN.md)
+
+**Completed Milestones**:
+- ✅ **1A**: Data validation and quality assurance (590,540 transactions)
+- ✅ **1B**: Exploratory Data Analysis (EDA) and insights
+- ✅ **1C.1-1C.6**: Feature engineering, imputation, scaling, baseline training
+- ✅ **1C.7-1C.9**: Baseline validation, diagnostics, optimization framework
+- 🔄 **1C.10**: Hyperparameter optimization (50-trial campaign RUNNING)
+- ⏳ **1C.11**: Hold-out test evaluation (prepared, awaiting 1C.10 completion)
+
+**Key Achievements**:
+- 📊 **Baseline Model**: XGBoost with PR-AUC 0.604, ROC-AUC 0.918 (validation set)
+- 🔬 **Random Search**: 50-trial hyperparameter optimization campaign
+- 🔒 **Test Set Isolation**: Hold-out test never used during training/optimization
+- 🎯 **Production Framework**: Reproducible pipeline with artifact versioning
+- 📈 **Comprehensive Diagnostics**: Calibration, threshold analysis, learning curves
+
+**Current Activity**:
+- ⚙️ **Optimization Running**: 15/50 trials complete (~30%), ~30-35 hours remaining
+- 🎯 **Primary Metric**: PR-AUC (Precision-Recall AUC for imbalanced data)
+- 📊 **Search Space**: 10 hyperparameters (learning rate, depth, regularization, etc.)
+- 🔍 **Best Trial So Far**: Trial 11 with PR-AUC 0.611 (validation)
+
+**Phase 4 Remaining**: Model deployment, SHAP explainability, drift detection setup
+
 **Note**: Phase 3B can be completed before or after Phase 4
 
 ---
@@ -215,10 +241,20 @@ python scripts/seed_database.py
 python scripts/generate_synthetic_data.py
 ```
 
-### 3. Train Initial Model
+### 3. Train Baseline Model (Optional - Model Already Trained)
 
 ```bash
-python scripts/train_model.py
+# Note: A baseline model has already been trained and frozen
+# Artifacts are in: artifacts/models/baseline_xgboost.json
+
+# To train from scratch (will overwrite):
+python ml/scripts/train_baseline.py
+
+# Current optimization campaign (DO NOT RUN - already in progress):
+# python run_milestone_1c10_optimization.py
+
+# Monitor optimization status:
+python monitor_optimization_status.py
 ```
 
 ### 4. Run API Server
@@ -300,27 +336,67 @@ mypy src/
 
 ## 📊 Performance Benchmarks
 
-| Metric | Target | Achieved |
-|--------|--------|----------|
-| Inference Latency (p95) | < 200ms | 145ms |
-| Throughput | > 1,000 req/s | 1,250 req/s |
-| Model PR-AUC | > 0.85 | 0.87 |
-| False Positive Rate | < 5% | 4.2% |
-| System Uptime | > 99.9% | 99.95% |
+### Current ML Model Performance (Baseline - Validation Set)
+
+| Metric | Value | Notes |
+|--------|-------|-------|
+| **PR-AUC** | 0.604 | Primary metric for imbalanced data |
+| **ROC-AUC** | 0.918 | Overall discrimination ability |
+| **MCC** | 0.569 | Matthews Correlation Coefficient |
+| **F1 Score** | 0.550 | Balance of precision and recall |
+| **Precision** | 0.829 | 82.9% of fraud predictions are correct |
+| **Recall** | 0.423 | Detects 42.3% of all fraud cases |
+
+**Dataset Characteristics**:
+- Training: 354,324 transactions
+- Validation: 118,108 transactions
+- Test: 118,108 transactions (isolated, not yet evaluated)
+- Fraud Rate: 3.44% (highly imbalanced)
+
+**Optimization Status**: 
+- 🔄 50-trial hyperparameter search in progress
+- 🎯 Best candidate so far: PR-AUC 0.611 (+1.2% improvement)
+- ⏳ Expected completion: 2026-08-05 or 2026-08-06
+
+### System Performance Targets
+
+| Metric | Target | Status |
+|--------|--------|--------|
+| Inference Latency (p95) | < 200ms | To be measured |
+| Throughput | > 1,000 req/s | To be measured |
+| Model Update Frequency | Weekly | Pipeline ready |
+| System Uptime | > 99.9% | Infrastructure ready |
 
 ---
 
 ## 🗺️ Roadmap
 
-- [x] **Phase 1**: Foundation (Domain layer, Database)
-- [x] **Phase 2**: Machine Learning (Training, Inference)
-- [x] **Phase 3**: API Layer (FastAPI, Endpoints)
-- [x] **Phase 4**: Monitoring (Drift Detection, Dashboards)
-- [x] **Phase 5**: AWS Integration (S3, Secrets Manager)
-- [x] **Phase 6**: Deployment (ECS, CI/CD)
-- [ ] **Phase 7**: Frontend (React Dashboard)
-- [ ] **Phase 8**: Advanced ML (Graph detection, Deep learning)
-- [ ] **Phase 9**: Scalability (Redis, Kafka)
+### Completed ✅
+- [x] **Phase 1**: Foundation (Repository setup, CI/CD, Docker)
+- [x] **Phase 2**: Domain Model & Database (Entities, repositories, migrations)
+- [x] **Phase 3A**: Application Services (7 production services)
+- [x] **Phase 3B**: DTOs & Exceptions (Partial - 15% complete)
+- [x] **ML Milestone 1A**: Data Validation (590K transactions validated)
+- [x] **ML Milestone 1B**: Exploratory Data Analysis (EDA complete)
+- [x] **ML Milestone 1C.1-1C.6**: Feature engineering, scaling, baseline training
+- [x] **ML Milestone 1C.7-1C.9**: Diagnostics, optimization framework build
+- [x] **ML Milestone 1C.11 Prep**: Test evaluation scripts prepared
+
+### In Progress 🔄
+- [ ] **ML Milestone 1C.10**: Hyperparameter optimization (15/50 trials, ~30%)
+- [ ] **Phase 3B Completion**: Use cases, repository implementations, API controllers
+
+### Next Up ⏳
+- [ ] **ML Milestone 1C.11**: Hold-out test evaluation and deployment gate
+- [ ] **ML Milestone 2**: Model serving infrastructure (FastAPI integration)
+- [ ] **ML Milestone 3**: SHAP explainability integration
+- [ ] **ML Milestone 4**: Drift detection and monitoring
+- [ ] **Phase 4**: API Layer completion (REST endpoints, authentication)
+- [ ] **Phase 5**: Monitoring dashboards (CloudWatch, custom metrics)
+- [ ] **Phase 6**: AWS Deployment (ECS, RDS, S3)
+- [ ] **Phase 7**: Frontend Dashboard (React, TypeScript)
+- [ ] **Phase 8**: Advanced ML (Graph detection, ensemble methods)
+- [ ] **Phase 9**: Scalability (Redis caching, Kafka streaming)
 - [ ] **Phase 10**: Multi-region deployment
 
 ---

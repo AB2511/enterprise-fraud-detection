@@ -1,0 +1,251 @@
+# Hyperparameter Optimization Configuration
+# Milestone 1C.9 - Framework Build
+
+# ============================================================================
+# SEARCH SPACE CONFIGURATION
+# ============================================================================
+
+search_space:
+  # Learning rate: Controls step size for weight updates
+  # Lower values = slower convergence but better generalization
+  # Baseline: 0.1
+  learning_rate:
+    type: continuous
+    min: 0.001
+    max: 0.3
+    log_scale: true
+    rationale: "Log scale for learning rate captures both fine-grained (0.001-0.01) and aggressive (0.1-0.3) learning regimes"
+    
+  # Maximum tree depth: Controls model complexity
+  # Deeper trees can capture more complex patterns but risk overfitting
+  # Baseline: 6
+  max_depth:
+    type: integer
+    min: 3
+    max: 12
+    rationale: "Range from shallow (3) to deep (12) trees. Values >15 rarely improve performance and increase overfitting risk"
+    
+  # Minimum child weight: Minimum sum of instance weight in a child
+  # Higher values = more conservative, prevents overfitting on rare patterns
+  # Baseline: 1 (default)
+  min_child_weight:
+    type: continuous
+    min: 0.5
+    max: 10.0
+    rationale: "Controls complexity of leaf nodes. Higher values reduce sensitivity to outliers"
+    
+  # Gamma: Minimum loss reduction required to make split
+  # Higher values = more conservative tree growth
+  # Baseline: 0 (default)
+  gamma:
+    type: continuous
+    min: 0.0
+    max: 5.0
+    rationale: "Regularization parameter. 0 allows all splits, higher values require larger improvements"
+    
+  # Subsample ratio: Fraction of samples used per tree
+  # Helps prevent overfitting, increases training speed
+  # Baseline: 0.8
+  subsample:
+    type: continuous
+    min: 0.5
+    max: 1.0
+    rationale: "Subsampling prevents overfitting. Range from aggressive (0.5) to full dataset (1.0)"
+    
+  # Column subsample ratio: Fraction of features used per tree
+  # Increases diversity, reduces correlation between trees
+  # Baseline: 0.8
+  colsample_bytree:
+    type: continuous
+    min: 0.5
+    max: 1.0
+    rationale: "Feature sampling per tree. Lower values increase tree diversity"
+    
+  # L1 regularization: Promotes sparsity in feature weights
+  # Baseline: 0 (default)
+  reg_alpha:
+    type: continuous
+    min: 0.0
+    max: 10.0
+    rationale: "L1 regularization. Higher values promote feature sparsity"
+    
+  # L2 regularization: Smooths feature weights
+  # Baseline: 1 (default)
+  reg_lambda:
+    type: continuous
+    min: 0.1
+    max: 10.0
+    rationale: "L2 regularization. Higher values prevent extreme weights"
+    
+  # Max delta step: Maximum delta step for weight estimation
+  # Useful for imbalanced classification (fraud detection)
+  # Baseline: 0 (default, no constraint)
+  max_delta_step:
+    type: integer
+    min: 0
+    max: 10
+    rationale: "Limits weight update magnitude. Useful for highly imbalanced datasets (3.44% fraud rate)"
+    
+  # Number of boosting rounds
+  # Early stopping will determine actual number used
+  # Baseline: 500
+  n_estimators:
+    type: integer
+    min: 100
+    max: 1000
+    rationale: "Number of trees. Early stopping (50 rounds) will select optimal count"
+
+# ============================================================================
+# OPTIMIZATION STRATEGY
+# ============================================================================
+
+optimization:
+  # Search method: random, grid, bayesian
+  method: random
+  
+  # Number of trials
+  n_trials: 50
+  
+  # Random seed for reproducibility
+  random_seed: 42
+  
+  # Early stopping for individual trials
+  early_stopping_rounds: 50
+  
+  # Primary metric to optimize
+  primary_metric: pr_auc
+  
+  # Secondary metrics to track
+  secondary_metrics:
+    - roc_auc
+    - mcc
+    - f1
+    - precision
+    - recall
+  
+  # Direction: maximize or minimize
+  direction: maximize
+
+# ============================================================================
+# VALIDATION PROTOCOL
+# ============================================================================
+
+validation:
+  # Data splits to use (NEVER test set)
+  allowed_splits:
+    - train
+    - validation
+  
+  # Forbidden splits (will abort if accessed)
+  forbidden_splits:
+    - test
+  
+  # Validation strategy
+  strategy: single_validation_split
+  
+  # Evaluation threshold (for discrete metrics)
+  evaluation_threshold: 0.5
+
+# ============================================================================
+# EXPERIMENT TRACKING
+# ============================================================================
+
+tracking:
+  # Base directory for experiments
+  base_dir: artifacts/experiments
+  
+  # Experiment naming pattern
+  experiment_pattern: experiment_{id:03d}
+  
+  # Files to save per experiment
+  save_artifacts:
+    - model.json
+    - metrics.json
+    - parameters.json
+    - training_log.txt
+  
+  # Summary file
+  summary_file: experiment_summary.csv
+  
+  # Metadata file
+  metadata_file: experiment_metadata.json
+
+# ============================================================================
+# FIXED PARAMETERS (DO NOT TUNE)
+# ============================================================================
+
+fixed_parameters:
+  objective: binary:logistic
+  eval_metric: auc
+  tree_method: hist
+  random_state: 42
+  verbosity: 1
+
+# ============================================================================
+# BASELINE REFERENCE (FOR COMPARISON)
+# ============================================================================
+
+baseline_reference:
+  model_path: artifacts/models/baseline_xgboost.json
+  metrics_path: artifacts/models/baseline_metrics.json
+  metadata_path: artifacts/models/training_metadata.json
+  
+  # Baseline parameters (for reference)
+  parameters:
+    learning_rate: 0.1
+    max_depth: 6
+    subsample: 0.8
+    colsample_bytree: 0.8
+    min_child_weight: 1.0
+    gamma: 0.0
+    reg_alpha: 0.0
+    reg_lambda: 1.0
+    max_delta_step: 0
+    n_estimators: 500
+  
+  # Baseline validation metrics
+  baseline_metrics:
+    roc_auc: 0.917665
+    pr_auc: 0.604030
+    mcc: 0.569549
+    f1: 0.550472
+
+# ============================================================================
+# RESOURCE LIMITS
+# ============================================================================
+
+resources:
+  # Maximum training time per trial (seconds)
+  max_training_time_per_trial: 600
+  
+  # Maximum memory per trial (GB)
+  max_memory_gb: 16
+  
+  # Parallel trials (1 = sequential)
+  n_parallel: 1
+  
+  # Verbose output
+  verbose: true
+
+# ============================================================================
+# SAFETY CHECKS
+# ============================================================================
+
+safety:
+  # Verify baseline unchanged before starting
+  verify_baseline_hash: true
+  
+  # Abort if test data accessed
+  abort_on_test_access: true
+  
+  # Verify data splits match expected sizes
+  verify_data_splits:
+    train_rows: 354324
+    validation_rows: 118108
+    test_rows: 118108  # Not used, but verified to exist
+  
+  # Hash validation
+  expected_hashes:
+    baseline_model: d5905f4d677fb064d5048d3a60c8d17dcacfc6f672dbcbd8159bfb8644c189b7
+    baseline_metrics: ec1a0305b007a945a49dc0f801d404e38fdf784e488a2568f5598fae38a9d2ef
+    baseline_metadata: 0f979e7e38b182005a375686eac9198b8d9f35c0dbea282c9b266e0b9146134a
