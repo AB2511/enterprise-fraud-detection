@@ -140,7 +140,7 @@ Presentation → Application → Domain ← Infrastructure
    (FastAPI)   (Use Cases)   (Entities)  (DB, ML, S3)
 ```
 
-**See**: [ARCHITECTURE.md](docs/ARCHITECTURE.md) for complete technical specification
+**See**: [ARCHITECTURE.md](ARCHITECTURE.md) for complete technical specification
 
 ---
 
@@ -285,12 +285,10 @@ curl -X POST http://localhost:8000/v1/predict \
 
 | Document | Description |
 |----------|-------------|
-| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Complete system architecture |
-| [API_DOCUMENTATION.md](docs/API_DOCUMENTATION.md) | REST API reference |
-| [DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md) | AWS deployment instructions |
-| [MODEL_CARD.md](docs/MODEL_CARD.md) | Model documentation |
-| [RUNBOOK.md](docs/RUNBOOK.md) | Operational procedures |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Complete system architecture |
 | [CONTRIBUTING.md](docs/CONTRIBUTING.md) | Contribution guidelines |
+| [SETUP_GUIDE.md](docs/guides/SETUP_GUIDE.md) | Development setup guide |
+| [QUICKSTART.md](docs/guides/QUICKSTART.md) | Quick start guide |
 
 ---
 
